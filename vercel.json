@@ -1,8 +1,9 @@
 {
   "buildCommand": null,
+  "installCommand": null,
+  "framework": null,
   "outputDirectory": "public",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

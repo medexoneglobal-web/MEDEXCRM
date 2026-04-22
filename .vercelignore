@@ -1,0 +1,8 @@
+server.js
+database.js
+routes/
+node_modules/
+node-v20.11.1-win-x64/
+*.db
+*.db-shm
+*.db-wal
