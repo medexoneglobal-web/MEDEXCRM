@@ -3343,6 +3343,17 @@
         // Column options for dropdown fields (like Excel data validation)
         let columnOptions = {};
 
+        // Default column headers when no data exists yet
+        const DEFAULT_HEADERS = [
+            'ACCT NO', 'CLINIC NAME', 'PHONE',
+            'CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE',
+            'CLOUD START DATE', 'CLOUD END DATE',
+            'M1G/ DEALER CASE', 'PRODUCT', 'PRODUCT TYPE',
+            'GROUP', 'COMPANY NAME', 'CO. REG & BRN',
+            'Customer ID- Certificate No.', 'CMS INSTALL DATE/LIVE DATE',
+            'State', 'Contact Name', 'Contact Tel1'
+        ];
+
         // Access Rights and Mandatory Fields Settings
         let accessRights = {};
         let mandatoryFields = [];
@@ -3715,6 +3726,20 @@
                             return await loadCRMDataFromAPI();
                         }
                     }
+                    // No data anywhere — use default headers so UI works
+                    headers = [...DEFAULT_HEADERS];
+                    crmData = [];
+                    visibleColumns = [];
+                    VISIBLE_COLUMN_NAMES.forEach(colName => {
+                        const idx = headers.findIndex(h => h.trim() === colName);
+                        if (idx !== -1) {
+                            visibleColumns.push(idx);
+                        }
+                    });
+                    if (visibleColumns.length === 0 && headers.length > 0) {
+                        visibleColumns = headers.map((_, idx) => idx);
+                    }
+                    return true;
                 }
             } catch (err) {
                 console.error('Failed to load CRM data from Supabase:', err);
@@ -3746,6 +3771,17 @@
                     }
                 } else {
                     crmData = [];
+                    headers = [...DEFAULT_HEADERS];
+                    visibleColumns = [];
+                    VISIBLE_COLUMN_NAMES.forEach(colName => {
+                        const idx = headers.findIndex(h => h.trim() === colName);
+                        if (idx !== -1) {
+                            visibleColumns.push(idx);
+                        }
+                    });
+                    if (visibleColumns.length === 0 && headers.length > 0) {
+                        visibleColumns = headers.map((_, idx) => idx);
+                    }
                 }
                 renderTable();
             } catch (err) {
@@ -5282,12 +5318,7 @@
 
         // Table Rendering
         function renderTable() {
-            if (crmData.length === 0) {
-                document.getElementById('tableBody').innerHTML = '<tr><td colspan="100">No data available. Please import a CSV file.</td></tr>';
-                return;
-            }
-
-            // Render headers with column filters
+            // Always render headers (even when empty) so filters and structure are visible
             const thead = document.getElementById('tableHead');
             let headerHTML = '<tr>';
             headerHTML += '<th>Actions</th>';
@@ -5312,6 +5343,14 @@
             headerHTML += '</tr>';
             
             thead.innerHTML = headerHTML;
+
+            // If no data, show friendly empty state but keep headers visible
+            if (crmData.length === 0) {
+                const colCount = visibleColumns.length > 0 ? visibleColumns.length + 1 : 2;
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;padding:24px;color:var(--text-muted);">No data available. Use the <strong>New Customer</strong> button to add records, or import a CSV file.</td></tr>`;
+                updateDeleteSelectedButton();
+                return;
+            }
 
             // Render body with all rows (no pagination)
             renderTableBody();
@@ -6449,11 +6488,21 @@
 
         // New Customer Modal
         function showNewCustomerModal() {
-            if (crmData.length === 0) {
-                alert('Please import CSV data first to define the structure');
-                return;
+            // Ensure headers and visibleColumns are initialized even with no data
+            if (headers.length === 0) {
+                headers = [...DEFAULT_HEADERS];
+                visibleColumns = [];
+                VISIBLE_COLUMN_NAMES.forEach(colName => {
+                    const idx = headers.findIndex(h => h.trim() === colName);
+                    if (idx !== -1) {
+                        visibleColumns.push(idx);
+                    }
+                });
+                if (visibleColumns.length === 0 && headers.length > 0) {
+                    visibleColumns = headers.map((_, idx) => idx);
+                }
             }
-            
+
             const container = document.getElementById('newCustomerFields');
             container.innerHTML = '';
             
