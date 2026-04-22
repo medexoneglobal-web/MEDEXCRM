@@ -2673,7 +2673,7 @@
                 <h1 class="page-title" id="pageTitle">CRM Dashboard</h1>
                 <div class="header-right">
                     <div class="header-search">
-                        <input type="text" placeholder="Search customers..." id="globalSearch">
+                        <input type="text" placeholder="Search customers..." id="globalSearch" onkeyup="searchData()">
                     </div>
                     <div class="header-user-info">
                         <span class="user-name" id="headerUserName">Admin</span>
@@ -2741,6 +2741,57 @@
                     </div>
                 </div>
                 <div class="section-body">
+                    <!-- Customer Summary Cards -->
+                    <div class="dashboard-cards" id="customerSummaryCards" style="margin-bottom: 20px;">
+                        <div class="dash-card">
+                            <div class="dash-card-icon" style="background:#e3f2fd;color:#1976d2;">&#128101;</div>
+                            <div class="dash-card-info">
+                                <div class="dash-card-label">Total Customers</div>
+                                <div class="dash-card-value" id="custTotal">0</div>
+                                <div class="dash-card-sub">All registered customers</div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-card-icon" style="background:#e8f5e9;color:#4caf50;">&#9989;</div>
+                            <div class="dash-card-info">
+                                <div class="dash-card-label">Active Customers</div>
+                                <div class="dash-card-value" id="custActive">0</div>
+                                <div class="dash-card-sub">Currently active</div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-card-icon" style="background:#fff3e0;color:#ff9800;">&#9888;</div>
+                            <div class="dash-card-info">
+                                <div class="dash-card-label">Expiring Soon</div>
+                                <div class="dash-card-value" id="custExpiringSoon">0</div>
+                                <div class="dash-card-sub">Next 30 days</div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-card-icon" style="background:#ffebee;color:#f44336;">&#10060;</div>
+                            <div class="dash-card-info">
+                                <div class="dash-card-label">Expired Customers</div>
+                                <div class="dash-card-value" id="custExpired">0</div>
+                                <div class="dash-card-sub">Needs attention</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Bar -->
+                    <div class="toolbar" style="margin-bottom: 16px;">
+                        <input type="text" id="customerSearchInput" placeholder="Search by account no. or clinic name..." onkeyup="searchData()" style="min-width: 260px;">
+                        <select id="customerStatusFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
+                            <option value="">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Expiring Soon">Expiring Soon</option>
+                            <option value="Expired">Expired</option>
+                        </select>
+                        <select id="customerProductFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
+                            <option value="">All Products</option>
+                        </select>
+                        <button class="btn btn-warning" onclick="clearCustomerFilters()">Clear Filters</button>
+                    </div>
+
                     <div class="table-container">
                         <table id="crmTable" class="crm-table">
                             <thead id="tableHead"></thead>
@@ -2751,9 +2802,10 @@
                         <span class="table-info" id="tableInfo">Showing 0 to 0 of 0 entries</span>
                         <div class="pagination" id="paginationControls"></div>
                         <select class="rows-select" onchange="changeRowsPerPage(this.value)">
+                            <option value="10" selected>10 rows</option>
                             <option value="25">25 rows</option>
                             <option value="50">50 rows</option>
-                            <option value="100" selected>100 rows</option>
+                            <option value="100">100 rows</option>
                         </select>
                     </div>
                 </div>
@@ -3550,7 +3602,7 @@
         let headers = [];
         let users = [];
         let currentPage = 1;
-        let rowsPerPage = 100;
+        let rowsPerPage = 10;
         let visibleColumns = [];
         let columnFilters = {};
         let editingCell = null;
@@ -3803,6 +3855,18 @@
             'REMARKS - FOLLOW UP'
         ];
 
+        // Fixed 8-column table display for Customers section
+        const TABLE_COLUMNS = [
+            { key: 'ACCT NO', label: 'ACCT NO' },
+            { key: 'CLINIC NAME', label: 'CLINIC NAME' },
+            { key: 'PRODUCT', label: 'PRODUCT' },
+            { key: 'CMS/MHIS MTN START DATE', label: 'MTN START DATE' },
+            { key: 'CMS/MHIS MTN END DATE', label: 'MTN END DATE' },
+            { key: '_status', label: 'STATUS' },
+            { key: 'PHONE', label: 'TEL (TEL & FAX)' },
+            { key: '_action', label: 'ACTION' }
+        ];
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadInitialData();
@@ -3942,7 +4006,9 @@
                     if (visibleColumns.length === 0 && headers.length > 0) {
                         visibleColumns = headers.map((_, idx) => idx);
                     }
-                    
+
+                    populateProductFilter();
+                    renderCustomerStats();
                     return true;
                 } else {
                     // No data in Supabase — use default headers so UI works
@@ -3958,6 +4024,8 @@
                     if (visibleColumns.length === 0 && headers.length > 0) {
                         visibleColumns = headers.map((_, idx) => idx);
                     }
+                    populateProductFilter();
+                    renderCustomerStats();
                     return true;
                 }
             } catch (err) {
@@ -4003,6 +4071,8 @@
                         visibleColumns = headers.map((_, idx) => idx);
                     }
                 }
+                populateProductFilter();
+                renderCustomerStats();
                 renderTable();
             } catch (err) {
                 console.error('Refresh error:', err);
@@ -4142,6 +4212,66 @@
             `).join('');
         }
 
+        function renderCustomerStats() {
+            if (!crmData || crmData.length === 0) {
+                document.getElementById('custTotal').textContent = '0';
+                document.getElementById('custActive').textContent = '0';
+                document.getElementById('custExpiringSoon').textContent = '0';
+                document.getElementById('custExpired').textContent = '0';
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const thirtyDaysFromNow = new Date(today);
+            thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+            let total = crmData.length;
+            let active = 0;
+            let expiringSoon = 0;
+            let expired = 0;
+
+            crmData.forEach(row => {
+                const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
+                if (!mtnEndDate) return;
+
+                if (mtnEndDate < today) {
+                    expired++;
+                } else if (mtnEndDate <= thirtyDaysFromNow) {
+                    expiringSoon++;
+                } else {
+                    active++;
+                }
+            });
+
+            document.getElementById('custTotal').textContent = total;
+            document.getElementById('custActive').textContent = active;
+            document.getElementById('custExpiringSoon').textContent = expiringSoon;
+            document.getElementById('custExpired').textContent = expired;
+        }
+
+        function populateProductFilter() {
+            const productSelect = document.getElementById('customerProductFilter');
+            if (!productSelect) return;
+
+            const currentVal = productSelect.value;
+            productSelect.innerHTML = '<option value="">All Products</option>';
+
+            const products = new Set();
+            crmData.forEach(row => {
+                const product = row['PRODUCT'];
+                if (product && String(product).trim()) {
+                    products.add(String(product).trim());
+                }
+            });
+
+            Array.from(products).sort().forEach(product => {
+                productSelect.innerHTML += `<option value="${escapeHtml(product)}">${escapeHtml(product)}</option>`;
+            });
+
+            productSelect.value = currentVal;
+        }
+
         // Navigation
         async function showSection(sectionId) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
@@ -4169,6 +4299,9 @@
 
             if (sectionId === 'dashboard') {
                 renderDashboard();
+            } else if (sectionId === 'crmData') {
+                renderCustomerStats();
+                populateProductFilter();
             } else if (sectionId === 'userManagement') {
                 renderUserList();
             } else if (sectionId === 'licenseKey') {
@@ -5281,50 +5414,23 @@
 
         // Table Rendering
         function renderTable() {
-            // Always render headers (even when empty) so filters and structure are visible
             const thead = document.getElementById('tableHead');
             let headerHTML = '<tr>';
-            headerHTML += '<th>Actions</th>';
-            headerHTML += '<th>Status</th>';
-            
-            visibleColumns.forEach(colIdx => {
-                if (headers[colIdx]) {
-                    headerHTML += `<th>${escapeHtml(headers[colIdx])}</th>`;
-                }
+            TABLE_COLUMNS.forEach(col => {
+                headerHTML += `<th>${escapeHtml(col.label)}</th>`;
             });
             headerHTML += '</tr>';
-            
-            // Add filter row
-            headerHTML += '<tr class="filter-row">';
-            headerHTML += '<th></th>';
-            headerHTML += '<th></th>';
-            visibleColumns.forEach(colIdx => {
-                if (headers[colIdx]) {
-                    const filterValue = columnFilters[colIdx] || '';
-                    const colName = headers[colIdx];
-                    headerHTML += `<th><input type="text" class="col-filter" placeholder="Search..." value="${escapeHtml(filterValue)}" onkeyup="applyColumnFilter(${colIdx}, this.value)" onchange="applyColumnFilter(${colIdx}, this.value)"></th>`;
-                }
-            });
-            headerHTML += '</tr>';
-            
             thead.innerHTML = headerHTML;
 
-            // If no data, show friendly empty state but keep headers visible
             if (crmData.length === 0) {
-                const colCount = visibleColumns.length > 0 ? visibleColumns.length + 2 : 3;
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;padding:24px;color:var(--text-muted);">No data available. Use the <strong>New Customer</strong> button to add records.</td></tr>`;
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="${TABLE_COLUMNS.length}" style="text-align:center;padding:24px;color:var(--text-muted);">No data available. Use the <strong>New Customer</strong> button to add records.</td></tr>`;
                 updateDeleteSelectedButton();
                 renderPaginationControls(0);
                 return;
             }
 
-            // Reset filtered data since we're showing full table
             currentFilteredData = null;
-            
-            // Render body with pagination
             renderTableBody();
-            
-            // Update delete button state
             updateDeleteSelectedButton();
         }
 
@@ -5334,7 +5440,6 @@
             const end = start + rowsPerPage;
             const pageData = crmData.slice(start, end);
 
-            // Check module-level permissions
             const hasEditPermission = hasPermission('crm', 'edit');
             const hasDeletePermission = hasPermission('crm', 'delete');
 
@@ -5344,47 +5449,31 @@
                 const canEdit = hasEditPermission;
                 const canDelete = hasDeletePermission;
 
-                const isSelected = selectedRows.has(globalIdx);
                 bodyHTML += `<tr data-row-index="${globalIdx}">`;
-                
-                // Action buttons
-                bodyHTML += `<td class="action-cell">
-                    <button class="action-btn view-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">&#128065;</button>
-                    <button class="action-btn edit-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">&#9998;</button>
-                    <button class="action-btn delete-btn" onclick="handleRowOption(${globalIdx}, 'delete')" ${!canDelete ? 'disabled' : ''} title="Delete">&#128465;</button>
-                </td>`;
 
-                // Status badge
-                const status = getRowStatus(row);
-                bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
-
-                visibleColumns.forEach(colIdx => {
-                    if (headers[colIdx]) {
-                        const headerName = headers[colIdx];
-                        let value = row[headerName] || '';
-                        // Format date columns
-                        if (isDateColumn(headerName)) {
+                TABLE_COLUMNS.forEach(col => {
+                    if (col.key === '_action') {
+                        bodyHTML += `<td class="action-cell">
+                            <button class="action-btn view-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">&#128065;</button>
+                            <button class="action-btn edit-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">&#9998;</button>
+                            <button class="action-btn delete-btn" onclick="handleRowOption(${globalIdx}, 'delete')" ${!canDelete ? 'disabled' : ''} title="Delete">&#128465;</button>
+                        </td>`;
+                    } else if (col.key === '_status') {
+                        const status = getRowStatus(row);
+                        bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
+                    } else {
+                        let value = row[col.key] || '';
+                        if (isDateColumn(col.key)) {
                             value = formatExcelDate(value);
                         }
-                        const isEditable = canEdit;
-                        const hasDropdown = columnOptions[colIdx] && columnOptions[colIdx].length > 0;
-                        let cellClass = isEditable ? 'editable' : '';
-                        if (isEditable && hasDropdown) cellClass += ' has-options';
-                        const displayValue = pendingChanges[`${globalIdx}-${colIdx}`] !== undefined 
-                            ? pendingChanges[`${globalIdx}-${colIdx}`] 
-                            : value;
-                        bodyHTML += `<td class="${cellClass}" onclick="${isEditable ? `editCell(${globalIdx}, ${colIdx}, '${escapeHtml(displayValue).replace(/'/g, "\\'")}')` : ''}">${escapeHtml(String(displayValue).substring(0, 100))}</td>`;
+                        bodyHTML += `<td>${escapeHtml(String(value).substring(0, 100))}</td>`;
                     }
                 });
                 bodyHTML += '</tr>';
             });
 
             tbody.innerHTML = bodyHTML || '<tr><td colspan="100">No visible data</td></tr>';
-            
-            // Render pagination controls
             renderPaginationControls(crmData.length);
-            
-            // Update delete selected button visibility based on permission
             updateDeleteSelectedButton();
         }
 
@@ -5447,14 +5536,17 @@
         function changePage(delta) {
             const searchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
             const hasSearch = searchEl && searchEl.value !== '';
-            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0;
+            const hasCustomerSearch = document.getElementById('customerSearchInput') && document.getElementById('customerSearchInput').value !== '';
+            const hasStatusFilter = document.getElementById('customerStatusFilter') && document.getElementById('customerStatusFilter').value !== '';
+            const hasProductFilter = document.getElementById('customerProductFilter') && document.getElementById('customerProductFilter').value !== '';
+            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0 || hasCustomerSearch || hasStatusFilter || hasProductFilter;
             const data = (isFiltered && currentFilteredData) ? currentFilteredData : crmData;
             const totalPages = Math.ceil(data.length / rowsPerPage);
-            
+
             currentPage += delta;
             if (currentPage < 1) currentPage = 1;
             if (totalPages > 0 && currentPage > totalPages) currentPage = totalPages;
-            
+
             if (isFiltered && currentFilteredData) {
                 renderFilteredTable(currentFilteredData);
             } else {
@@ -5467,8 +5559,11 @@
             currentPage = 1;
             const searchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
             const hasSearch = searchEl && searchEl.value !== '';
-            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0;
-            
+            const hasCustomerSearch = document.getElementById('customerSearchInput') && document.getElementById('customerSearchInput').value !== '';
+            const hasStatusFilter = document.getElementById('customerStatusFilter') && document.getElementById('customerStatusFilter').value !== '';
+            const hasProductFilter = document.getElementById('customerProductFilter') && document.getElementById('customerProductFilter').value !== '';
+            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0 || hasCustomerSearch || hasStatusFilter || hasProductFilter;
+
             if (isFiltered && currentFilteredData) {
                 renderFilteredTable(currentFilteredData);
             } else {
@@ -6847,48 +6942,79 @@
             renderTable();
         }
 
+        function clearCustomerFilters() {
+            const searchEl = document.getElementById('customerSearchInput');
+            const statusEl = document.getElementById('customerStatusFilter');
+            const productEl = document.getElementById('customerProductFilter');
+            if (searchEl) searchEl.value = '';
+            if (statusEl) statusEl.value = '';
+            if (productEl) productEl.value = '';
+            columnFilters = {};
+            currentPage = 1;
+            currentFilteredData = null;
+            renderTable();
+        }
+
         // Debounce timer for main search
         let searchTimer = null;
 
         function searchData() {
-            // Clear existing timer
             if (searchTimer) {
                 clearTimeout(searchTimer);
             }
-            
-            // Set new timer with 300ms debounce
+
             searchTimer = setTimeout(() => {
-                const searchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
-                const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
-                
-                if (!searchTerm && Object.keys(columnFilters).length === 0) {
+                const searchEl = document.getElementById('customerSearchInput');
+                const statusEl = document.getElementById('customerStatusFilter');
+                const productEl = document.getElementById('customerProductFilter');
+                const globalSearchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
+
+                const searchTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
+                const statusFilter = statusEl ? statusEl.value : '';
+                const productFilter = productEl ? productEl.value : '';
+                const globalTerm = globalSearchEl ? globalSearchEl.value.toLowerCase().trim() : '';
+
+                if (!searchTerm && !statusFilter && !productFilter && !globalTerm && Object.keys(columnFilters).length === 0) {
+                    currentFilteredData = null;
                     renderTable();
                     return;
                 }
 
-                // Filter data based on global search AND column filters
                 const filtered = crmData.filter(row => {
-                    // Check global search
                     if (searchTerm) {
-                        const matchesGlobal = headers.some(h => String(row[h]).toLowerCase().includes(searchTerm));
+                        const acctNo = String(row['ACCT NO'] || '').toLowerCase();
+                        const clinicName = String(row['CLINIC NAME'] || '').toLowerCase();
+                        if (!acctNo.includes(searchTerm) && !clinicName.includes(searchTerm)) {
+                            return false;
+                        }
+                    }
+
+                    if (statusFilter) {
+                        const status = getRowStatus(row);
+                        if (status.label !== statusFilter) return false;
+                    }
+
+                    if (productFilter) {
+                        const product = String(row['PRODUCT'] || '').toLowerCase();
+                        if (product !== productFilter.toLowerCase()) return false;
+                    }
+
+                    if (globalTerm) {
+                        const matchesGlobal = headers.some(h => String(row[h]).toLowerCase().includes(globalTerm));
                         if (!matchesGlobal) return false;
                     }
-                    
-                    // Check column filters
+
                     for (let colIdx in columnFilters) {
                         const colValue = String(row[headers[colIdx]] || '').toLowerCase();
                         if (!colValue.includes(columnFilters[colIdx])) {
                             return false;
                         }
                     }
-                    
+
                     return true;
                 });
 
-                // Store filtered data for pagination
                 currentFilteredData = filtered;
-                
-                // Render filtered data
                 renderFilteredTable(filtered);
             }, 300);
         }
@@ -6899,33 +7025,30 @@
             const end = start + rowsPerPage;
             const pageData = filteredData.slice(start, end);
             let bodyHTML = '';
-            
-            // Check module-level permissions
+
             const hasEditPermission = hasPermission('crm', 'edit');
             const hasDeletePermission = hasPermission('crm', 'delete');
-            
+
             pageData.forEach((row, idx) => {
                 const globalIdx = row._rowIndex;
                 const canEdit = hasEditPermission;
                 const canDelete = hasDeletePermission;
 
                 bodyHTML += `<tr data-row-index="${globalIdx}">`;
-                bodyHTML += `<td class="action-cell">
-                    <button class="action-btn view-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">&#128065;</button>
-                    <button class="action-btn edit-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">&#9998;</button>
-                    <button class="action-btn delete-btn" onclick="handleRowOption(${globalIdx}, 'delete')" ${!canDelete ? 'disabled' : ''} title="Delete">&#128465;</button>
-                </td>`;
 
-                // Status badge
-                const status = getRowStatus(row);
-                bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
-
-                visibleColumns.forEach(colIdx => {
-                    if (headers[colIdx]) {
-                        const headerName = headers[colIdx];
-                        let value = row[headerName] || '';
-                        // Format date columns
-                        if (isDateColumn(headerName)) {
+                TABLE_COLUMNS.forEach(col => {
+                    if (col.key === '_action') {
+                        bodyHTML += `<td class="action-cell">
+                            <button class="action-btn view-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">&#128065;</button>
+                            <button class="action-btn edit-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">&#9998;</button>
+                            <button class="action-btn delete-btn" onclick="handleRowOption(${globalIdx}, 'delete')" ${!canDelete ? 'disabled' : ''} title="Delete">&#128465;</button>
+                        </td>`;
+                    } else if (col.key === '_status') {
+                        const status = getRowStatus(row);
+                        bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
+                    } else {
+                        let value = row[col.key] || '';
+                        if (isDateColumn(col.key)) {
                             value = formatExcelDate(value);
                         }
                         bodyHTML += `<td>${escapeHtml(String(value).substring(0, 100))}</td>`;
@@ -6935,8 +7058,6 @@
             });
 
             tbody.innerHTML = bodyHTML || '<tr><td colspan="100">No matching results</td></tr>';
-            
-            // Render pagination controls for filtered data
             renderPaginationControls(filteredData.length);
         }
 
