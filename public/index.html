@@ -456,9 +456,9 @@
         }
         
         th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #374151;
+            background: #dbeafe;
+            font-weight: 700;
+            color: #000000;
             position: sticky;
             top: 0;
             z-index: 20;
@@ -473,7 +473,7 @@
         
         /* Filter row headers - sticky below main header */
         .filter-row th {
-            background: #f8fafc !important;
+            background: #dbeafe !important;
             padding: 6px 10px !important;
             border-bottom: 2px solid #e5e7eb !important;
             border-right: 1px solid #e5e7eb;
@@ -525,7 +525,7 @@
         /* Header cells for sticky columns - higher z-index */
         th:first-child, th:nth-child(3) {
             z-index: 30;
-            background: #f8f9fa;
+            background: #dbeafe;
         }
         
         /* Filter row cells for sticky columns */
@@ -4003,7 +4003,7 @@
                 if (!records) { console.error('Failed to load CRM data'); return false; }
                 if (records && records.length > 0) {
                     // Extract headers from the first record's data JSONB field
-                    const allKeys = Object.keys(records[0].data);
+                    const allKeys = Object.keys(records[0].data).filter(k => !k.includes('_EMPTY_') && !k.startsWith('__'));
                     headers = allKeys;
                     
                     // Convert records to the format crmData expects
@@ -4066,13 +4066,19 @@
                 if (!records) { console.error('Refresh failed'); return; }
                 if (records && records.length > 0) {
                     const allKeys = new Set();
-                    records.forEach(r => Object.keys(r.data || {}).forEach(k => allKeys.add(k)));
-                    headers = Array.from(allKeys);
-                    crmData = records.map((record, idx) => ({
-                        id: record.id,
-                        _rowIndex: idx,
-                        ...record.data
+                    records.forEach(r => Object.keys(r.data || {}).forEach(k => {
+                        if (!k.includes('_EMPTY_') && !k.startsWith('__')) allKeys.add(k);
                     }));
+                    headers = Array.from(allKeys);
+                    crmData = records.map((record, idx) => {
+                        const row = { id: record.id, _rowIndex: idx };
+                        for (const [key, value] of Object.entries(record.data || {})) {
+                            if (!key.includes('_EMPTY_') && !key.startsWith('__')) {
+                                row[key] = value;
+                            }
+                        }
+                        return row;
+                    });
                     visibleColumns = [];
                     VISIBLE_COLUMN_NAMES.forEach(colName => {
                         const idx = headers.findIndex(h => h.trim() === colName);
@@ -5832,6 +5838,12 @@
             if (recordId) {
                 const rowData = {...row};
                 delete rowData.id;
+                // Remove any _EMPTY_ keys before saving
+                for (const key of Object.keys(rowData)) {
+                    if (key.includes('_EMPTY_') || key.startsWith('__')) {
+                        delete rowData[key];
+                    }
+                }
                 const { error } = await supabaseClient.from('contacts').update({ data: rowData }).eq('id', recordId);
                 if (error) {
                     console.error('Failed to update record in Supabase:', error);
@@ -6275,6 +6287,12 @@
                     // Build full data object for the record
                     const rowData = {...crmData[rowIdx]};
                     delete rowData.id; // Remove id from data payload
+                    // Remove any _EMPTY_ keys before saving
+                    for (const key of Object.keys(rowData)) {
+                        if (key.includes('_EMPTY_') || key.startsWith('__')) {
+                            delete rowData[key];
+                        }
+                    }
                     
                     updatePromises.push(
                         supabaseClient.from('contacts').update({ data: rowData }).eq('id', recordId)

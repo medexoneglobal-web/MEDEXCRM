@@ -49,6 +49,9 @@ function processValue(key, value) {
 function processRow(row) {
   const obj = {};
   for (const [key, value] of Object.entries(row)) {
+    if (key.includes('_EMPTY_') || key.startsWith('__')) {
+      continue;
+    }
     if (value === null || value === undefined) {
       obj[key] = '';
       continue;
