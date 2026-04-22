@@ -3656,6 +3656,32 @@
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Fetch all contacts with pagination (Supabase default limit is 1000)
+        async function fetchAllContacts() {
+            const PAGE_SIZE = 1000;
+            let allData = [];
+            let from = 0;
+            let hasMore = true;
+
+            while (hasMore) {
+                const { data, error } = await supabaseClient
+                    .from('contacts')
+                    .select('*')
+                    .order('id')
+                    .range(from, from + PAGE_SIZE - 1);
+
+                if (error) { console.error('Fetch error:', error); break; }
+                if (data && data.length > 0) {
+                    allData = allData.concat(data);
+                    from += PAGE_SIZE;
+                    if (data.length < PAGE_SIZE) hasMore = false;
+                } else {
+                    hasMore = false;
+                }
+            }
+            return allData;
+        }
+
         // Date columns that should use date picker
         const DATE_COLUMNS = [
             'CMS/MHIS MTN START DATE',
@@ -3973,8 +3999,8 @@
 
         async function loadCRMDataFromAPI() {
             try {
-                const { data: records, error } = await supabaseClient.from('contacts').select('*').order('id');
-                if (error) { console.error('Failed to load CRM data:', error); return false; }
+                const records = await fetchAllContacts();
+                if (!records) { console.error('Failed to load CRM data'); return false; }
                 if (records && records.length > 0) {
                     // Extract headers from the first record's data JSONB field
                     const allKeys = Object.keys(records[0].data);
@@ -4036,8 +4062,8 @@
 
         async function refreshTableFromSupabase() {
             try {
-                const { data: records, error } = await supabaseClient.from('contacts').select('*').order('id');
-                if (error) { console.error('Refresh failed:', error); return; }
+                const records = await fetchAllContacts();
+                if (!records) { console.error('Refresh failed'); return; }
                 if (records && records.length > 0) {
                     const allKeys = new Set();
                     records.forEach(r => Object.keys(r.data || {}).forEach(k => allKeys.add(k)));

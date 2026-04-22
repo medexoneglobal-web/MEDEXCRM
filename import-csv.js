@@ -1,84 +1,55 @@
 const fs = require('fs');
 const path = require('path');
+const XLSX = require('xlsx');
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 const SUPABASE_URL = 'https://aymidyknappzejqrljdu.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5bWlkeWtuYXBwemVqcXJsamR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNzgwODQsImV4cCI6MjA5MTg1NDA4NH0.zxVXVZogd1NNWyCs660XH6ZKK8jtHX4UeEP7fa57ArE';
-const CSV_PATH = path.join('c:', 'Users', 'N6745', 'Music', 'Cloud', 'CRM(CRM).csv');
+const CRM_FILE = path.join('c:', 'Users', 'N6745', 'Music', 'Cloud', 'CRM (13).xlsx');
 const REST_URL = `${SUPABASE_URL}/rest/v1/contacts`;
 const BATCH_SIZE = 100;
 
 // =============================================================================
-// CSV PARSER (handles quoted fields, commas inside quotes, multiline values, BOM)
+// HELPERS
 // =============================================================================
 
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let cell = '';
-  let inQuotes = false;
-  let i = 0;
+function formatDate(date) {
+  const d = date.getDate().toString().padStart(2, '0');
+  const m = (date.getMonth() + 1).toString().padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
+}
 
-  while (i < text.length) {
-    const char = text[i];
-    const nextChar = text[i + 1];
-
-    if (inQuotes) {
-      if (char === '"' && nextChar === '"') {
-        cell += '"';
-        i += 2;
-      } else if (char === '"') {
-        inQuotes = false;
-        i++;
-      } else {
-        cell += char;
-        i++;
+function processValue(key, value) {
+  if (value instanceof Date) {
+    return formatDate(value);
+  }
+  if (typeof value === 'number' && value > 30000 && value < 60000 && !Number.isInteger(value * 100)) {
+    try {
+      const parsed = XLSX.SSF.parse_date_code(value);
+      if (parsed && parsed.y >= 1900 && parsed.y <= 2100) {
+        return `${String(parsed.d).padStart(2, '0')}/${String(parsed.m).padStart(2, '0')}/${parsed.y}`;
       }
-    } else {
-      if (char === '"') {
-        inQuotes = true;
-        i++;
-      } else if (char === ',') {
-        row.push(cell);
-        cell = '';
-        i++;
-      } else if (char === '\r' && nextChar === '\n') {
-        row.push(cell);
-        rows.push(row);
-        row = [];
-        cell = '';
-        i += 2;
-      } else if (char === '\n' || char === '\r') {
-        row.push(cell);
-        rows.push(row);
-        row = [];
-        cell = '';
-        i++;
-      } else {
-        cell += char;
-        i++;
-      }
+    } catch (e) {
+      // ignore
     }
   }
+  return value;
+}
 
-  // Push any remaining cell/row
-  row.push(cell);
-  if (row.length > 1 || row[0] !== '' || rows.length === 0) {
-    rows.push(row);
+function processRow(row) {
+  const obj = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (value === null || value === undefined) {
+      obj[key] = '';
+      continue;
+    }
+    obj[key] = processValue(key, value);
   }
-
-  return rows;
+  return obj;
 }
-
-function isEmptyRow(row) {
-  return row.every(cell => cell.trim() === '');
-}
-
-// =============================================================================
-// SUPABASE HELPERS
-// =============================================================================
 
 async function getContactsCount() {
   const res = await fetch(`${REST_URL}?select=id`, {
@@ -143,58 +114,39 @@ async function insertBatch(batch, batchNumber, totalBatches) {
 
 async function main() {
   try {
-    // Step 1: Read and parse CSV
-    console.log(`Reading CSV: ${CSV_PATH}`);
-    const rawBuffer = fs.readFileSync(CSV_PATH);
-    let text = rawBuffer.toString('utf-8');
-
-    // Strip UTF-8 BOM if present
-    if (text.charCodeAt(0) === 0xFEFF) {
-      text = text.slice(1);
-      console.log('  UTF-8 BOM stripped.');
+    // Step 1: Read Excel
+    console.log(`Reading Excel: ${CRM_FILE}`);
+    if (!fs.existsSync(CRM_FILE)) {
+      throw new Error(`File not found: ${CRM_FILE}`);
     }
+    const workbook = XLSX.readFile(CRM_FILE, { type: 'buffer', cellDates: true });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    console.log(`  Sheet name: ${sheetName}`);
 
-    console.log('Parsing CSV...');
-    const allRows = parseCSV(text);
-    console.log(`  Total parsed rows (including header): ${allRows.length}`);
+    const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    console.log(`  Total rows read: ${rawRows.length}`);
 
-    if (allRows.length === 0) {
-      console.log('No data found in CSV.');
+    if (rawRows.length === 0) {
+      console.log('No data found in the first sheet.');
       return;
     }
 
-    // Step 2: Extract headers and data rows
-    const rawHeaders = allRows[0];
-    // Replace empty headers with Column_N so JSON keys are valid
-    const headers = rawHeaders.map((h, idx) => {
-      const trimmed = h.trim();
-      return trimmed === '' ? `Column_${idx + 1}` : trimmed;
-    });
-
+    const headers = Object.keys(rawRows[0]);
     console.log(`  Columns detected: ${headers.length}`);
     console.log(`  Headers: ${headers.slice(0, 10).join(', ')}${headers.length > 10 ? '...' : ''}`);
 
-    const dataRows = allRows.slice(1).filter(row => !isEmptyRow(row));
-    console.log(`  Data rows after skipping empties: ${dataRows.length}`);
+    // Step 2: Process rows
+    const rows = rawRows.map(processRow);
 
-    // Step 3: Build JSON objects
-    const rows = dataRows.map((row, rowIdx) => {
-      const obj = {};
-      for (let i = 0; i < headers.length; i++) {
-        const value = i < row.length ? row[i] : '';
-        obj[headers[i]] = value;
-      }
-      return obj;
-    });
-
-    // Step 4: Check and clear existing data
+    // Step 3: Check and clear existing data
     const existingCount = await getContactsCount();
     console.log(`\nExisting contacts in table: ${existingCount}`);
     if (existingCount > 0) {
       await clearContacts();
     }
 
-    // Step 5: Batch insert with progress logging every 1000 rows
+    // Step 4: Batch insert with progress logging
     const totalRows = rows.length;
     const totalBatches = Math.ceil(totalRows / BATCH_SIZE);
     console.log(`\nImporting ${totalRows} rows in ${totalBatches} batch(es)...`);
@@ -219,7 +171,7 @@ async function main() {
       }
     }
 
-    // Step 6: Verify
+    // Step 5: Verify
     const finalCount = await getContactsCount();
     console.log(`\nImport complete!`);
     console.log(`  Rows processed: ${totalRows}`);
