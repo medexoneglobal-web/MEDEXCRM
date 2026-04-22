@@ -3788,6 +3788,7 @@
         async function saveImportedDataToDatabase(records) {
             let successCount = 0;
             let failCount = 0;
+            const failedRecords = [];
             
             const rows = records.map(record => ({ data: record }));
             // Insert in batches of 100 to avoid payload limits
@@ -3796,8 +3797,30 @@
                 const { data: result, error } = await supabaseClient.from('contacts').insert(batch).select();
                 if (error) {
                     console.error('Batch insert error:', error);
-                    failCount += batch.length;
-                } else {
+                    // Retry individual records in the failed batch
+                    let batchFailCount = 0;
+                    for (let j = 0; j < batch.length; j++) {
+                        const single = batch[j];
+                        try {
+                            const { data: singleResult, error: singleError } = await supabaseClient.from('contacts').insert(single).select();
+                            if (singleError) {
+                                console.error('Individual insert failed:', singleError, 'Record:', single);
+                                failedRecords.push({ record: single, error: singleError });
+                                batchFailCount++;
+                            } else if (singleResult && singleResult.length > 0) {
+                                records[i + j].id = singleResult[0].id;
+                                successCount++;
+                            } else {
+                                batchFailCount++;
+                            }
+                        } catch (singleErr) {
+                            console.error('Individual insert exception:', singleErr, 'Record:', single);
+                            failedRecords.push({ record: single, error: singleErr });
+                            batchFailCount++;
+                        }
+                    }
+                    failCount += batchFailCount;
+                } else if (result) {
                     result.forEach((r, idx) => { records[i + idx].id = r.id; });
                     successCount += result.length;
                     
@@ -3813,11 +3836,22 @@
                     } catch (auditErr) {
                         console.error('Failed to insert audit logs for import:', auditErr);
                     }
+                } else {
+                    // No error but no result — unexpected, count as failures
+                    failCount += batch.length;
+                    console.error('Batch insert returned no result for batch:', batch);
                 }
             }
             
-            console.log(`Import to database: ${successCount} saved, ${failCount} failed`);
-            return successCount;
+            const summaryMsg = `Import complete: ${successCount} records imported successfully, ${failCount} failed.`;
+            console.log(summaryMsg);
+            if (failCount > 0) {
+                showNotification(summaryMsg, 'error');
+            } else {
+                showNotification(summaryMsg, 'success');
+            }
+            
+            return { successCount, failCount, failedRecords };
         }
 
         function setupEventListeners() {
@@ -5062,12 +5096,15 @@
             saveCRMData();
 
             // Save imported records to database immediately
-            await saveImportedDataToDatabase(newRecords);
+            const importResult = await saveImportedDataToDatabase(newRecords);
 
             // Show preview
+            const importMsg = importResult.failCount > 0
+                ? `<span style="font-weight: 600;">⚠ Import Partially Successful!</span> ${importResult.successCount} records imported, ${importResult.failCount} failed.`
+                : `<span style="font-weight: 600;">✓ Import Successful!</span> ${importResult.successCount} records imported with ${headers.length} columns.`;
             document.getElementById('importPreview').innerHTML = `
-                <div class="alert alert-success" style="margin-top: 20px; padding: 16px; background: #dcfce7; border: 1px solid #86efac; border-radius: 8px; color: #166534;">
-                    <span style="font-weight: 600;">✓ Import Successful!</span> ${newRecords.length} records imported with ${headers.length} columns.
+                <div class="alert alert-success" style="margin-top: 20px; padding: 16px; background: ${importResult.failCount > 0 ? '#fef9c3' : '#dcfce7'}; border: 1px solid ${importResult.failCount > 0 ? '#fde047' : '#86efac'}; border-radius: 8px; color: ${importResult.failCount > 0 ? '#854d0e' : '#166534'};">
+                    ${importMsg}
                 </div>
             `;
 
@@ -5193,12 +5230,15 @@
             saveCRMData();
 
             // Save imported records to database immediately
-            await saveImportedDataToDatabase(newRecords);
+            const importResult = await saveImportedDataToDatabase(newRecords);
 
             // Show preview
+            const importMsg = importResult.failCount > 0
+                ? `<span style="font-weight: 600;">⚠ Import Partially Successful!</span> ${importResult.successCount} records imported, ${importResult.failCount} failed.`
+                : `<span style="font-weight: 600;">✓ Import Successful!</span> ${importResult.successCount} records imported with ${headers.length} columns.`;
             document.getElementById('importPreview').innerHTML = `
-                <div class="alert alert-success" style="margin-top: 20px; padding: 16px; background: #dcfce7; border: 1px solid #86efac; border-radius: 8px; color: #166534;">
-                    <span style="font-weight: 600;">✓ Import Successful!</span> ${newRecords.length} records imported with ${headers.length} columns.
+                <div class="alert alert-success" style="margin-top: 20px; padding: 16px; background: ${importResult.failCount > 0 ? '#fef9c3' : '#dcfce7'}; border: 1px solid ${importResult.failCount > 0 ? '#fde047' : '#86efac'}; border-radius: 8px; color: ${importResult.failCount > 0 ? '#854d0e' : '#166534'};">
+                    ${importMsg}
                 </div>
             `;
 
