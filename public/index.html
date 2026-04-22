@@ -4097,7 +4097,6 @@
                         visibleColumns = headers.map((_, idx) => idx);
                     }
                     populateProductFilter();
-                    renderCustomerStats();
                     return true;
                 }
             } catch (err) {
@@ -4150,7 +4149,6 @@
                     }
                 }
                 populateProductFilter();
-                renderCustomerStats();
                 renderTable();
             } catch (err) {
                 console.error('Refresh error:', err);
@@ -4290,44 +4288,6 @@
             `).join('');
         }
 
-        function renderCustomerStats() {
-            if (!crmData || crmData.length === 0) {
-                document.getElementById('custTotal').textContent = '0';
-                document.getElementById('custActive').textContent = '0';
-                document.getElementById('custExpiringSoon').textContent = '0';
-                document.getElementById('custExpired').textContent = '0';
-                return;
-            }
-
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const thirtyDaysFromNow = new Date(today);
-            thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-
-            let total = crmData.length;
-            let active = 0;
-            let expiringSoon = 0;
-            let expired = 0;
-
-            crmData.forEach(row => {
-                const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
-                if (!mtnEndDate) return;
-
-                if (mtnEndDate < today) {
-                    expired++;
-                } else if (mtnEndDate <= thirtyDaysFromNow) {
-                    expiringSoon++;
-                } else {
-                    active++;
-                }
-            });
-
-            document.getElementById('custTotal').textContent = total;
-            document.getElementById('custActive').textContent = active;
-            document.getElementById('custExpiringSoon').textContent = expiringSoon;
-            document.getElementById('custExpired').textContent = expired;
-        }
-
         function populateProductFilter() {
             const productSelect = document.getElementById('customerProductFilter');
             if (!productSelect) return;
@@ -4379,7 +4339,6 @@
             if (sectionId === 'dashboard') {
                 renderDashboard();
             } else if (sectionId === 'crmData') {
-                renderCustomerStats();
                 populateProductFilter();
             } else if (sectionId === 'userManagement') {
                 renderUserList();
