@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -387,8 +389,8 @@
         }
         
         /* Column-specific minimum widths to prevent text truncation */
-        th:nth-child(1), td:nth-child(1) { min-width: 50px; }  /* Checkbox */
-        th:nth-child(2), td:nth-child(2) { min-width: 80px; }  /* ACCT NO */
+        th:nth-child(1), td:nth-child(1) { min-width: 60px; max-width: 80px; }  /* Actions */
+        th:nth-child(2), td:nth-child(2) { min-width: 60px; }  /* ACCT NO */
         th:nth-child(3), td:nth-child(3) { min-width: 200px; } /* CLINIC NAME */
         th:nth-child(4), td:nth-child(4) { min-width: 200px; } /* EMAIL ID MAIN */
         th:nth-child(5), td:nth-child(5) { min-width: 150px; } /* Contact Name */
@@ -948,13 +950,13 @@
         
         /* Row Options Dropdown */
         .row-options select {
-            padding: 6px 10px;
-            font-size: 12px;
+            padding: 4px 6px;
+            font-size: 11px;
             border: 1px solid var(--border);
             border-radius: 6px;
             background: white;
             cursor: pointer;
-            min-width: 100px;
+            min-width: 70px;
         }
         
         /* Permission row */
@@ -2512,15 +2514,11 @@
                     <h2>Customer Records</h2>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-success" onclick="showNewCustomerModal()">+ New Customer</button>
-                        <button class="btn btn-outline" onclick="exportSelected()">Export Selected</button>
-                        <button class="btn btn-danger" id="deleteSelectedBtn" onclick="deleteSelected()" disabled>Delete Selected</button>
                         <button class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
                     </div>
                 </div>
                 <div class="section-body">
                     <div class="toolbar">
-                        <input type="text" id="searchInput" placeholder="Search all columns..." onkeyup="searchData()">
-                        <button class="btn btn-primary" onclick="searchData()">Search</button>
                         <button class="btn btn-warning" onclick="clearAllFilters()">Clear Filters</button>
                         <button class="btn btn-outline" onclick="showColumnToggle()">Show/Hide Columns</button>
                     </div>
@@ -3386,6 +3384,12 @@
             }
         };
 
+        // Supabase Client
+        const SUPABASE_URL = 'https://aymidyknappzejqrljdu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5bWlkeWtuYXBwemVqcXJsamR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNzgwODQsImV4cCI6MjA5MTg1NDA4NH0.zxVXVZogd1NNWyCs660XH6ZKK8jtHX4UeEP7fa57ArE';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // Date columns that should use date picker
         const DATE_COLUMNS = [
             'CMS/MHIS MTN START DATE',
@@ -3576,15 +3580,14 @@
 
         // Check for existing session on page load
         async function checkSession() {
-            try {
-                const res = await fetch('/api/auth/me', { credentials: 'include' });
-                if (res.ok) {
-                    const data = await res.json();
-                    currentUser = data.user;
+            const stored = localStorage.getItem('currentUser');
+            if (stored) {
+                try {
+                    currentUser = JSON.parse(stored);
                     showApp();
                     return true;
-                }
-            } catch (e) {}
+                } catch (e) {}
+            }
             showLoginScreen();
             return false;
         }
@@ -3634,17 +3637,16 @@
             errorDiv.classList.remove('hidden');
         }
 
-        function loadInitialData() {
+        async function loadInitialData() {
             // Users are now managed via backend API - initialize empty array
             // The actual users will be fetched when needed (e.g., in renderAccessRightsUsers)
             users = [];
 
-            // Load CRM data
+            // CRM data is loaded from Supabase in loadCRMDataFromAPI()
+            // Only restore UI settings from localStorage
             const storedData = localStorage.getItem('crm_data');
             if (storedData) {
                 const parsed = JSON.parse(storedData);
-                crmData = parsed.data || [];
-                headers = parsed.headers || [];
                 columnFilters = parsed.columnFilters || {};
                 columnOptions = parsed.columnOptions || {};
                 
@@ -3666,72 +3668,74 @@
             // Access rights are now loaded from API after login
             // See loadAccessRights() function called in showApp()
 
-            // Load mandatory fields
-            const storedMandatoryFields = localStorage.getItem('crm_mandatory_fields');
-            if (storedMandatoryFields) {
-                mandatoryFields = JSON.parse(storedMandatoryFields);
-            } else {
-                // Default mandatory fields
+            // Load mandatory fields from Supabase
+            try {
+                const { data, error } = await supabaseClient.from('mandatory_fields').select('*').limit(1).single();
+                if (!error && data) {
+                    mandatoryFields = data.fields || [];
+                } else {
+                    mandatoryFields = ['ACCT NO', 'CLINIC NAME'];
+                }
+            } catch (err) {
+                console.error('Error loading mandatory fields:', err);
                 mandatoryFields = ['ACCT NO', 'CLINIC NAME'];
             }
         }
 
         async function loadCRMDataFromAPI() {
             try {
-                const res = await fetch('/api/crm/data', { credentials: 'include' });
-                if (res.ok) {
-                    const records = await res.json();
-                    if (records && records.length > 0) {
-                        // Extract headers from the first record (exclude 'id')
-                        const allKeys = Object.keys(records[0]).filter(k => k !== 'id');
-                        headers = allKeys;
-                        
-                        // Convert records to the format crmData expects
-                        crmData = records.map(record => {
-                            const row = {};
-                            // Keep the id
-                            row.id = record.id;
-                            // Copy all other fields
-                            allKeys.forEach(key => {
-                                row[key] = record[key] || '';
-                            });
-                            return row;
+                const { data: records, error } = await supabaseClient.from('contacts').select('*').order('id');
+                if (error) { console.error('Failed to load CRM data:', error); return false; }
+                if (records && records.length > 0) {
+                    // Extract headers from the first record's data JSONB field
+                    const allKeys = Object.keys(records[0].data);
+                    headers = allKeys;
+                    
+                    // Convert records to the format crmData expects
+                    crmData = records.map(record => {
+                        const row = {};
+                        // Keep the id
+                        row.id = record.id;
+                        // Flatten data fields
+                        allKeys.forEach(key => {
+                            row[key] = record.data[key] || '';
                         });
-                        
-                        // Initialize visible columns from VISIBLE_COLUMN_NAMES
-                        visibleColumns = [];
-                        VISIBLE_COLUMN_NAMES.forEach(colName => {
-                            const idx = headers.findIndex(h => h.trim() === colName);
-                            if (idx !== -1) {
-                                visibleColumns.push(idx);
-                            }
-                        });
-                        
-                        // If no visible columns matched, show all columns
-                        if (visibleColumns.length === 0 && headers.length > 0) {
-                            visibleColumns = headers.map((_, idx) => idx);
+                        return row;
+                    });
+                    
+                    // Initialize visible columns from VISIBLE_COLUMN_NAMES
+                    visibleColumns = [];
+                    VISIBLE_COLUMN_NAMES.forEach(colName => {
+                        const idx = headers.findIndex(h => h.trim() === colName);
+                        if (idx !== -1) {
+                            visibleColumns.push(idx);
                         }
-                        
-                        return true;
-                    } else {
-                        // Database empty — check localStorage for data to migrate
-                        const storedData = localStorage.getItem('crm_data');
-                        if (storedData) {
-                            const parsed = JSON.parse(storedData);
-                            const localRecords = parsed.data || [];
-                            const localHeaders = parsed.headers || [];
-                            if (localRecords && localRecords.length > 0) {
-                                console.log('Migrating', localRecords.length, 'records from localStorage to database...');
-                                // Sync localStorage data to backend
-                                await syncLocalDataToBackend(localRecords);
-                                // Re-fetch from API to get proper IDs
-                                return await loadCRMDataFromAPI();
-                            }
+                    });
+                    
+                    // If no visible columns matched, show all columns
+                    if (visibleColumns.length === 0 && headers.length > 0) {
+                        visibleColumns = headers.map((_, idx) => idx);
+                    }
+                    
+                    return true;
+                } else {
+                    // Database empty — check localStorage for data to migrate
+                    const storedData = localStorage.getItem('crm_data');
+                    if (storedData) {
+                        const parsed = JSON.parse(storedData);
+                        const localRecords = parsed.data || [];
+                        const localHeaders = parsed.headers || [];
+                        if (localRecords && localRecords.length > 0) {
+                            console.log('Migrating', localRecords.length, 'records from localStorage to Supabase...');
+                            // Sync localStorage data to Supabase
+                            await syncLocalDataToBackend(localRecords);
+                            // Re-fetch from Supabase to get proper IDs
+                            return await loadCRMDataFromAPI();
                         }
                     }
                 }
             } catch (err) {
-                console.error('Failed to load CRM data from API:', err);
+                console.error('Failed to load CRM data from Supabase:', err);
             }
             return false;
         }
@@ -3740,23 +3744,21 @@
             let successCount = 0;
             let failCount = 0;
             
-            for (const record of records) {
+            const rows = records.map(record => ({ data: record }));
+            // Insert in batches of 100 to avoid payload limits
+            for (let i = 0; i < rows.length; i += 100) {
+                const batch = rows.slice(i, i + 100);
                 try {
-                    const res = await fetch('/api/crm/data', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ data: record })
-                    });
-                    if (res.ok) {
-                        successCount++;
+                    const { data: result, error } = await supabaseClient.from('contacts').insert(batch).select();
+                    if (error) {
+                        console.error('Batch insert error:', error);
+                        failCount += batch.length;
                     } else {
-                        failCount++;
-                        console.error('Failed to sync record:', await res.text());
+                        successCount += result.length;
                     }
                 } catch (err) {
-                    failCount++;
-                    console.error('Failed to sync record:', err);
+                    console.error('Batch insert exception:', err);
+                    failCount += batch.length;
                 }
             }
             
@@ -3765,7 +3767,7 @@
             if (successCount > 0) {
                 // Clear localStorage CRM data after successful migration
                 localStorage.removeItem('crm_data');
-                showNotification('Data migration complete! ' + successCount + ' records synced to database.', 'success');
+                showNotification('Data migration complete! ' + successCount + ' records synced to Supabase.', 'success');
             }
         }
 
@@ -3774,25 +3776,30 @@
             let successCount = 0;
             let failCount = 0;
             
-            for (const record of records) {
-                try {
-                    const res = await fetch('/api/crm/data', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ data: record })
-                    });
-                    if (res.ok) {
-                        const result = await res.json();
-                        // Update the local record with the database ID
-                        record.id = result.id;
-                        successCount++;
-                    } else {
-                        failCount++;
+            const rows = records.map(record => ({ data: record }));
+            // Insert in batches of 100 to avoid payload limits
+            for (let i = 0; i < rows.length; i += 100) {
+                const batch = rows.slice(i, i + 100);
+                const { data: result, error } = await supabaseClient.from('contacts').insert(batch).select();
+                if (error) {
+                    console.error('Batch insert error:', error);
+                    failCount += batch.length;
+                } else {
+                    result.forEach((r, idx) => { records[i + idx].id = r.id; });
+                    successCount += result.length;
+                    
+                    // Insert audit logs for created records
+                    const auditEntries = result.map(r => ({
+                        contacts_id: r.id,
+                        action: 'CREATE',
+                        changed_by: currentUser ? currentUser.username : 'Unknown',
+                        new_data: r.data
+                    }));
+                    try {
+                        await supabaseClient.from('audit_log').insert(auditEntries);
+                    } catch (auditErr) {
+                        console.error('Failed to insert audit logs for import:', auditErr);
                     }
-                } catch (err) {
-                    console.error('Failed to save record:', err);
-                    failCount++;
                 }
             }
             
@@ -3810,36 +3817,40 @@
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
-            
+
             if (!username || !password) {
                 showLoginError('Please enter username and password');
                 return;
             }
-            
+
             try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    currentUser = data.user;
-                    showApp();
-                } else {
-                    showLoginError(data.error || 'Invalid username or password');
+                const { data, error } = await supabaseClient.from('users').select('*').eq('username', username).single();
+                if (error || !data) {
+                    showLoginError('Invalid username or password');
+                    return;
                 }
+                if (data.status !== 'active') {
+                    showLoginError('Your account has been deactivated. Contact admin.');
+                    return;
+                }
+
+                const valid = dcodeIO.bcrypt.compareSync(password, data.password);
+                if (!valid) {
+                    showLoginError('Invalid username or password');
+                    return;
+                }
+
+                currentUser = { id: data.id, username: data.username, name: data.name, role: data.role };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showApp();
             } catch (err) {
                 showLoginError('Cannot connect to server. Please try again.');
             }
         }
 
-        async function logout() {
-            try {
-                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-            } catch (e) {}
+        function logout() {
             currentUser = null;
+            localStorage.removeItem('currentUser');
             showLoginScreen();
         }
 
@@ -5226,7 +5237,6 @@
             // Render headers with column filters
             const thead = document.getElementById('tableHead');
             let headerHTML = '<tr>';
-            headerHTML += '<th>Select<br><input type="checkbox" onchange="toggleSelectAll(this)"></th>';
             headerHTML += '<th>Actions</th>';
             
             visibleColumns.forEach(colIdx => {
@@ -5238,7 +5248,7 @@
             
             // Add filter row
             headerHTML += '<tr class="filter-row">';
-            headerHTML += '<th></th><th></th>';
+            headerHTML += '<th></th>';
             visibleColumns.forEach(colIdx => {
                 if (headers[colIdx]) {
                     const filterValue = columnFilters[colIdx] || '';
@@ -5276,16 +5286,12 @@
 
                 const isSelected = selectedRows.has(globalIdx);
                 bodyHTML += `<tr data-row-index="${globalIdx}">`;
-                bodyHTML += `<td><input type="checkbox" class="row-select" ${isSelected ? 'checked' : ''} onchange="toggleRowSelection(${globalIdx})"></td>`;
                 
                 // Options dropdown - disable edit/delete based on permissions
                 bodyHTML += `<td class="row-options">
-                    <select onchange="handleRowOption(${globalIdx}, this.value)" ${!canEdit ? 'disabled' : ''}>
+                    <select onchange="handleRowOption(${globalIdx}, this.value)">
                         <option value="">-- Select --</option>
                         <option value="view">View Details</option>
-                        <option value="history">History</option>
-                        <option value="edit" ${!canEdit ? 'disabled' : ''}>Edit Row</option>
-                        <option value="duplicate">Duplicate</option>
                         <option value="delete" ${!canDelete ? 'disabled' : ''}>Delete</option>
                     </select>
                 </td>`;
@@ -5525,10 +5531,16 @@
         }
 
         // Save changes from the view details modal
-        function saveViewDetails() {
+        async function saveViewDetails() {
             if (currentViewRowIndex === null) return;
             
             const row = crmData[currentViewRowIndex];
+            const recordId = row.id;
+            
+            // Capture old data before applying changes
+            const oldData = {};
+            const newData = {};
+            const changedFieldsList = [];
             
             // Read all input values and update the row
             headers.forEach((headerName, colIdx) => {
@@ -5541,16 +5553,46 @@
                         newValue = fromInputDate(newValue);
                     }
                     
+                    if (row[headerName] !== newValue) {
+                        oldData[headerName] = row[headerName];
+                        newData[headerName] = newValue;
+                        changedFieldsList.push(headerName);
+                    }
+                    
                     row[headerName] = newValue;
                 }
             });
+            
+            // Save to Supabase if record has an ID
+            if (recordId) {
+                const rowData = {...row};
+                delete rowData.id;
+                const { error } = await supabaseClient.from('contacts').update({ data: rowData }).eq('id', recordId);
+                if (error) {
+                    console.error('Failed to update record in Supabase:', error);
+                } else if (changedFieldsList.length > 0) {
+                    // Insert audit log
+                    try {
+                        await supabaseClient.from('audit_log').insert([{
+                            contacts_id: recordId,
+                            action: 'UPDATE',
+                            changed_by: currentUser ? currentUser.username : 'Unknown',
+                            old_data: oldData,
+                            new_data: newData,
+                            changed_fields: changedFieldsList
+                        }]);
+                    } catch (auditErr) {
+                        console.error('Failed to insert audit log:', auditErr);
+                    }
+                }
+            }
             
             // Save to localStorage and refresh
             saveCRMData();
             renderTable();
             
-            // Show success notification
-            showNotification('Changes saved successfully!', 'success');
+            // Show success notification and close modal
+            showNotification('Info Updated', 'success');
             
             // Close modal
             closeViewDetailsModal();
@@ -5603,16 +5645,27 @@
             }
             if (confirm('Are you sure you want to delete this row?')) {
                 const recordId = crmData[rowIndex].id;
+                const recordData = { ...crmData[rowIndex] };
+                delete recordData.id;
                 
-                // Delete from backend API if record has an ID
+                // Delete from Supabase if record has an ID
                 if (recordId) {
+                    // Insert audit log before deleting
                     try {
-                        const res = await fetch(`/api/crm/data/${recordId}`, {
-                            method: 'DELETE',
-                            credentials: 'include'
-                        });
-                        if (!res.ok) {
-                            console.error(`Failed to delete record ${recordId} from backend`);
+                        await supabaseClient.from('audit_log').insert([{
+                            contacts_id: recordId,
+                            action: 'DELETE',
+                            changed_by: currentUser ? currentUser.username : 'Unknown',
+                            old_data: recordData
+                        }]);
+                    } catch (auditErr) {
+                        console.error('Failed to insert audit log for delete:', auditErr);
+                    }
+                    
+                    try {
+                        const { error } = await supabaseClient.from('contacts').delete().eq('id', recordId);
+                        if (error) {
+                            console.error(`Failed to delete record ${recordId} from Supabase:`, error);
                         }
                     } catch (err) {
                         console.error(`Error deleting record ${recordId}:`, err);
@@ -5660,20 +5713,20 @@
         }
         
         /**
-         * Fetch audit history from the backend API
+         * Fetch audit history from Supabase
          * @param {number} recordId - The CRM record ID
          */
         async function loadAuditTrail(recordId) {
             try {
-                const response = await fetch(`/api/crm/data/${recordId}/history`, {
-                    credentials: 'include'
-                });
+                const { data: logs, error } = await supabaseClient.from('audit_log')
+                    .select('*')
+                    .eq('contacts_id', recordId)
+                    .order('changed_at', { ascending: false });
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                if (error) {
+                    throw error;
                 }
                 
-                const logs = await response.json();
                 renderAuditTrail(logs);
             } catch (error) {
                 console.error('Failed to load audit trail:', error);
@@ -5931,6 +5984,12 @@
                 rowChanges[rowIdx].changes[headers[colIdx]] = pendingChanges[key];
             });
 
+            // Capture old data before applying changes
+            const oldDataMap = {};
+            Object.keys(rowChanges).forEach(rowIdx => {
+                oldDataMap[rowIdx] = { ...crmData[rowIdx] };
+            });
+
             // Apply changes to local data and sync to backend
             const updatePromises = [];
             Object.keys(pendingChanges).forEach(key => {
@@ -5938,7 +5997,7 @@
                 crmData[rowIdx][headers[colIdx]] = pendingChanges[key];
             });
 
-            // Sync each changed row to backend API
+            // Sync each changed row to Supabase
             for (const rowIdx of Object.keys(rowChanges)) {
                 const { recordId, changes } = rowChanges[rowIdx];
                 if (recordId) {
@@ -5947,12 +6006,8 @@
                     delete rowData.id; // Remove id from data payload
                     
                     updatePromises.push(
-                        fetch(`/api/crm/data/${recordId}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            credentials: 'include',
-                            body: JSON.stringify({ data: rowData })
-                        }).catch(err => console.error(`Failed to update record ${recordId}:`, err))
+                        supabaseClient.from('contacts').update({ data: rowData }).eq('id', recordId)
+                            .catch(err => console.error(`Failed to update record ${recordId}:`, err))
                     );
                 }
             }
@@ -5960,10 +6015,37 @@
             // Wait for all API calls to complete
             await Promise.all(updatePromises);
 
+            // Insert audit logs for each changed row
+            for (const rowIdx of Object.keys(rowChanges)) {
+                const { recordId, changes } = rowChanges[rowIdx];
+                if (recordId) {
+                    const oldData = {};
+                    const newData = {};
+                    const changedFieldsList = [];
+                    Object.keys(changes).forEach(field => {
+                        oldData[field] = oldDataMap[rowIdx][field];
+                        newData[field] = changes[field];
+                        changedFieldsList.push(field);
+                    });
+                    try {
+                        await supabaseClient.from('audit_log').insert([{
+                            contacts_id: recordId,
+                            action: 'UPDATE',
+                            changed_by: currentUser ? currentUser.username : 'Unknown',
+                            old_data: oldData,
+                            new_data: newData,
+                            changed_fields: changedFieldsList
+                        }]);
+                    } catch (auditErr) {
+                        console.error('Failed to insert audit log:', auditErr);
+                    }
+                }
+            }
+
             pendingChanges = {};
             saveCRMData();
             renderTable();
-            alert('Changes saved successfully!');
+            showNotification('Info Updated', 'success');
         }
 
         // ==================== ACCESS RIGHTS & SETTINGS MODULE ====================
@@ -6034,18 +6116,15 @@
             accessRights[module][action][role] = checked;
         }
 
-        // Load access rights from backend API
+        // Load access rights from Supabase
         async function loadAccessRights() {
             try {
-                const response = await fetch('/api/settings/access-rights', {
-                    credentials: 'include'
-                });
-                if (response.ok) {
-                    const data = await response.json();
+                const { data, error } = await supabaseClient.from('access_rights').select('*').limit(1).single();
+                if (!error && data) {
                     // Merge with defaults to ensure all required fields exist
-                    accessRights = { ...JSON.parse(JSON.stringify(defaultAccessRights)), ...data };
+                    accessRights = { ...JSON.parse(JSON.stringify(defaultAccessRights)), ...data.config };
                 } else {
-                    // Fallback to defaults if API fails
+                    // Fallback to defaults if query fails
                     accessRights = JSON.parse(JSON.stringify(defaultAccessRights));
                 }
             } catch (error) {
@@ -6055,20 +6134,23 @@
             }
         }
 
-        // Save access rights to backend API
+        // Save access rights to Supabase
         async function saveAccessRights() {
             try {
-                const response = await fetch('/api/settings/access-rights', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify(accessRights)
-                });
-                if (response.ok) {
-                    showNotification('Access rights saved successfully!', 'success');
-                } else {
+                const { data: existing, error: fetchError } = await supabaseClient.from('access_rights').select('id').limit(1).single();
+                if (fetchError && fetchError.code !== 'PGRST116') {
+                    console.error('Error checking existing access rights:', fetchError);
                     showNotification('Failed to save access rights', 'error');
+                    return;
                 }
+                if (existing) {
+                    const { error } = await supabaseClient.from('access_rights').update({ config: accessRights }).eq('id', existing.id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from('access_rights').insert([{ config: accessRights }]);
+                    if (error) throw error;
+                }
+                showNotification('Access rights saved successfully!', 'success');
             } catch (error) {
                 console.error('Error saving access rights:', error);
                 showNotification('Error saving access rights', 'error');
@@ -6082,16 +6164,13 @@
             const tbody = document.getElementById('accessRightsUsersTableBody');
             if (!tbody) return;
 
-            // Fetch users from API
+            // Fetch users from Supabase
             try {
-                const response = await fetch('/api/auth/users', {
-                    credentials: 'include'
-                });
-                if (!response.ok) {
+                const { data: apiUsers, error } = await supabaseClient.from('users').select('*').order('id');
+                if (error) {
                     throw new Error('Failed to fetch users');
                 }
-                const apiUsers = await response.json();
-                
+
                 // Update local users array for compatibility with other functions
                 users = apiUsers.map(u => ({
                     id: u.id,
@@ -6107,19 +6186,19 @@
                     const isAdmin = user.username === 'admin';
                     const isActive = user.status !== 'inactive';
                     const rowStyle = isActive ? '' : 'background-color: #f1f5f9; color: #94a3b8;';
-                    const statusBadge = isActive 
-                        ? '<span class="status status-active">Active</span>' 
+                    const statusBadge = isActive
+                        ? '<span class="status status-active">Active</span>'
                         : '<span class="status status-inactive">Inactive</span>';
-                    
+
                     html += `<tr style="border-bottom: 1px solid var(--border); ${rowStyle}" data-user-id="${user.id}">`;
                     html += `<td style="padding: 12px; font-weight: 500;">${escapeHtml(user.username)}</td>`;
                     html += `<td style="padding: 12px;"><span class="badge badge-${user.role}">${user.role}</span></td>`;
                     html += `<td style="padding: 12px; text-align: center;">${statusBadge}</td>`;
                     html += `<td style="padding: 12px; text-align: center;">`;
-                    
+
                     // Edit button
                     html += `<button class="btn btn-primary btn-sm" onclick="editUserFromSettings('${user.id}')" style="margin-right: 8px;">Edit</button>`;
-                    
+
                     // Toggle status button (disable for admin)
                     if (isAdmin) {
                         html += `<button class="btn btn-outline btn-sm" disabled title="Admin cannot be deactivated" style="opacity: 0.5; cursor: not-allowed;">Inactive</button>`;
@@ -6128,7 +6207,7 @@
                         const toggleClass = isActive ? 'btn-warning' : 'btn-success';
                         html += `<button class="btn ${toggleClass} btn-sm" onclick="toggleUserStatus('${user.id}')">${toggleText}</button>`;
                     }
-                    
+
                     html += `</td>`;
                     html += `</tr>`;
                 });
@@ -6167,25 +6246,18 @@
             }
 
             try {
-                const body = {
+                const updateData = {
                     name: newUsername,
                     role: newRole
                 };
                 if (newPassword) {
-                    body.password = newPassword;
+                    updateData.password = dcodeIO.bcrypt.hashSync(newPassword, 10);
                 }
 
-                const response = await fetch(`/api/auth/users/${userId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify(body)
-                });
+                const { error } = await supabaseClient.from('users').update(updateData).eq('id', userId);
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to update user');
+                if (error) {
+                    throw new Error(error.message || 'Failed to update user');
                 }
 
                 // Refresh user list
@@ -6214,15 +6286,14 @@
 
             if (confirm(`Are you sure you want to ${actionText} user "${user.username}"?`)) {
                 try {
-                    const response = await fetch(`/api/auth/users/${userId}/toggle`, {
-                        method: 'PUT',
-                        credentials: 'include'
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Failed to toggle user status');
+                    const { data, error } = await supabaseClient.from('users').select('status').eq('id', userId).single();
+                    if (error) {
+                        throw new Error(error.message || 'Failed to toggle user status');
+                    }
+                    const statusToSet = data.status === 'active' ? 'inactive' : 'active';
+                    const { error: updateError } = await supabaseClient.from('users').update({ status: statusToSet }).eq('id', userId);
+                    if (updateError) {
+                        throw new Error(updateError.message || 'Failed to toggle user status');
                     }
 
                     // Refresh user list
@@ -6268,8 +6339,8 @@
             }
         }
 
-        // Save master field settings to localStorage
-        function saveMasterFieldSettings() {
+        // Save master field settings to Supabase
+        async function saveMasterFieldSettings() {
             // Always ensure ACCT NO and CLINIC NAME are in the list
             if (!mandatoryFields.includes('ACCT NO')) {
                 mandatoryFields.push('ACCT NO');
@@ -6278,8 +6349,25 @@
                 mandatoryFields.push('CLINIC NAME');
             }
             
-            localStorage.setItem('crm_mandatory_fields', JSON.stringify(mandatoryFields));
-            showNotification('Master field settings saved successfully!', 'success');
+            try {
+                const { data: existing, error: fetchError } = await supabaseClient.from('mandatory_fields').select('id').limit(1).single();
+                if (fetchError && fetchError.code !== 'PGRST116') {
+                    console.error('Error checking existing mandatory fields:', fetchError);
+                    showNotification('Failed to save master field settings', 'error');
+                    return;
+                }
+                if (existing) {
+                    const { error } = await supabaseClient.from('mandatory_fields').update({ fields: mandatoryFields }).eq('id', existing.id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from('mandatory_fields').insert([{ fields: mandatoryFields }]);
+                    if (error) throw error;
+                }
+                showNotification('Master field settings saved successfully!', 'success');
+            } catch (error) {
+                console.error('Error saving mandatory fields:', error);
+                showNotification('Error saving master field settings', 'error');
+            }
         }
 
         // User Management
@@ -6434,26 +6522,36 @@
             if (address3) newCustomer['Address3'] = address3.value.trim();
             if (contactTel1) newCustomer['Contact Tel1'] = contactTel1.value.trim();
             
-            // Save to database first
+            // Save to Supabase first
+            let newId = null;
             try {
-                const res = await fetch('/api/crm/data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ data: newCustomer })
-                });
-                
-                if (res.ok) {
-                    const result = await res.json();
-                    // Update the local record with the database ID
-                    newCustomer.id = result.id;
-                } else {
-                    console.error('Failed to save customer to database:', await res.text());
-                    showNotification('Warning: Customer saved locally but failed to save to database.', 'error');
+                const { data: result, error } = await supabaseClient.from('contacts').insert([{ data: newCustomer }]).select();
+                if (error) {
+                    console.error('Failed to save customer to Supabase:', error);
+                    showNotification('Warning: Customer saved locally but failed to save to Supabase.', 'error');
+                } else if (result && result[0]) {
+                    newCustomer.id = result[0].id;
+                    newId = result[0].id;
                 }
             } catch (err) {
-                console.error('Error saving customer to database:', err);
-                showNotification('Warning: Customer saved locally but failed to save to database.', 'error');
+                console.error('Error saving customer to Supabase:', err);
+                showNotification('Warning: Customer saved locally but failed to save to Supabase.', 'error');
+            }
+            
+            // Insert audit log for creation
+            if (newId) {
+                const recordData = { ...newCustomer };
+                delete recordData.id;
+                try {
+                    await supabaseClient.from('audit_log').insert([{
+                        contacts_id: newId,
+                        action: 'CREATE',
+                        changed_by: currentUser ? currentUser.username : 'Unknown',
+                        new_data: recordData
+                    }]);
+                } catch (auditErr) {
+                    console.error('Failed to insert audit log for create:', auditErr);
+                }
             }
             
             // Add to data
@@ -6485,7 +6583,7 @@
 
         async function handleAddUser(e) {
             e.preventDefault();
-            
+
             const username = document.getElementById('newUsername').value.trim();
             const password = document.getElementById('newPassword').value;
             const role = document.getElementById('newRole').value;
@@ -6496,25 +6594,25 @@
             }
 
             try {
-                const response = await fetch('/api/auth/users', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ username, password, name: username, role })
-                });
+                const hash = dcodeIO.bcrypt.hashSync(password, 10);
+                const { data, error } = await supabaseClient.from('users').insert([{
+                    username,
+                    password: hash,
+                    name: username,
+                    role,
+                    status: 'active'
+                }]).select();
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to create user');
+                if (error) {
+                    throw new Error(error.message || 'Failed to create user');
                 }
 
                 // Refresh user list
                 await renderAccessRightsUsers();
-                
+
                 closeModal('addUserModal');
                 document.getElementById('addUserForm').reset();
-                
+
                 showNotification('User added successfully!', 'success');
             } catch (error) {
                 console.error('Error creating user:', error);
@@ -6618,13 +6716,10 @@
                 const canDelete = hasDeletePermission;
 
                 bodyHTML += `<tr data-row-index="${globalIdx}">`;
-                bodyHTML += `<td><input type="checkbox" class="row-select" onchange="toggleRowSelection(${globalIdx})"></td>`;
                 bodyHTML += `<td class="row-options">
-                    <select onchange="handleRowOption(${globalIdx}, this.value)" ${!canEdit ? 'disabled' : ''}>
+                    <select onchange="handleRowOption(${globalIdx}, this.value)">
                         <option value="">-- Select --</option>
                         <option value="view">View Details</option>
-                        <option value="edit" ${!canEdit ? 'disabled' : ''}>Edit Row</option>
-                        <option value="duplicate">Duplicate</option>
                         <option value="delete" ${!canDelete ? 'disabled' : ''}>Delete</option>
                     </select>
                 </td>`;
@@ -6748,7 +6843,7 @@
             }
         }
 
-        function deleteSelected() {
+        async function deleteSelected() {
             // Check delete permission
             if (!hasPermission('crm', 'delete')) {
                 alert("You don't have permission to perform this action");
@@ -6766,6 +6861,36 @@
 
             // Get selected row indices and sort in descending order to avoid index shifting issues
             const indicesToDelete = Array.from(selectedRows).sort((a, b) => b - a);
+            
+            // Delete from Supabase first for records with IDs
+            for (const index of indicesToDelete) {
+                const recordId = crmData[index].id;
+                if (recordId) {
+                    const recordData = { ...crmData[index] };
+                    delete recordData.id;
+                    
+                    // Insert audit log before deleting
+                    try {
+                        await supabaseClient.from('audit_log').insert([{
+                            contacts_id: recordId,
+                            action: 'DELETE',
+                            changed_by: currentUser ? currentUser.username : 'Unknown',
+                            old_data: recordData
+                        }]);
+                    } catch (auditErr) {
+                        console.error('Failed to insert audit log for delete:', auditErr);
+                    }
+                    
+                    try {
+                        const { error } = await supabaseClient.from('contacts').delete().eq('id', recordId);
+                        if (error) {
+                            console.error(`Failed to delete record ${recordId} from Supabase:`, error);
+                        }
+                    } catch (err) {
+                        console.error(`Error deleting record ${recordId}:`, err);
+                    }
+                }
+            }
             
             // Delete rows from crmData
             indicesToDelete.forEach(index => {
