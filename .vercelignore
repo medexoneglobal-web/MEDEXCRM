@@ -1,6 +1,13 @@
 server.js
+package.json
+package-lock.json
 database.js
+export-data.js
+supabase-migration.sql
+supabase-schema.sql
+supabase-data-migration.sql
 routes/
+uploads/
 node_modules/
 node-v20.11.1-win-x64/
 *.db
