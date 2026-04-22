@@ -2555,7 +2555,6 @@
                     <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
                         <button class="btn btn-primary" id="accessRightsSubTab" onclick="showSettingsPanel('accessRights')">Access Rights</button>
                         <button class="btn btn-outline" id="masterFieldSubTab" onclick="showSettingsPanel('masterField')">Master Field Setting</button>
-                        <button class="btn btn-outline" id="importDataSubTab" onclick="showSettingsPanel('importData')">Import Data</button>
                     </div>
                     
                     <!-- Access Rights Panel -->
@@ -2642,26 +2641,7 @@
                         </div>
                     </div>
                     
-                    <!-- Import Data Panel -->
-                    <div id="importDataPanel" class="settings-panel" style="display: none;">
-                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">Import Data</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 14px;">Upload Excel or CSV file to import clinic data into the CRM system.</p>
-                        
-                        <div class="upload-area" onclick="document.getElementById('csvFile').click()" style="cursor: pointer; border: 2px dashed var(--border); border-radius: 12px; padding: 48px 32px; text-align: center; background: var(--bg); transition: all 0.2s;">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent); margin-bottom: 16px;">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            <p style="font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 8px;">Click to select or drag Excel/CSV file here</p>
-                            <p style="font-size: 13px; color: var(--text-muted);">Supported formats: .xlsx, .xls, .csv</p>
-                            <input type="file" id="csvFile" accept=".xlsx,.xls,.csv" style="display: none;" onchange="handleFileSelect(event)">
-                        </div>
-                        <div id="importPreview"></div>
-                        <div id="importSuccessMessage" style="display: none; margin-top: 20px; padding: 16px; background: #dcfce7; border: 1px solid #86efac; border-radius: 8px; color: #166534;">
-                            <span style="font-weight: 600;">✓ Import Successful!</span> <span id="importSuccessCount"></span> records imported.
-                        </div>
-                    </div>
+
                 </div>
             </div>
 
@@ -3636,27 +3616,7 @@
             users = [];
 
             // CRM data is loaded from Supabase in loadCRMDataFromAPI()
-            // Only restore UI settings from localStorage
-            const storedData = localStorage.getItem('crm_data');
-            if (storedData) {
-                const parsed = JSON.parse(storedData);
-                columnFilters = parsed.columnFilters || {};
-                columnOptions = parsed.columnOptions || {};
-                
-                // Use stored visible columns if available, otherwise initialize from VISIBLE_COLUMN_NAMES
-                if (parsed.visibleColumns && parsed.visibleColumns.length > 0) {
-                    visibleColumns = parsed.visibleColumns;
-                } else if (headers.length > 0) {
-                    // Initialize visible columns from VISIBLE_COLUMN_NAMES
-                    visibleColumns = [];
-                    VISIBLE_COLUMN_NAMES.forEach(colName => {
-                        const idx = headers.findIndex(h => h.trim() === colName);
-                        if (idx !== -1) {
-                            visibleColumns.push(idx);
-                        }
-                    });
-                }
-            }
+            // UI settings (filters, visible columns) will be initialized when data loads
 
             // Access rights are now loaded from API after login
             // See loadAccessRights() function called in showApp()
@@ -3712,21 +3672,7 @@
                     
                     return true;
                 } else {
-                    // Database empty — check localStorage for data to migrate
-                    const storedData = localStorage.getItem('crm_data');
-                    if (storedData) {
-                        const parsed = JSON.parse(storedData);
-                        const localRecords = parsed.data || [];
-                        const localHeaders = parsed.headers || [];
-                        if (localRecords && localRecords.length > 0) {
-                            console.log('Migrating', localRecords.length, 'records from localStorage to Supabase...');
-                            // Sync localStorage data to Supabase
-                            await syncLocalDataToBackend(localRecords);
-                            // Re-fetch from Supabase to get proper IDs
-                            return await loadCRMDataFromAPI();
-                        }
-                    }
-                    // No data anywhere — use default headers so UI works
+                    // No data in Supabase — use default headers so UI works
                     headers = [...DEFAULT_HEADERS];
                     crmData = [];
                     visibleColumns = [];
@@ -3787,107 +3733,6 @@
             } catch (err) {
                 console.error('Refresh error:', err);
             }
-        }
-
-        async function syncLocalDataToBackend(records) {
-            let successCount = 0;
-            let failCount = 0;
-            
-            const rows = records.map(record => ({ data: record }));
-            // Insert in batches of 100 to avoid payload limits
-            for (let i = 0; i < rows.length; i += 100) {
-                const batch = rows.slice(i, i + 100);
-                try {
-                    const { data: result, error } = await supabaseClient.from('contacts').insert(batch).select();
-                    if (error) {
-                        console.error('Batch insert error:', error);
-                        failCount += batch.length;
-                    } else {
-                        successCount += result.length;
-                    }
-                } catch (err) {
-                    console.error('Batch insert exception:', err);
-                    failCount += batch.length;
-                }
-            }
-            
-            console.log('Migration complete:', successCount, 'succeeded,', failCount, 'failed');
-            
-            if (successCount > 0) {
-                // Clear localStorage CRM data after successful migration
-                localStorage.removeItem('crm_data');
-                showNotification('Data migration complete! ' + successCount + ' records synced to Supabase.', 'success');
-            }
-        }
-
-        // Save imported records to database immediately after parsing
-        async function saveImportedDataToDatabase(records) {
-            let successCount = 0;
-            let failCount = 0;
-            const failedRecords = [];
-            
-            const rows = records.map(record => ({ data: record }));
-            // Insert in batches of 100 to avoid payload limits
-            for (let i = 0; i < rows.length; i += 100) {
-                const batch = rows.slice(i, i + 100);
-                const { data: result, error } = await supabaseClient.from('contacts').insert(batch).select();
-                if (error) {
-                    console.error('Batch insert error:', error);
-                    // Retry individual records in the failed batch
-                    let batchFailCount = 0;
-                    for (let j = 0; j < batch.length; j++) {
-                        const single = batch[j];
-                        try {
-                            const { data: singleResult, error: singleError } = await supabaseClient.from('contacts').insert(single).select();
-                            if (singleError) {
-                                console.error('Individual insert failed:', singleError, 'Record:', single);
-                                failedRecords.push({ record: single, error: singleError });
-                                batchFailCount++;
-                            } else if (singleResult && singleResult.length > 0) {
-                                records[i + j].id = singleResult[0].id;
-                                successCount++;
-                            } else {
-                                batchFailCount++;
-                            }
-                        } catch (singleErr) {
-                            console.error('Individual insert exception:', singleErr, 'Record:', single);
-                            failedRecords.push({ record: single, error: singleErr });
-                            batchFailCount++;
-                        }
-                    }
-                    failCount += batchFailCount;
-                } else if (result) {
-                    result.forEach((r, idx) => { records[i + idx].id = r.id; });
-                    successCount += result.length;
-                    
-                    // Insert audit logs for created records
-                    const auditEntries = result.map(r => ({
-                        contacts_id: r.id,
-                        action: 'CREATE',
-                        changed_by: currentUser ? currentUser.username : 'Unknown',
-                        new_data: r.data
-                    }));
-                    try {
-                        await supabaseClient.from('audit_log').insert(auditEntries);
-                    } catch (auditErr) {
-                        console.error('Failed to insert audit logs for import:', auditErr);
-                    }
-                } else {
-                    // No error but no result — unexpected, count as failures
-                    failCount += batch.length;
-                    console.error('Batch insert returned no result for batch:', batch);
-                }
-            }
-            
-            const summaryMsg = `Import complete: ${successCount} records imported successfully, ${failCount} failed.`;
-            console.log(summaryMsg);
-            if (failCount > 0) {
-                showNotification(summaryMsg, 'error');
-            } else {
-                showNotification(summaryMsg, 'success');
-            }
-            
-            return { successCount, failCount, failedRecords };
         }
 
         function setupEventListeners() {
@@ -5028,13 +4873,11 @@
             // Hide all panels
             document.getElementById('accessRightsPanel').style.display = 'none';
             document.getElementById('masterFieldPanel').style.display = 'none';
-            document.getElementById('importDataPanel').style.display = 'none';
-            
+
             // Reset tab styles
             document.getElementById('accessRightsSubTab').className = 'btn btn-outline';
             document.getElementById('masterFieldSubTab').className = 'btn btn-outline';
-            document.getElementById('importDataSubTab').className = 'btn btn-outline';
-            
+
             // Show selected panel
             if (panelId === 'accessRights') {
                 document.getElementById('accessRightsPanel').style.display = 'block';
@@ -5042,278 +4885,7 @@
             } else if (panelId === 'masterField') {
                 document.getElementById('masterFieldPanel').style.display = 'block';
                 document.getElementById('masterFieldSubTab').className = 'btn btn-primary';
-            } else if (panelId === 'importData') {
-                document.getElementById('importDataPanel').style.display = 'block';
-                document.getElementById('importDataSubTab').className = 'btn btn-primary';
             }
-        }
-
-        // File Import (Excel/CSV)
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const fileName = file.name.toLowerCase();
-            const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (isExcel) {
-                    const data = new Uint8Array(e.target.result);
-                    parseExcel(data);
-                } else {
-                    const text = e.target.result;
-                    parseCSV(text);
-                }
-            };
-
-            if (isExcel) {
-                reader.readAsArrayBuffer(file);
-            } else {
-                reader.readAsText(file);
-            }
-        }
-
-        // Parse Excel file using SheetJS
-        async function parseExcel(data) {
-            const workbook = XLSX.read(data, {type: 'array'});
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
-
-            if (rows.length < 2) return;
-
-            // First row becomes headers
-            headers = rows[0].map(h => String(h || ''));
-
-            // Normalize headers: replace internal newlines with spaces and collapse multiple spaces
-            headers = headers.map(h => h.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim());
-
-            // Handle duplicate column names
-            headers = deduplicateHeaders(headers);
-
-            // Parse data rows
-            const newRecords = [];
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (row && row.length > 0) {
-                    const rowObj = {};
-                    headers.forEach((h, idx) => {
-                        let value = row[idx] !== undefined ? String(row[idx]) : '';
-                        // Convert Excel date serial numbers to formatted dates for date columns
-                        if (isDateColumn(h)) {
-                            value = formatExcelDate(value);
-                        }
-                        rowObj[h] = value;
-                    });
-                    rowObj._rowIndex = crmData.length + i - 1;
-                    newRecords.push(rowObj);
-                }
-            }
-
-            // Add new records to existing crmData (APPEND mode)
-            crmData = crmData.concat(newRecords);
-
-            // Initialize visible columns - only show columns in VISIBLE_COLUMN_NAMES, in that order
-            visibleColumns = [];
-            VISIBLE_COLUMN_NAMES.forEach(colName => {
-                const idx = headers.findIndex(h => h.trim() === colName);
-                if (idx !== -1) {
-                    visibleColumns.push(idx);
-                }
-            });
-
-            // Initialize column filters
-            columnFilters = {};
-
-            // Auto-detect column options for dropdown fields
-            detectColumnOptions();
-
-            // Save to localStorage
-            saveCRMData();
-
-            // Save imported records to database immediately
-            const importResult = await saveImportedDataToDatabase(newRecords);
-
-            // Show preview
-            const importMsg = importResult.failCount > 0
-                ? `<span style="font-weight: 600;">⚠ Import Partially Successful!</span> ${importResult.successCount} records imported, ${importResult.failCount} failed.`
-                : `<span style="font-weight: 600;">✓ Import Successful!</span> ${importResult.successCount} records imported with ${headers.length} columns.`;
-            document.getElementById('importPreview').innerHTML = `
-                <div class="alert alert-success" style="margin-top: 20px; padding: 16px; background: ${importResult.failCount > 0 ? '#fef9c3' : '#dcfce7'}; border: 1px solid ${importResult.failCount > 0 ? '#fde047' : '#86efac'}; border-radius: 8px; color: ${importResult.failCount > 0 ? '#854d0e' : '#166534'};">
-                    ${importMsg}
-                </div>
-            `;
-
-            // Refresh table from Supabase to show latest data with IDs
-            await refreshTableFromSupabase();
-            showColumnToggle();
-        }
-
-        // Split CSV text into lines, respecting quoted fields that may contain newlines
-        function splitCSVLines(text) {
-            const lines = [];
-            let currentLine = '';
-            let inQuotes = false;
-            let i = 0;
-            
-            while (i < text.length) {
-                const char = text[i];
-                const nextChar = text[i + 1];
-                
-                if (char === '"') {
-                    currentLine += char;
-                    if (inQuotes && nextChar === '"') {
-                        // Escaped quote ("") inside a quoted field - treat as literal quote
-                        currentLine += nextChar;
-                        i += 2; // Skip both quotes
-                    } else {
-                        // Toggle quote state
-                        inQuotes = !inQuotes;
-                        i++;
-                    }
-                } else if ((char === '\n' || char === '\r') && !inQuotes) {
-                    // End of line (handle \n, \r\n, and standalone \r)
-                    if (char === '\r' && nextChar === '\n') {
-                        i += 2; // Skip \r\n
-                    } else {
-                        i++; // Skip \n or standalone \r
-                    }
-                    if (currentLine.length > 0) {
-                        lines.push(currentLine);
-                        currentLine = '';
-                    }
-                } else {
-                    currentLine += char;
-                    i++;
-                }
-            }
-            
-            // Don't forget the last line
-            if (currentLine.length > 0) {
-                lines.push(currentLine);
-            }
-            
-            return lines;
-        }
-
-        // Handle duplicate column names by appending suffixes
-        function deduplicateHeaders(headers) {
-            const seen = new Map();
-            const result = [];
-            
-            for (const header of headers) {
-                if (seen.has(header)) {
-                    const count = seen.get(header) + 1;
-                    seen.set(header, count);
-                    result.push(`${header} (${count})`);
-                } else {
-                    seen.set(header, 1);
-                    result.push(header);
-                }
-            }
-            
-            return result;
-        }
-
-        async function parseCSV(text) {
-            const lines = splitCSVLines(text);
-            if (lines.length < 2) return;
-
-            // Parse headers
-            headers = parseCSVLine(lines[0]);
-
-            // Normalize headers: replace internal newlines with spaces and collapse multiple spaces
-            headers = headers.map(h => h.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim());
-
-            // Handle duplicate column names
-            headers = deduplicateHeaders(headers);
-            
-            // Parse data rows
-            const newRecords = [];
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim()) {
-                    const row = parseCSVLine(lines[i]);
-                    if (row.length >= headers.length) {
-                        const rowObj = {};
-                        headers.forEach((h, idx) => {
-                            rowObj[h] = row[idx] || '';
-                        });
-                        rowObj._rowIndex = crmData.length + i - 1;
-                        newRecords.push(rowObj);
-                    }
-                }
-            }
-
-            // Add new records to existing crmData (APPEND mode)
-            crmData = crmData.concat(newRecords);
-
-            // Initialize visible columns - only show columns in VISIBLE_COLUMN_NAMES, in that order
-            visibleColumns = [];
-            VISIBLE_COLUMN_NAMES.forEach(colName => {
-                const idx = headers.findIndex(h => h.trim() === colName);
-                if (idx !== -1) {
-                    visibleColumns.push(idx);
-                }
-            });
-            
-            // Initialize column filters
-            columnFilters = {};
-            
-            // Auto-detect column options for dropdown fields
-            detectColumnOptions();
-
-            // Save to localStorage
-            saveCRMData();
-
-            // Save imported records to database immediately
-            const importResult = await saveImportedDataToDatabase(newRecords);
-
-            // Show preview
-            const importMsg = importResult.failCount > 0
-                ? `<span style="font-weight: 600;">⚠ Import Partially Successful!</span> ${importResult.successCount} records imported, ${importResult.failCount} failed.`
-                : `<span style="font-weight: 600;">✓ Import Successful!</span> ${importResult.successCount} records imported with ${headers.length} columns.`;
-            document.getElementById('importPreview').innerHTML = `
-                <div class="alert alert-success" style="margin-top: 20px; padding: 16px; background: ${importResult.failCount > 0 ? '#fef9c3' : '#dcfce7'}; border: 1px solid ${importResult.failCount > 0 ? '#fde047' : '#86efac'}; border-radius: 8px; color: ${importResult.failCount > 0 ? '#854d0e' : '#166534'};">
-                    ${importMsg}
-                </div>
-            `;
-
-            // Refresh table from Supabase to show latest data with IDs
-            await refreshTableFromSupabase();
-            showColumnToggle();
-        }
-
-        function parseCSVLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            let i = 0;
-            
-            while (i < line.length) {
-                const char = line[i];
-                const nextChar = line[i + 1];
-                
-                if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        // Escaped quote ("") inside a quoted field - treat as literal quote
-                        current += '"';
-                        i += 2; // Skip both quotes
-                    } else {
-                        // Toggle quote state (don't add quote char to result)
-                        inQuotes = !inQuotes;
-                        i++;
-                    }
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                    i++;
-                } else {
-                    current += char;
-                    i++;
-                }
-            }
-            result.push(current.trim());
-            return result;
         }
 
         // Table Rendering
