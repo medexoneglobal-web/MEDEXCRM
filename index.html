@@ -2471,9 +2471,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg">Sign In</button>
             </form>
-            <div style="margin-top: 24px; text-align: center; font-size: 13px; color: var(--text-muted);">
-                <p>Default: admin / admin123</p>
-            </div>
+
         </div>
     </div>
 
@@ -6613,6 +6611,13 @@
             }
 
             try {
+                // Check for duplicate username
+                const { data: existing } = await supabaseClient.from('users').select('id').eq('username', username).single();
+                if (existing) {
+                    alert('User ID "' + username + '" already exists. Please choose a different User ID.');
+                    return;
+                }
+
                 const hash = dcodeIO.bcrypt.hashSync(password, 10);
                 const { data, error } = await supabaseClient.from('users').insert([{
                     username,
@@ -6639,11 +6644,25 @@
             }
         }
 
-        function deleteUser(username) {
-            if (confirm(`Are you sure you want to delete user ${username}?`)) {
-                users = users.filter(u => u.username !== username);
-                saveUsers();
-                renderUserList();
+        async function deleteUser(username) {
+            const user = users.find(u => u.username === username);
+            if (!user) return;
+            if (user.username === 'admin') {
+                alert('Cannot delete the default admin user.');
+                return;
+            }
+            if (!confirm('Are you sure you want to delete user "' + username + '"?')) return;
+            
+            try {
+                const { error } = await supabaseClient.from('users').delete().eq('id', user.id);
+                if (error) {
+                    alert('Failed to delete user: ' + error.message);
+                    return;
+                }
+                await renderAccessRightsUsers();
+                showNotification('User deleted successfully', 'success');
+            } catch (err) {
+                alert('Failed to delete user. Please try again.');
             }
         }
 
