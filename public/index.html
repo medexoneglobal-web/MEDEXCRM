@@ -3183,7 +3183,7 @@
             </form>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal('newCustomerModal')">Cancel</button>
-                <button type="submit" class="btn btn-success" onclick="saveNewCustomer()">Save Customer</button>
+                <button type="button" class="btn btn-success" onclick="saveNewCustomer()">Save Customer</button>
             </div>
         </div>
     </div>
@@ -6907,20 +6907,41 @@
             if (address3) newCustomer['Address3'] = address3.value.trim();
             if (contactTel1) newCustomer['Contact Tel1'] = contactTel1.value.trim();
             
+            // Check for duplicate ACCT NO
+            const acctNo = newCustomer['ACCT NO'];
+            if (acctNo) {
+                const { data: existing, error: dupError } = await supabaseClient
+                    .from('contacts')
+                    .select('id')
+                    .eq('data->>ACCT NO', acctNo)
+                    .limit(1);
+
+                if (dupError) {
+                    console.error('Error checking duplicate ACCT NO:', dupError);
+                }
+
+                if (existing && existing.length > 0) {
+                    alert('ACCT NO "' + acctNo + '" already exists. Please use a unique ACCT NO.');
+                    return;
+                }
+            }
+
             // Save to Supabase first
             let newId = null;
             try {
                 const { data: result, error } = await supabaseClient.from('contacts').insert([{ data: newCustomer }]).select();
                 if (error) {
                     console.error('Failed to save customer to Supabase:', error);
-                    showNotification('Warning: Customer saved locally but failed to save to Supabase.', 'error');
+                    alert('Error creating customer: ' + error.message);
+                    return; // Don't close modal on error
                 } else if (result && result[0]) {
                     newCustomer.id = result[0].id;
                     newId = result[0].id;
                 }
             } catch (err) {
                 console.error('Error saving customer to Supabase:', err);
-                showNotification('Warning: Customer saved locally but failed to save to Supabase.', 'error');
+                alert('Error creating customer: ' + err.message);
+                return; // Don't close modal on error
             }
             
             // Insert audit log for creation
@@ -6943,31 +6964,18 @@
             crmData.push(newCustomer);
             saveCRMData();
             
+            // Close modal
+            closeModal('newCustomerModal');
+            
+            // Show success message
+            showNotification('Customer created successfully!', 'success');
+            
             // Refresh table
             if (newId) {
                 await refreshTableFromSupabase();
             } else {
                 renderTable();
             }
-            
-            // Close modal
-            closeModal('newCustomerModal');
-            
-            // Show success message
-            showNotification('Customer created successfully!', 'success');
-        }
-
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type}`;
-            notification.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 16px 24px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); animation: slideIn 0.3s ease;';
-            notification.innerHTML = type === 'success' ? '✓ ' + message : message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
         }
 
         async function handleAddUser(e) {
