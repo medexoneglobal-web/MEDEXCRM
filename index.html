@@ -17,28 +17,28 @@
         :root {
             --primary: #0f172a;
             --primary-light: #1e293b;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
+            --accent: #4361ee;
+            --accent-hover: #3451d1;
             --success: #10b981;
             --success-hover: #059669;
             --danger: #ef4444;
             --danger-hover: #dc2626;
             --warning: #f59e0b;
             --warning-hover: #d97706;
-            --bg: #f1f5f9;
+            --bg: #f5f6fa;
             --card: #ffffff;
-            --text: #1e293b;
+            --text: #1a1a2e;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             min-height: 100vh;
-            color: var(--text);
+            color: #4a5568;
             line-height: 1.5;
         }
         
@@ -118,8 +118,8 @@
         
         .form-group input:focus, .form-group select:focus, .form-group input[type="date"]:focus {
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #4361ee;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
         }
         
         /* Date input styling for consistency across browsers */
@@ -165,7 +165,7 @@
         
         .btn-primary:hover {
             background: var(--accent-hover);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
         }
         
         .btn-success {
@@ -210,14 +210,15 @@
         }
         
         .btn-outline {
-            background: transparent;
-            color: var(--text);
-            border: 1.5px solid var(--border);
+            background: #fff;
+            color: #4361ee;
+            border: 1.5px solid #4361ee;
         }
         
         .btn-outline:hover {
-            background: var(--bg);
-            border-color: var(--text-muted);
+            background: #eef1fe;
+            border-color: #3451d1;
+            color: #3451d1;
         }
         
         .btn-sm {
@@ -298,7 +299,7 @@
         .nav-tab.active {
             color: var(--accent);
             border-bottom-color: var(--accent);
-            background: rgba(59, 130, 246, 0.05);
+            background: rgba(67, 97, 238, 0.05);
         }
         
         .nav-tab:hover:not(.active) {
@@ -338,8 +339,8 @@
         
         .section-header h2 {
             font-size: 16px;
-            font-weight: 600;
-            color: var(--text);
+            font-weight: 700;
+            color: #1a1a2e;
         }
         
         .section-body {
@@ -354,7 +355,7 @@
         .table-container {
             overflow-x: auto;
             overflow-y: auto;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             background: var(--card);
             width: 100%;
@@ -374,8 +375,8 @@
         th, td {
             padding: 8px 12px;
             text-align: left;
-            border-bottom: 1px solid #cbd5e1;
-            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
         }
         
         th {
@@ -404,18 +405,14 @@
         /* Default min-width for remaining columns */
         th:nth-child(n+13), td:nth-child(n+13) { min-width: 100px; }
         
-        /* Zebra striping for data rows */
-        tbody tr:nth-child(even) {
-            background-color: #f8fafc;
-        }
-        
-        tbody tr:nth-child(odd) {
+        /* All data rows white background */
+        tbody tr {
             background-color: #ffffff;
         }
         
         /* Hover effect */
         tbody tr:hover {
-            background-color: #e0f2fe !important;
+            background-color: #f8fafc !important;
         }
         
         tbody tr:hover td {
@@ -423,14 +420,14 @@
         }
         
         th {
-            background: #3b82f6;
-            font-weight: 700;
-            color: #ffffff;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #374151;
             position: sticky;
             top: 0;
             z-index: 20;
-            border-bottom: 2px solid #1d4ed8;
-            border-right: 1px solid #60a5fa;
+            border-bottom: 2px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -440,10 +437,10 @@
         
         /* Filter row headers - sticky below main header */
         .filter-row th {
-            background: #dbeafe !important;
+            background: #f8fafc !important;
             padding: 6px 10px !important;
-            border-bottom: 2px solid #3b82f6 !important;
-            border-right: 1px solid #bfdbfe;
+            border-bottom: 2px solid #e5e7eb !important;
+            border-right: 1px solid #e5e7eb;
             position: sticky;
             top: 48px; /* Height of main header row (padding 20px + font 14px + border 2px + buffer) */
             z-index: 15;
@@ -453,19 +450,19 @@
         .col-filter {
             width: 100%;
             padding: 6px 10px;
-            border: 1.5px solid #3b82f6;
-            border-radius: 4px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
             font-size: 12px;
             background: #ffffff;
-            color: #1e293b;
+            color: #374151;
             transition: all 0.2s;
         }
         
         .col-filter:focus {
             outline: none;
-            border-color: #2563eb;
+            border-color: #4361ee;
             background: white;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
         }
         
         .col-filter::placeholder {
@@ -492,35 +489,30 @@
         /* Header cells for sticky columns - higher z-index */
         th:first-child, th:nth-child(2) {
             z-index: 30;
-            background: #3b82f6;
+            background: #f8f9fa;
         }
         
         /* Filter row cells for sticky columns */
         .filter-row th:first-child, .filter-row th:nth-child(2) {
             z-index: 25;
-            background: #dbeafe !important;
+            background: #f8fafc !important;
         }
         
         /* Data cells for sticky columns */
         td:first-child, td:nth-child(2) {
-            border-right: 2px solid #cbd5e1;
+            border-right: 2px solid #e5e7eb;
             background: inherit;
         }
         
-        /* Ensure sticky columns maintain zebra striping on hover */
-        tbody tr:nth-child(even) td:first-child,
-        tbody tr:nth-child(even) td:nth-child(2) {
-            background-color: #f8fafc;
-        }
-        
-        tbody tr:nth-child(odd) td:first-child,
-        tbody tr:nth-child(odd) td:nth-child(2) {
+        /* Sticky columns background */
+        tbody tr td:first-child,
+        tbody tr td:nth-child(2) {
             background-color: #ffffff;
         }
         
         tbody tr:hover td:first-child,
         tbody tr:hover td:nth-child(2) {
-            background-color: #e0f2fe !important;
+            background-color: #f8fafc !important;
         }
         
         /* Audit Trail Table Styles */
@@ -531,12 +523,12 @@
         }
         
         .audit-trail-table th {
-            background: #1a237e;
-            color: white;
+            background: #f8f9fa;
+            color: #374151;
             font-weight: 600;
             padding: 12px;
             text-align: left;
-            border-bottom: 2px solid #0d1245;
+            border-bottom: 2px solid #e5e7eb;
         }
         
         .audit-trail-table td {
@@ -594,7 +586,7 @@
         
         .audit-field-name {
             font-weight: 600;
-            color: #1a237e;
+            color: #4361ee;
         }
         
         .audit-old-value {
@@ -625,7 +617,7 @@
         .editable.has-options::after {
             content: '▼';
             font-size: 8px;
-            color: #3b82f6;
+            color: #4361ee;
             margin-left: 4px;
             opacity: 0.7;
         }
@@ -661,8 +653,8 @@
         
         .toolbar input[type="text"]:focus {
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #4361ee;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
         }
         
         /* Stats Cards */
@@ -745,9 +737,9 @@
         }
         
         .modal-header h2 {
-            color: var(--text);
+            color: #1a1a2e;
             font-size: 18px;
-            font-weight: 600;
+            font-weight: 700;
         }
         
         .modal-body {
@@ -1049,12 +1041,12 @@
         #licenseKeyTable th:first-child,
         #licenseKeyTable th:nth-child(2) {
             z-index: 30;
-            background: #3b82f6;
+            background: #f8f9fa;
         }
         
         #licenseKeyTable td:first-child,
         #licenseKeyTable td:nth-child(2) {
-            border-right: 2px solid #cbd5e1;
+            border-right: 2px solid #e5e7eb;
             background: inherit;
         }
         
@@ -1246,8 +1238,8 @@
         }
         
         #accessRightsUsersTable th {
-            background: #3b82f6;
-            color: white;
+            background: #f8f9fa;
+            color: #374151;
             font-weight: 600;
             font-size: 12px;
             text-transform: uppercase;
@@ -1255,6 +1247,7 @@
             padding: 8px 12px;
             text-align: left;
             white-space: nowrap;
+            border-bottom: 2px solid #e5e7eb;
         }
         
         #accessRightsUsersTable td {
@@ -1321,14 +1314,14 @@
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             min-width: 180px;
             flex: 1;
             border-left: 4px solid var(--accent);
         }
         
         .report-card.card-blue {
-            border-left-color: #3b82f6;
+            border-left-color: #4361ee;
         }
         
         .report-card.card-red {
@@ -1371,7 +1364,7 @@
             background: white;
             border-radius: 12px;
             padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             border: 2px solid transparent;
@@ -1458,7 +1451,7 @@
         .maintenance-detail-container {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             overflow: hidden;
         }
         
@@ -1713,7 +1706,7 @@
         .report-table-container {
             overflow-x: auto;
             overflow-y: auto;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             background: var(--card);
             max-height: 500px;
@@ -1728,14 +1721,14 @@
         }
         
         .report-table th {
-            background: #3b82f6;
-            font-weight: 700;
-            color: #ffffff;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #374151;
             position: sticky;
             top: 0;
             z-index: 20;
-            border-bottom: 2px solid #1d4ed8;
-            border-right: 1px solid #60a5fa;
+            border-bottom: 2px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -1746,8 +1739,8 @@
         .report-table td {
             padding: 8px 12px;
             text-align: left;
-            border-bottom: 1px solid #cbd5e1;
-            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
             white-space: nowrap;
             color: #000000;
             font-weight: 400;
@@ -1771,7 +1764,7 @@
         .report-table thead th:nth-child(1),
         .report-table thead th:nth-child(2) {
             z-index: 30;
-            background: #3b82f6;
+            background: #f8f9fa;
             position: sticky;
             left: 0;
         }
@@ -2440,9 +2433,9 @@
             position: sticky;
             top: 0;
             z-index: 20;
-            background: #3b82f6;
-            color: #ffffff;
-            font-weight: 700;
+            background: #f8f9fa;
+            color: #374151;
+            font-weight: 600;
         }
         
         /* Ensure all tables have proper overflow for scrolling */
@@ -2518,15 +2511,6 @@
                     </div>
                 </div>
                 <div class="section-body">
-                    <div class="toolbar">
-                        <button class="btn btn-warning" onclick="clearAllFilters()">Clear Filters</button>
-                        <button class="btn btn-outline" onclick="showColumnToggle()">Show/Hide Columns</button>
-                    </div>
-                    
-                    <div id="columnToggle" class="column-toggle hidden">
-                        <!-- Column toggles will be generated here -->
-                    </div>
-                    
                     <div class="table-container">
                         <table id="crmTable">
                             <thead id="tableHead"></thead>
@@ -2631,7 +2615,7 @@
                             <div class="table-container" style="max-height: 400px;">
                                 <table id="accessRightsUsersTable" style="width: 100%; border-collapse: collapse; font-size: 13px;">
                                     <thead>
-                                        <tr style="background: #3b82f6; color: white;">
+                                        <tr style="background: #f8f9fa; color: #374151;">
                                             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Username</th>
                                             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Role</th>
                                             <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
@@ -2934,9 +2918,9 @@
     <!-- Audit Trail Modal -->
     <div id="auditTrailModal" class="modal">
         <div class="modal-content" style="max-width: 900px; max-height: 85vh;">
-            <div class="modal-header" style="background: #1a237e;">
-                <h2 style="color: white; margin: 0;">Audit Trail - <span id="auditTrailRecordName"></span></h2>
-                <button class="close-btn" onclick="closeModal('auditTrailModal')" style="color: white;">&times;</button>
+            <div class="modal-header" style="background: #f8f9fa; border-bottom: 1px solid #e5e7eb;">
+                <h2 style="color: #1a1a2e; margin: 0;">Audit Trail - <span id="auditTrailRecordName"></span></h2>
+                <button class="close-btn" onclick="closeModal('auditTrailModal')" style="color: #64748b;">&times;</button>
             </div>
             <div class="modal-body" style="max-height: calc(85vh - 140px); overflow-y: auto;">
                 <div id="auditTrailLoading" style="text-align: center; padding: 40px; color: #64748b;">
@@ -2951,7 +2935,7 @@
                 <div id="auditTrailContent" style="display: none;">
                     <table class="audit-trail-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
                         <thead>
-                            <tr style="background: #1a237e; color: white;">
+                            <tr style="background: #f8f9fa; color: #374151;">
                                 <th style="padding: 12px; text-align: left; font-weight: 600; white-space: nowrap;">Date/Time</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600; white-space: nowrap;">User</th>
                                 <th style="padding: 12px; text-align: center; font-weight: 600; white-space: nowrap;">Action</th>
@@ -3738,6 +3722,37 @@
                 console.error('Failed to load CRM data from Supabase:', err);
             }
             return false;
+        }
+
+        async function refreshTableFromSupabase() {
+            try {
+                const { data: records, error } = await supabaseClient.from('contacts').select('*').order('id');
+                if (error) { console.error('Refresh failed:', error); return; }
+                if (records && records.length > 0) {
+                    const allKeys = new Set();
+                    records.forEach(r => Object.keys(r.data || {}).forEach(k => allKeys.add(k)));
+                    headers = Array.from(allKeys);
+                    crmData = records.map(record => ({
+                        id: record.id,
+                        ...record.data
+                    }));
+                    visibleColumns = [];
+                    VISIBLE_COLUMN_NAMES.forEach(colName => {
+                        const idx = headers.findIndex(h => h.trim() === colName);
+                        if (idx !== -1) {
+                            visibleColumns.push(idx);
+                        }
+                    });
+                    if (visibleColumns.length === 0 && headers.length > 0) {
+                        visibleColumns = headers.map((_, idx) => idx);
+                    }
+                } else {
+                    crmData = [];
+                }
+                renderTable();
+            } catch (err) {
+                console.error('Refresh error:', err);
+            }
         }
 
         async function syncLocalDataToBackend(records) {
@@ -5058,8 +5073,8 @@
                 </div>
             `;
 
-            // Render table
-            renderTable();
+            // Refresh table from Supabase to show latest data with IDs
+            await refreshTableFromSupabase();
             showColumnToggle();
         }
 
@@ -5189,8 +5204,8 @@
                 </div>
             `;
 
-            // Render table
-            renderTable();
+            // Refresh table from Supabase to show latest data with IDs
+            await refreshTableFromSupabase();
             showColumnToggle();
         }
 
@@ -6559,7 +6574,11 @@
             saveCRMData();
             
             // Refresh table
-            renderTable();
+            if (newId) {
+                await refreshTableFromSupabase();
+            } else {
+                renderTable();
+            }
             
             // Close modal
             closeModal('newCustomerModal');
