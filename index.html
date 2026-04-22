@@ -273,44 +273,78 @@
             font-weight: 500;
         }
         
-        /* Navigation - Modern Tabs */
-        .nav-tabs {
-            display: flex;
-            gap: 4px;
-            padding: 0 32px;
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
+        /* Sidebar Layout */
+        .sidebar {
+            position: fixed; left: 0; top: 0; bottom: 0;
+            width: 220px; background: #1a1a2e; color: #fff;
+            display: flex; flex-direction: column;
+            z-index: 100; padding-top: 20px;
         }
-        
-        .nav-tab {
-            padding: 16px 24px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            color: var(--text-muted);
+        .sidebar-logo { padding: 0 20px 30px; font-size: 20px; font-weight: 700; }
+        .logo-icon { color: #4361ee; margin-right: 8px; }
+        .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 0 12px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; border-radius: 8px; color: #a0aec0;
+            cursor: pointer; text-decoration: none; font-size: 14px;
             transition: all 0.2s;
-            position: relative;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -1px;
         }
-        
-        .nav-tab.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-            background: rgba(67, 97, 238, 0.05);
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .nav-item.active { background: #4361ee; color: #fff; }
+        .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
+
+        /* Main content */
+        .app-container { margin-left: 220px; height: 100vh; background: #f0f2f5; display: flex; flex-direction: column; }
+
+        /* Top header */
+        .top-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 30px; background: #fff;
+            border-bottom: 1px solid #e5e7eb; flex-shrink: 0;
         }
-        
-        .nav-tab:hover:not(.active) {
-            color: var(--text);
-            background: var(--bg);
+        .page-title { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .header-search input {
+            padding: 8px 14px; border: 1px solid #e5e7eb; border-radius: 8px;
+            font-size: 14px; width: 220px;
         }
-        
+        .header-user-info { display: flex; flex-direction: column; align-items: flex-end; }
+        .header-user-info .user-name { font-weight: 600; font-size: 14px; color: #1a1a2e; }
+        .header-user-info .user-role { font-size: 12px; color: #6b7280; }
+
+        /* Dashboard */
+        .dashboard-welcome { margin-bottom: 8px; }
+        .dashboard-welcome h2 { font-size: 20px; font-weight: 600; color: #1a1a2e; }
+        .dashboard-welcome p { color: #6b7280; font-size: 14px; }
+        .dashboard-actions { margin-bottom: 16px; }
+        .dashboard-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+        .dash-card {
+            background: #fff; border-radius: 12px; padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex; align-items: center; gap: 16px;
+        }
+        .dash-card-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .dash-card-value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+        .dash-card-label { font-size: 13px; color: #6b7280; }
+        .dash-card-sub { font-size: 12px; color: #9ca3af; }
+        .dashboard-alerts { margin-top: 20px; }
+        .dashboard-alert {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 18px; background: #fff; border-radius: 10px;
+            margin-bottom: 10px; border-left: 4px solid #4361ee;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .dashboard-alert.warning { border-left-color: #ff9800; }
+        .dashboard-alert.danger { border-left-color: #f44336; }
+        .dashboard-alert.success { border-left-color: #4caf50; }
+        .dashboard-alert-icon { font-size: 20px; }
+        .dashboard-alert-text { font-size: 14px; color: #374151; }
+        .dashboard-alert-text strong { color: #1a1a2e; }
+
         /* Content Sections */
         .content-wrapper {
             padding: 16px 24px;
-            height: calc(100vh - 120px);
+            flex: 1;
             overflow: hidden;
         }
         
@@ -326,6 +360,7 @@
         .content-section.active {
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
         
         .section-header {
@@ -390,20 +425,21 @@
         }
         
         /* Column-specific minimum widths to prevent text truncation */
-        th:nth-child(1), td:nth-child(1) { min-width: 60px; max-width: 80px; }  /* Actions */
-        th:nth-child(2), td:nth-child(2) { min-width: 60px; }  /* ACCT NO */
-        th:nth-child(3), td:nth-child(3) { min-width: 200px; } /* CLINIC NAME */
-        th:nth-child(4), td:nth-child(4) { min-width: 200px; } /* EMAIL ID MAIN */
-        th:nth-child(5), td:nth-child(5) { min-width: 150px; } /* Contact Name */
-        th:nth-child(6), td:nth-child(6) { min-width: 120px; } /* Contact Tel1 */
-        th:nth-child(7), td:nth-child(7) { min-width: 180px; } /* COMPANY NAME */
-        th:nth-child(8), td:nth-child(8) { min-width: 120px; } /* Date columns */
-        th:nth-child(9), td:nth-child(9) { min-width: 120px; }
-        th:nth-child(10), td:nth-child(10) { min-width: 100px; } /* State */
-        th:nth-child(11), td:nth-child(11) { min-width: 100px; } /* PRODUCT */
-        th:nth-child(12), td:nth-child(12) { min-width: 100px; } /* PRODUCT TYPE */
+        th:nth-child(1), td:nth-child(1) { min-width: 100px; max-width: 120px; }  /* Actions */
+        th:nth-child(2), td:nth-child(2) { min-width: 120px; }  /* Status */
+        th:nth-child(3), td:nth-child(3) { min-width: 100px; }  /* ACCT NO */
+        th:nth-child(4), td:nth-child(4) { min-width: 200px; } /* CLINIC NAME */
+        th:nth-child(5), td:nth-child(5) { min-width: 200px; } /* EMAIL ID MAIN */
+        th:nth-child(6), td:nth-child(6) { min-width: 150px; } /* Contact Name */
+        th:nth-child(7), td:nth-child(7) { min-width: 120px; } /* Contact Tel1 */
+        th:nth-child(8), td:nth-child(8) { min-width: 180px; } /* COMPANY NAME */
+        th:nth-child(9), td:nth-child(9) { min-width: 120px; } /* Date columns */
+        th:nth-child(10), td:nth-child(10) { min-width: 120px; }
+        th:nth-child(11), td:nth-child(11) { min-width: 100px; } /* State */
+        th:nth-child(12), td:nth-child(12) { min-width: 100px; } /* PRODUCT */
+        th:nth-child(13), td:nth-child(13) { min-width: 100px; } /* PRODUCT TYPE */
         /* Default min-width for remaining columns */
-        th:nth-child(n+13), td:nth-child(n+13) { min-width: 100px; }
+        th:nth-child(n+14), td:nth-child(n+14) { min-width: 100px; }
         
         /* All data rows white background */
         tbody tr {
@@ -475,44 +511,72 @@
             position: sticky;
             left: 0;
             z-index: 25;
-            min-width: 50px;
+            min-width: 100px;
             text-align: center;
         }
         
-        th:nth-child(2), td:nth-child(2) {
+        th:nth-child(3), td:nth-child(3) {
             position: sticky;
-            left: 50px;
+            left: 100px;
             z-index: 25;
-            min-width: 80px;
+            min-width: 100px;
         }
         
         /* Header cells for sticky columns - higher z-index */
-        th:first-child, th:nth-child(2) {
+        th:first-child, th:nth-child(3) {
             z-index: 30;
             background: #f8f9fa;
         }
         
         /* Filter row cells for sticky columns */
-        .filter-row th:first-child, .filter-row th:nth-child(2) {
+        .filter-row th:first-child, .filter-row th:nth-child(3) {
             z-index: 25;
             background: #f8fafc !important;
         }
         
         /* Data cells for sticky columns */
-        td:first-child, td:nth-child(2) {
+        td:first-child, td:nth-child(3) {
             border-right: 2px solid #e5e7eb;
             background: inherit;
         }
         
         /* Sticky columns background */
         tbody tr td:first-child,
-        tbody tr td:nth-child(2) {
+        tbody tr td:nth-child(3) {
             background-color: #ffffff;
         }
         
         tbody tr:hover td:first-child,
-        tbody tr:hover td:nth-child(2) {
+        tbody tr:hover td:nth-child(3) {
             background-color: #f8fafc !important;
+        }
+
+        /* CRM Table Specific Styles */
+        .crm-table th {
+            background: #f8f9fa;
+            color: #374151;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .crm-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+        .crm-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        /* Section Card Utility */
+        .section-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         
         /* Audit Trail Table Styles */
@@ -940,15 +1004,120 @@
             border: 1px solid var(--border);
         }
         
-        /* Row Options Dropdown */
-        .row-options select {
-            padding: 4px 6px;
-            font-size: 11px;
-            border: 1px solid var(--border);
+        /* Row Action Buttons */
+        .action-cell {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            align-items: center;
+        }
+        .action-btn {
+            width: 32px;
+            height: 32px;
             border-radius: 6px;
-            background: white;
+            border: 1px solid #e5e7eb;
+            background: #fff;
             cursor: pointer;
-            min-width: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .view-btn:hover:not(:disabled) {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+        .edit-btn:hover:not(:disabled) {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .delete-btn:hover:not(:disabled) {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status-expiring {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .status-expired {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .status-na {
+            background: #f5f5f5;
+            color: #9e9e9e;
+        }
+
+        /* Table Footer & Pagination */
+        .table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-top: 1px solid #e5e7eb;
+            border-radius: 0 0 8px 8px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .pagination {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .page-btn {
+            min-width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #374151;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+        }
+        .page-btn.active {
+            background: #4361ee;
+            color: #fff;
+            border-color: #4361ee;
+        }
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .rows-select {
+            padding: 6px 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
         }
         
         /* Permission row */
@@ -1918,19 +2087,6 @@
             cursor: pointer;
         }
         
-        /* Row options dropdown */
-        .row-options {
-            position: relative;
-        }
-        
-        .row-options select {
-            padding: 5px;
-            font-size: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            min-width: 120px;
-        }
-        
         /* ==================== JOBSHEET MODULE STYLES ==================== */
         
         /* Jobsheet form modal - full screen overlay */
@@ -2477,46 +2633,129 @@
 
     <!-- Main Application -->
     <div id="mainApp" class="hidden">
-        <!-- Header -->
-        <div class="header">
-            <h1>CRM Management System</h1>
-            <div class="user-info">
-                <span id="currentUserDisplay" class="user-name"></span>
-                <span id="currentRoleDisplay" class="badge"></span>
-                <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <span class="logo-icon">&#9670;</span>
+                <span class="logo-text">CRM System</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
+                    <span class="nav-icon">&#128202;</span> Dashboard
+                </a>
+                <a class="nav-item" data-section="crmData" onclick="showSection('crmData')">
+                    <span class="nav-icon">&#128101;</span> Customers
+                </a>
+                <a class="nav-item" data-section="licenseKey" onclick="showSection('licenseKey')">
+                    <span class="nav-icon">&#128273;</span> License Key
+                </a>
+                <a class="nav-item" data-section="reports" onclick="showSection('reports')">
+                    <span class="nav-icon">&#128203;</span> Reports
+                </a>
+                <a class="nav-item" data-section="jobsheet" onclick="showSection('jobsheet')">
+                    <span class="nav-icon">&#128221;</span> Jobsheet
+                </a>
+                <a class="nav-item" data-section="settings" id="sidebarSettingsTab" onclick="showSection('settings')">
+                    <span class="nav-icon">&#9881;</span> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a class="nav-item" onclick="logout()">
+                    <span class="nav-icon">&#128682;</span> Logout
+                </a>
             </div>
         </div>
 
-        <!-- Navigation -->
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showSection('crmData')">CRM Data</button>
+        <!-- Main Content -->
+        <div class="app-container">
+            <!-- Top Header -->
+            <div class="top-header">
+                <h1 class="page-title" id="pageTitle">CRM Dashboard</h1>
+                <div class="header-right">
+                    <div class="header-search">
+                        <input type="text" placeholder="Search customers..." id="globalSearch">
+                    </div>
+                    <div class="header-user-info">
+                        <span class="user-name" id="headerUserName">Admin</span>
+                        <span class="user-role" id="headerUserRole">Administrator</span>
+                    </div>
+                </div>
+            </div>
 
-            <button class="nav-tab" onclick="showSection('licenseKey')">License Key</button>
-            <button class="nav-tab" onclick="showSection('reports')">Reports</button>
-            <button class="nav-tab" onclick="showSection('jobsheet')">Jobsheet</button>
-            <button class="nav-tab" id="settingsTab" onclick="showSection('settings')">Settings</button>
+            <div class="content-wrapper">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="content-section active">
+                    <div class="dashboard-welcome">
+                        <h2>Welcome back, <span id="dashboardUserName">Admin</span>!</h2>
+                        <p>Here's what's happening with your customers.</p>
+                    </div>
+                    <div class="dashboard-actions">
+                        <button class="btn btn-primary" onclick="showNewCustomerModal()">+ New Customer</button>
+                    </div>
+                    <div class="dashboard-cards">
+                        <div class="dash-card">
+                            <div class="dash-card-icon" style="background:#e8f5e9;color:#4caf50;">&#128101;</div>
+                            <div class="dash-card-info">
+                                <div class="dash-card-label">Total Customers</div>
+                                <div class="dash-card-value" id="dashTotalCustomers">0</div>
+                                <div class="dash-card-sub">All registered customers</div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-card-icon" style="background:#e8f5e9;color:#4caf50;">&#9989;</div>
+                            <div class="dash-card-info">
+                                <div class="dash-card-label">Active Licenses</div>
+                                <div class="dash-card-value" id="dashActiveLicenses">0</div>
+                                <div class="dash-card-sub">Currently active</div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-card-icon" style="background:#fff3e0;color:#ff9800;">&#9888;</div>
+                            <div class="dash-card-info">
+                                <div class="dash-card-label">Expiring Soon</div>
+                                <div class="dash-card-value" id="dashExpiringSoon">0</div>
+                                <div class="dash-card-sub">Next 30 days</div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-card-icon" style="background:#ffebee;color:#f44336;">&#10060;</div>
+                            <div class="dash-card-info">
+                                <div class="dash-card-label">Expired Licenses</div>
+                                <div class="dash-card-value" id="dashExpiredLicenses">0</div>
+                                <div class="dash-card-sub">Needs attention</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-alerts" id="dashboardAlerts">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
 
-        </div>
-
-        <div class="content-wrapper">
-            <!-- CRM Data Section -->
-            <div id="crmData" class="content-section active">
+                <!-- CRM Data Section -->
+                <div id="crmData" class="content-section">
                 <div class="section-header">
                     <h2>Customer Records</h2>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 10px; flex-shrink: 0;">
                         <button class="btn btn-success" onclick="showNewCustomerModal()">+ New Customer</button>
                         <button class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
                     </div>
                 </div>
                 <div class="section-body">
                     <div class="table-container">
-                        <table id="crmTable">
+                        <table id="crmTable" class="crm-table">
                             <thead id="tableHead"></thead>
                             <tbody id="tableBody"></tbody>
                         </table>
                     </div>
-                    
-                    <!-- Pagination removed - all rows displayed with scrolling -->
+                    <div class="table-footer" id="tableFooter" style="display: none;">
+                        <span class="table-info" id="tableInfo">Showing 0 to 0 of 0 entries</span>
+                        <div class="pagination" id="paginationControls"></div>
+                        <select class="rows-select" onchange="changeRowsPerPage(this.value)">
+                            <option value="25">25 rows</option>
+                            <option value="50">50 rows</option>
+                            <option value="100" selected>100 rows</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -2524,7 +2763,7 @@
             <div id="licenseKey" class="content-section">
                 <div class="section-header">
                     <h2>License Key Management</h2>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 10px; flex-shrink: 0;">
                         <button class="btn btn-outline" onclick="exportLicenseKeys()">Export License Keys</button>
                     </div>
                 </div>
@@ -2714,6 +2953,7 @@
             </div>
         </div>
     </div>
+</div>
 
     <!-- Add User Modal -->
     <div id="addUserModal" class="modal">
@@ -3310,12 +3550,13 @@
         let headers = [];
         let users = [];
         let currentPage = 1;
-        let rowsPerPage = 999999; // Show all rows - no pagination
+        let rowsPerPage = 100;
         let visibleColumns = [];
         let columnFilters = {};
         let editingCell = null;
         let selectedRows = new Set();
         let pendingChanges = {}; // Store pending edits
+        let currentFilteredData = null; // Holds filtered data when search/filters are active
         let currentEditingLicenseKeyRow = null;
         let currentViewingLicenseKeyRow = null;
         let licenseKeySearchTimer = null;
@@ -3518,6 +3759,24 @@
             return Math.round((date2 - date1) / oneDay);
         }
 
+        // Get computed status badge for a row based on CMS/MHIS MTN END DATE
+        function getRowStatus(row) {
+            const endDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
+            if (!endDate) {
+                return { label: 'N/A', class: 'status-na' };
+            }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((endDate - today) / (24 * 60 * 60 * 1000));
+            if (diffDays < 0) {
+                return { label: 'Expired', class: 'status-expired' };
+            }
+            if (diffDays <= 30) {
+                return { label: 'Expiring Soon', class: 'status-expiring' };
+            }
+            return { label: 'Active', class: 'status-active' };
+        }
+
         // Define the 22 columns to display (in specified order)
         const VISIBLE_COLUMN_NAMES = [
             'ACCT NO',
@@ -3568,21 +3827,31 @@
         async function showApp() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('currentUserDisplay').textContent = currentUser.username;
-            document.getElementById('currentRoleDisplay').textContent = currentUser.role;
-            document.getElementById('currentRoleDisplay').className = 'badge badge-' + currentUser.role;
+            
+            // Update header user info
+            document.getElementById('headerUserName').textContent = currentUser.username;
+            document.getElementById('headerUserRole').textContent = currentUser.role;
+            document.getElementById('dashboardUserName').textContent = currentUser.username;
 
-            // Show/hide admin tabs
-            if (currentUser.role !== 'admin') {
-                document.getElementById('usersTab').classList.add('hidden');
-                document.getElementById('settingsTab').classList.add('hidden');
+            // Show/hide admin-only sidebar items
+            const settingsTab = document.getElementById('sidebarSettingsTab');
+            if (settingsTab) {
+                if (currentUser.role !== 'admin') {
+                    settingsTab.classList.add('hidden');
+                } else {
+                    settingsTab.classList.remove('hidden');
+                }
             }
 
-            // Always navigate to CRM Data tab after login
+            // Always navigate to Dashboard after login
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('crmData').classList.add('active');
-            document.getElementById('crmDataTab').classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+            document.getElementById('dashboard').classList.add('active');
+            const dashboardNav = document.querySelector('.nav-item[data-section="dashboard"]');
+            if (dashboardNav) {
+                dashboardNav.classList.add('active');
+            }
+            document.getElementById('pageTitle').textContent = 'CRM Dashboard';
 
             // Load access rights from API
             await loadAccessRights();
@@ -3594,6 +3863,9 @@
 
             // Always render table (even if empty to show headers)
             renderTable();
+            
+            // Render dashboard
+            renderDashboard();
         }
 
         function showLoginScreen() {
@@ -3645,10 +3917,11 @@
                     headers = allKeys;
                     
                     // Convert records to the format crmData expects
-                    crmData = records.map(record => {
+                    crmData = records.map((record, idx) => {
                         const row = {};
                         // Keep the id
                         row.id = record.id;
+                        row._rowIndex = idx;
                         // Flatten data fields
                         allKeys.forEach(key => {
                             row[key] = record.data[key] || '';
@@ -3701,8 +3974,9 @@
                     const allKeys = new Set();
                     records.forEach(r => Object.keys(r.data || {}).forEach(k => allKeys.add(k)));
                     headers = Array.from(allKeys);
-                    crmData = records.map(record => ({
+                    crmData = records.map((record, idx) => ({
                         id: record.id,
+                        _rowIndex: idx,
                         ...record.data
                     }));
                     visibleColumns = [];
@@ -3782,15 +4056,120 @@
             showLoginScreen();
         }
 
+        function renderDashboard() {
+            if (!crmData || crmData.length === 0) {
+                document.getElementById('dashTotalCustomers').textContent = '0';
+                document.getElementById('dashActiveLicenses').textContent = '0';
+                document.getElementById('dashExpiringSoon').textContent = '0';
+                document.getElementById('dashExpiredLicenses').textContent = '0';
+                document.getElementById('dashboardAlerts').innerHTML = '';
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const thirtyDaysFromNow = new Date(today);
+            thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+            const sevenDaysFromNow = new Date(today);
+            sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+            let total = crmData.length;
+            let active = 0;
+            let expiringSoon = 0;
+            let expired = 0;
+            let expiring7Days = 0;
+
+            crmData.forEach(row => {
+                const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
+                if (!mtnEndDate) return;
+
+                if (mtnEndDate < today) {
+                    expired++;
+                } else if (mtnEndDate <= thirtyDaysFromNow) {
+                    expiringSoon++;
+                    if (mtnEndDate <= sevenDaysFromNow) {
+                        expiring7Days++;
+                    }
+                } else {
+                    active++;
+                }
+            });
+
+            document.getElementById('dashTotalCustomers').textContent = total;
+            document.getElementById('dashActiveLicenses').textContent = active;
+            document.getElementById('dashExpiringSoon').textContent = expiringSoon;
+            document.getElementById('dashExpiredLicenses').textContent = expired;
+
+            // Generate alerts
+            const alertsContainer = document.getElementById('dashboardAlerts');
+            const alerts = [];
+
+            if (expiring7Days > 0) {
+                alerts.push({
+                    type: 'warning',
+                    icon: '\u26A0\uFE0F',
+                    text: `<strong>${expiring7Days}</strong> licenses will expire in 7 days. Please renew soon.`
+                });
+            } else if (expiringSoon > 0) {
+                alerts.push({
+                    type: 'warning',
+                    icon: '\u26A0\uFE0F',
+                    text: `<strong>${expiringSoon}</strong> licenses will expire in the next 30 days.`
+                });
+            }
+
+            if (expired > 0) {
+                alerts.push({
+                    type: 'danger',
+                    icon: '\u274C',
+                    text: `<strong>${expired}</strong> licenses have expired. Immediate action required.`
+                });
+            }
+
+            if (alerts.length === 0) {
+                alerts.push({
+                    type: 'success',
+                    icon: '\u2705',
+                    text: 'All licenses are healthy. No immediate action required.'
+                });
+            }
+
+            alertsContainer.innerHTML = alerts.map(a => `
+                <div class="dashboard-alert ${a.type}">
+                    <span class="dashboard-alert-icon">${a.icon}</span>
+                    <span class="dashboard-alert-text">${a.text}</span>
+                </div>
+            `).join('');
+        }
+
         // Navigation
         async function showSection(sectionId) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
             
             document.getElementById(sectionId).classList.add('active');
-            event.target.classList.add('active');
+            
+            // Find the nav item that corresponds to this section
+            const navItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+            
+            // Update page title
+            const pageTitles = {
+                'dashboard': 'CRM Dashboard',
+                'crmData': 'Customers',
+                'licenseKey': 'License Key',
+                'reports': 'Reports',
+                'jobsheet': 'Jobsheet',
+                'settings': 'Settings',
+                'userManagement': 'User Management'
+            };
+            document.getElementById('pageTitle').textContent = pageTitles[sectionId] || 'CRM System';
 
-            if (sectionId === 'userManagement') {
+            if (sectionId === 'dashboard') {
+                renderDashboard();
+            } else if (sectionId === 'userManagement') {
                 renderUserList();
             } else if (sectionId === 'licenseKey') {
                 renderLicenseKeyTable();
@@ -4906,6 +5285,7 @@
             const thead = document.getElementById('tableHead');
             let headerHTML = '<tr>';
             headerHTML += '<th>Actions</th>';
+            headerHTML += '<th>Status</th>';
             
             visibleColumns.forEach(colIdx => {
                 if (headers[colIdx]) {
@@ -4917,11 +5297,12 @@
             // Add filter row
             headerHTML += '<tr class="filter-row">';
             headerHTML += '<th></th>';
+            headerHTML += '<th></th>';
             visibleColumns.forEach(colIdx => {
                 if (headers[colIdx]) {
                     const filterValue = columnFilters[colIdx] || '';
                     const colName = headers[colIdx];
-                    headerHTML += `<th><input type="text" class="col-filter" placeholder="Search ${escapeHtml(colName)}..." value="${escapeHtml(filterValue)}" onkeyup="applyColumnFilter(${colIdx}, this.value)" onchange="applyColumnFilter(${colIdx}, this.value)"></th>`;
+                    headerHTML += `<th><input type="text" class="col-filter" placeholder="Search..." value="${escapeHtml(filterValue)}" onkeyup="applyColumnFilter(${colIdx}, this.value)" onchange="applyColumnFilter(${colIdx}, this.value)"></th>`;
                 }
             });
             headerHTML += '</tr>';
@@ -4930,15 +5311,18 @@
 
             // If no data, show friendly empty state but keep headers visible
             if (crmData.length === 0) {
-                const colCount = visibleColumns.length > 0 ? visibleColumns.length + 1 : 2;
+                const colCount = visibleColumns.length > 0 ? visibleColumns.length + 2 : 3;
                 document.getElementById('tableBody').innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;padding:24px;color:var(--text-muted);">No data available. Use the <strong>New Customer</strong> button to add records.</td></tr>`;
                 updateDeleteSelectedButton();
+                renderPaginationControls(0);
                 return;
             }
 
-            // Render body with all rows (no pagination)
+            // Reset filtered data since we're showing full table
+            currentFilteredData = null;
+            
+            // Render body with pagination
             renderTableBody();
-            // Pagination removed - showing all rows
             
             // Update delete button state
             updateDeleteSelectedButton();
@@ -4963,14 +5347,16 @@
                 const isSelected = selectedRows.has(globalIdx);
                 bodyHTML += `<tr data-row-index="${globalIdx}">`;
                 
-                // Options dropdown - disable edit/delete based on permissions
-                bodyHTML += `<td class="row-options">
-                    <select onchange="handleRowOption(${globalIdx}, this.value)">
-                        <option value="">-- Select --</option>
-                        <option value="view">View Details</option>
-                        <option value="delete" ${!canDelete ? 'disabled' : ''}>Delete</option>
-                    </select>
+                // Action buttons
+                bodyHTML += `<td class="action-cell">
+                    <button class="action-btn view-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">&#128065;</button>
+                    <button class="action-btn edit-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">&#9998;</button>
+                    <button class="action-btn delete-btn" onclick="handleRowOption(${globalIdx}, 'delete')" ${!canDelete ? 'disabled' : ''} title="Delete">&#128465;</button>
                 </td>`;
+
+                // Status badge
+                const status = getRowStatus(row);
+                bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
 
                 visibleColumns.forEach(colIdx => {
                     if (headers[colIdx]) {
@@ -4995,17 +5381,99 @@
 
             tbody.innerHTML = bodyHTML || '<tr><td colspan="100">No visible data</td></tr>';
             
+            // Render pagination controls
+            renderPaginationControls(crmData.length);
+            
             // Update delete selected button visibility based on permission
             updateDeleteSelectedButton();
         }
 
-        // Pagination functions removed - now showing all rows with scrolling
-        function renderPagination() {
-            // No-op: pagination disabled, all rows shown
+        // Pagination controls rendering
+        function renderPaginationControls(totalCount) {
+            const footer = document.getElementById('tableFooter');
+            const info = document.getElementById('tableInfo');
+            const controls = document.getElementById('paginationControls');
+            
+            if (totalCount === 0) {
+                footer.style.display = 'none';
+                return;
+            }
+            
+            footer.style.display = 'flex';
+            
+            const totalPages = Math.ceil(totalCount / rowsPerPage);
+            const start = totalCount === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+            const end = Math.min(currentPage * rowsPerPage, totalCount);
+            info.textContent = `Showing ${start} to ${end} of ${totalCount} entries`;
+            
+            let html = '';
+            html += `<button class="page-btn" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>&#8249;</button>`;
+            
+            // Show page numbers
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            if (startPage > 1) {
+                html += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+                if (startPage > 2) html += `<span style="padding:0 4px;">...</span>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<span style="padding:0 4px;">...</span>`;
+                html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+            
+            html += `<button class="page-btn" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>&#8250;</button>`;
+            controls.innerHTML = html;
         }
 
         function goToPage(page) {
-            // No-op: pagination disabled
+            currentPage = page;
+            if (currentFilteredData) {
+                renderFilteredTable(currentFilteredData);
+            } else {
+                renderTable();
+            }
+        }
+
+        function changePage(delta) {
+            const searchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
+            const hasSearch = searchEl && searchEl.value !== '';
+            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0;
+            const data = (isFiltered && currentFilteredData) ? currentFilteredData : crmData;
+            const totalPages = Math.ceil(data.length / rowsPerPage);
+            
+            currentPage += delta;
+            if (currentPage < 1) currentPage = 1;
+            if (totalPages > 0 && currentPage > totalPages) currentPage = totalPages;
+            
+            if (isFiltered && currentFilteredData) {
+                renderFilteredTable(currentFilteredData);
+            } else {
+                renderTable();
+            }
+        }
+
+        function changeRowsPerPage(value) {
+            rowsPerPage = parseInt(value, 10);
+            currentPage = 1;
+            const searchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
+            const hasSearch = searchEl && searchEl.value !== '';
+            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0;
+            
+            if (isFiltered && currentFilteredData) {
+                renderFilteredTable(currentFilteredData);
+            } else {
+                renderTable();
+            }
         }
 
         // Row Options
@@ -5349,6 +5817,12 @@
                 }
                 
                 crmData.splice(rowIndex, 1);
+                
+                // Re-index remaining rows
+                crmData.forEach((row, idx) => {
+                    row._rowIndex = idx;
+                });
+                
                 saveCRMData();
                 renderTable();
             }
@@ -6366,8 +6840,10 @@
 
         function clearAllFilters() {
             columnFilters = {};
-            document.getElementById('searchInput').value = '';
+            const searchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
+            if (searchEl) searchEl.value = '';
             currentPage = 1;
+            currentFilteredData = null;
             renderTable();
         }
 
@@ -6382,7 +6858,8 @@
             
             // Set new timer with 300ms debounce
             searchTimer = setTimeout(() => {
-                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const searchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
+                const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
                 
                 if (!searchTerm && Object.keys(columnFilters).length === 0) {
                     renderTable();
@@ -6408,6 +6885,9 @@
                     return true;
                 });
 
+                // Store filtered data for pagination
+                currentFilteredData = filtered;
+                
                 // Render filtered data
                 renderFilteredTable(filtered);
             }, 300);
@@ -6415,25 +6895,30 @@
 
         function renderFilteredTable(filteredData) {
             const tbody = document.getElementById('tableBody');
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const pageData = filteredData.slice(start, end);
             let bodyHTML = '';
             
             // Check module-level permissions
             const hasEditPermission = hasPermission('crm', 'edit');
             const hasDeletePermission = hasPermission('crm', 'delete');
             
-            filteredData.forEach((row, idx) => {
+            pageData.forEach((row, idx) => {
                 const globalIdx = row._rowIndex;
                 const canEdit = hasEditPermission;
                 const canDelete = hasDeletePermission;
 
                 bodyHTML += `<tr data-row-index="${globalIdx}">`;
-                bodyHTML += `<td class="row-options">
-                    <select onchange="handleRowOption(${globalIdx}, this.value)">
-                        <option value="">-- Select --</option>
-                        <option value="view">View Details</option>
-                        <option value="delete" ${!canDelete ? 'disabled' : ''}>Delete</option>
-                    </select>
+                bodyHTML += `<td class="action-cell">
+                    <button class="action-btn view-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">&#128065;</button>
+                    <button class="action-btn edit-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">&#9998;</button>
+                    <button class="action-btn delete-btn" onclick="handleRowOption(${globalIdx}, 'delete')" ${!canDelete ? 'disabled' : ''} title="Delete">&#128465;</button>
                 </td>`;
+
+                // Status badge
+                const status = getRowStatus(row);
+                bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
 
                 visibleColumns.forEach(colIdx => {
                     if (headers[colIdx]) {
@@ -6450,7 +6935,9 @@
             });
 
             tbody.innerHTML = bodyHTML || '<tr><td colspan="100">No matching results</td></tr>';
-            // Pagination removed - all filtered results displayed
+            
+            // Render pagination controls for filtered data
+            renderPaginationControls(filteredData.length);
         }
 
         // Column Toggle - only show the 18 predefined columns
