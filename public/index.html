@@ -8768,10 +8768,10 @@
             const cu = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
             const isAdmin = cu.role === 'admin';
             const isCreator = task.created_by && (String(task.created_by) === String(cu.id) || task.created_by === cu.username);
-            const isAssigned = task.assigned_to && String(task.assigned_to) === String(cu.id);
+            const isAssigned = task.assigned_to && (String(task.assigned_to) === String(cu.id) || task.assigned_to === cu.username);
             return {
                 canComplete: isAdmin || isAssigned || isCreator,
-                canEdit: isAdmin || isCreator,
+                canEdit: isAdmin || isCreator || isAssigned,
                 canDelete: isAdmin || isCreator
             };
         }
@@ -8850,10 +8850,9 @@
             if (!title) { showToast('Title is required', 'error'); return; }
             if (!dueDate) { showToast('Due date is required', 'error'); return; }
             const { data: task } = await supabaseClient.from('tasks').select('*').eq('id', editingTaskId).single();
-            if (task) {
-                const perm = getTaskPermissions(task);
-                if (!perm.canEdit) { showToast('You do not have permission to edit this task', 'error'); return; }
-            }
+            if (!task) { showToast('Task not found', 'error'); return; }
+            const perm = getTaskPermissions(task);
+            if (!perm.canEdit) { showToast('You do not have permission to edit this task', 'error'); return; }
             const { error } = await supabaseClient.from('tasks').update({
                 title, description, due_date: dueDate, status, assigned_to: assignedTo || null
             }).eq('id', editingTaskId);
@@ -8866,10 +8865,9 @@
         // ===== Delete Task =====
         async function deleteTask(taskId) {
             const { data: task } = await supabaseClient.from('tasks').select('*').eq('id', taskId).single();
-            if (task) {
-                const perm = getTaskPermissions(task);
-                if (!perm.canDelete) { showToast('You do not have permission to delete this task', 'error'); return; }
-            }
+            if (!task) { showToast('Task not found', 'error'); return; }
+            const perm = getTaskPermissions(task);
+            if (!perm.canDelete) { showToast('You do not have permission to delete this task', 'error'); return; }
             openConfirmModal('Are you sure you want to delete this task?', async () => {
                 const { error } = await supabaseClient.from('tasks').delete().eq('id', taskId);
                 if (error) { showToast('Failed to delete task: ' + error.message, 'error'); return; }
@@ -9113,10 +9111,9 @@
             const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
             // Permission check
             const { data: task } = await supabaseClient.from('tasks').select('*').eq('id', taskId).single();
-            if (task) {
-                const perm = getTaskPermissions(task);
-                if (!perm.canComplete) { showToast('You do not have permission to complete this task', 'error'); return; }
-            }
+            if (!task) { showToast('Task not found', 'error'); return; }
+            const perm = getTaskPermissions(task);
+            if (!perm.canComplete) { showToast('You do not have permission to complete this task', 'error'); return; }
             const { error } = await supabaseClient.from('tasks')
                 .update({ status: 'Completed', completed_at: new Date().toISOString() })
                 .eq('id', taskId);
