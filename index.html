@@ -2202,6 +2202,109 @@
         .profile-form input:focus {
             border-color: #4361ee; outline: none; box-shadow: 0 0 0 3px rgba(67,97,238,0.1);
         }
+
+        /* Pipeline Stepper */
+        .pipeline-stepper {
+            display: flex; gap: 4px; margin-bottom: 20px; padding: 16px;
+            background: #f8fafc; border-radius: 10px;
+        }
+        .pipeline-stage {
+            flex: 1; text-align: center; padding: 10px 8px; border-radius: 6px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            background: #e5e7eb; color: #6b7280; transition: all 0.2s;
+        }
+        .pipeline-stage.active { background: #4361ee; color: #fff; }
+        .pipeline-stage.completed { background: #10b981; color: #fff; }
+        .pipeline-stage.lost { background: #ef4444; color: #fff; }
+        .pipeline-stage:hover { opacity: 0.8; }
+
+        /* Modal Tabs */
+        .modal-tabs {
+            display: flex; gap: 4px; border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 16px; padding: 0 24px;
+        }
+        .modal-tab {
+            padding: 10px 16px; font-size: 13px; font-weight: 600;
+            color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .modal-tab:hover { color: #4361ee; }
+        .modal-tab.active { color: #4361ee; border-bottom-color: #4361ee; }
+
+        /* Activity Timeline */
+        .activity-timeline { padding: 16px 0; }
+        .activity-item {
+            display: flex; gap: 12px; margin-bottom: 16px; position: relative;
+            padding-left: 32px;
+        }
+        .activity-item::before {
+            content: ''; position: absolute; left: 10px; top: 28px;
+            bottom: -16px; width: 2px; background: #e5e7eb;
+        }
+        .activity-item:last-child::before { display: none; }
+        .activity-icon {
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; position: absolute; left: 0; top: 2px;
+            z-index: 1;
+        }
+        .activity-icon.note { background: #dbeafe; }
+        .activity-icon.call { background: #d1fae5; }
+        .activity-icon.email { background: #fef3c7; }
+        .activity-icon.meeting { background: #ede9fe; }
+        .activity-icon.stage_change { background: #e0e7ff; }
+        .activity-icon.task_created { background: #fce7f3; }
+        .activity-icon.task_completed { background: #d1fae5; }
+        .activity-content { flex: 1; }
+        .activity-text { font-size: 13px; color: #374151; }
+        .activity-meta { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+        .add-activity-bar {
+            display: flex; gap: 8px; align-items: center;
+            padding: 12px 0; border-top: 1px solid #e5e7eb; margin-top: 8px;
+        }
+        .add-activity-bar select {
+            padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px;
+            font-size: 13px; background: #fff;
+        }
+        .add-activity-bar input {
+            flex: 1; padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px;
+            font-size: 13px;
+        }
+
+        /* Task List Styles */
+        .task-list-container { padding: 16px 0; }
+        .task-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; background: #fff; border-radius: 8px;
+            border: 1px solid #e5e7eb; margin-bottom: 10px;
+        }
+        .task-item.overdue { background: #fef2f2; border-color: #fca5a5; }
+        .task-item.due-today { background: #fff7ed; border-color: #fdba74; }
+        .task-item.due-soon { background: #fefce8; border-color: #fde047; }
+        .task-checkbox {
+            width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;
+        }
+        .task-info { flex: 1; }
+        .task-title { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+        .task-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+        .task-due { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 12px; }
+        .task-due.overdue { color: #dc2626; background: #fecaca; }
+        .task-due.due-today { color: #c2410c; background: #fed7aa; }
+        .task-due.due-soon { color: #a16207; background: #fef08a; }
+        .task-actions { display: flex; gap: 6px; }
+
+        /* Tasks page filter buttons */
+        .task-filter-bar {
+            display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+            align-items: center;
+        }
+        .task-filter-btn {
+            padding: 6px 14px; border-radius: 6px; font-size: 13px;
+            border: 1px solid #d1d5db; background: #fff; color: #374151;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .task-filter-btn:hover { background: #f3f4f6; }
+        .task-filter-btn.active { background: #4361ee; color: #fff; border-color: #4361ee; }
     </style>
 </head>
 <body>
@@ -2246,6 +2349,9 @@
                 </a>
                 <a class="nav-item" data-section="reports" onclick="showSection('reports')">
                     <span class="nav-icon">&#128203;</span> Reports
+                </a>
+                <a class="nav-item" data-section="tasks" onclick="showSection('tasks')">
+                    <span class="nav-icon">&#128203;</span> Tasks
                 </a>
                 <a class="nav-item" data-section="settings" id="sidebarSettingsTab" onclick="showSection('settings')">
                     <span class="nav-icon">&#9881;</span> Settings
@@ -2351,6 +2457,15 @@
                         </select>
                         <select id="customerProductFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
                             <option value="">All Products</option>
+                        </select>
+                        <select id="customerPipelineFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
+                            <option value="">All Pipeline Stages</option>
+                            <option value="Lead">Lead</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Demo">Demo</option>
+                            <option value="Quotation">Quotation</option>
+                            <option value="Won">Won</option>
+                            <option value="Lost">Lost</option>
                         </select>
                         <button class="btn btn-warning" onclick="clearCustomerFilters()">Clear Filters</button>
                     </div>
@@ -2533,6 +2648,40 @@
                         <div id="cloudBackupDetailContainer" class="maintenance-detail-container" style="display: none;"></div>
                     </div>
                     
+                </div>
+            </div>
+
+            <!-- Tasks Section -->
+            <div id="tasks" class="content-section">
+                <div class="section-header">
+                    <h2>Tasks</h2>
+                    <button class="btn btn-primary" onclick="openCreateTaskModal()">+ New Task</button>
+                </div>
+                <div class="section-body">
+                    <div class="task-filter-bar">
+                        <button class="task-filter-btn active" data-filter="all" onclick="setTaskFilter('all')">All</button>
+                        <button class="task-filter-btn" data-filter="my" onclick="setTaskFilter('my')">My Tasks</button>
+                        <button class="task-filter-btn" data-filter="overdue" onclick="setTaskFilter('overdue')">Overdue</button>
+                        <button class="task-filter-btn" data-filter="today" onclick="setTaskFilter('today')">Today</button>
+                        <button class="task-filter-btn" data-filter="this_week" onclick="setTaskFilter('this_week')">This Week</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="tasksTable">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Title</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasksTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -2867,6 +3016,42 @@
         </div>
     </div>
 
+    <!-- Create Task Modal -->
+    <div id="createTaskModal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Create Task</h2>
+                <button class="close-btn" onclick="closeCreateTaskModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Customer</label>
+                    <select id="taskCustomerSelect" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;"></select>
+                </div>
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="taskTitle" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="taskDescription" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Due Date *</label>
+                    <input type="date" id="taskDueDate" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label>Assigned To</label>
+                    <input type="text" id="taskAssignedTo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateTaskModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global State
         let currentUser = null;
@@ -2884,6 +3069,9 @@
         let currentEditingLicenseKeyRow = null;
         let currentViewingLicenseKeyRow = null;
         let licenseKeySearchTimer = null;
+        let pipelineStagesMap = {};
+        let currentTaskFilter = 'all';
+        let currentViewContactId = null;
         
         // Column options for dropdown fields (like Excel data validation)
         let columnOptions = {};
@@ -3379,9 +3567,23 @@
                     }
                 }
                 populateProductFilter();
+                await loadPipelineStagesMap();
                 renderTable();
             } catch (err) {
                 console.error('Refresh error:', err);
+            }
+        }
+
+        async function loadPipelineStagesMap() {
+            try {
+                const { data, error } = await supabaseClient.from('pipeline_stages').select('contact_id, stage');
+                if (error) { console.error('Pipeline stages load error:', error); return; }
+                pipelineStagesMap = {};
+                if (data) {
+                    data.forEach(ps => { pipelineStagesMap[ps.contact_id] = ps.stage; });
+                }
+            } catch (e) {
+                console.error('Failed to load pipeline stages map:', e);
             }
         }
 
@@ -3630,6 +3832,7 @@
                 'crmData': 'Customers',
                 'licenseKey': 'License Key',
                 'reports': 'Reports',
+                'tasks': 'Tasks',
                 'settings': 'Settings',
                 'users': 'Users',
                 'userManagement': 'User Management',
@@ -3653,6 +3856,8 @@
                     await refreshTableFromSupabase();
                 }
                 await renderAllReports();
+            } else if (sectionId === 'tasks') {
+                await loadAllTasks();
             } else if (sectionId === 'users') {
                 await loadUsers();
             } else if (sectionId === 'profile') {
@@ -4958,6 +5163,7 @@
             currentViewRowIndex = rowIndex;
             const row = crmData[rowIndex];
             const hasEdit = hasPermission('crm', 'edit');
+            currentViewContactId = row.id;
 
             // Get customer identifier for title
             const acctNo = row['ACCT NO'] || '';
@@ -4992,19 +5198,15 @@
 
             // Build form HTML
             let formHTML = '';
-
-            // Render grouped fields as cards
             Object.keys(FIELD_GROUPS).forEach(groupName => {
                 formHTML += renderCard(groupName, FIELD_GROUPS[groupName]);
             });
-
-            // Render remaining fields (not in any group)
             const otherFields = headers.filter(h => !groupedHeaders.has(h));
             if (otherFields.length > 0) {
                 formHTML += renderCard('Status & Other', otherFields);
             }
 
-            // Build modal
+            // Build modal with tabs
             const modal = document.createElement('div');
             modal.id = 'viewDetailsModal';
             modal.className = 'modal active';
@@ -5017,8 +5219,46 @@
                         </div>
                         <button class="close-btn" onclick="closeViewDetailsModal()">&times;</button>
                     </div>
-                    <div style="flex: 1; overflow-y: auto; padding: 20px;">
-                        ${formHTML}
+                    <div class="modal-tabs" style="flex-shrink: 0;">
+                        <div class="modal-tab active" data-tab="details" onclick="switchModalTab('details')">Details</div>
+                        <div class="modal-tab" data-tab="pipeline" onclick="switchModalTab('pipeline')">Pipeline</div>
+                        <div class="modal-tab" data-tab="tasks" onclick="switchModalTab('tasks')">Tasks</div>
+                        <div class="modal-tab" data-tab="activity" onclick="switchModalTab('activity')">Activity</div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding: 0 24px 20px;">
+                        <div id="tab-details" class="modal-tab-content" style="display: block;">
+                            ${formHTML}
+                        </div>
+                        <div id="tab-pipeline" class="modal-tab-content" style="display: none;">
+                            <div class="pipeline-stepper" id="modalPipelineStepper">
+                                <div class="pipeline-stage" data-stage="Lead" onclick="updatePipelineStage('${row.id}', 'Lead')">Lead</div>
+                                <div class="pipeline-stage" data-stage="Contacted" onclick="updatePipelineStage('${row.id}', 'Contacted')">Contacted</div>
+                                <div class="pipeline-stage" data-stage="Demo" onclick="updatePipelineStage('${row.id}', 'Demo')">Demo</div>
+                                <div class="pipeline-stage" data-stage="Quotation" onclick="updatePipelineStage('${row.id}', 'Quotation')">Quotation</div>
+                                <div class="pipeline-stage" data-stage="Won" onclick="updatePipelineStage('${row.id}', 'Won')">Won</div>
+                                <div class="pipeline-stage" data-stage="Lost" onclick="updatePipelineStage('${row.id}', 'Lost')">Lost</div>
+                            </div>
+                        </div>
+                        <div id="tab-tasks" class="modal-tab-content" style="display: none;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                <h3 style="font-size:15px;font-weight:600;color:#1a1a2e;margin:0;">Customer Tasks</h3>
+                                <button class="btn btn-primary btn-sm" onclick="openCreateTaskModalForCustomer('${row.id}')">+ New Task</button>
+                            </div>
+                            <div id="customerTasksList" class="task-list-container"></div>
+                        </div>
+                        <div id="tab-activity" class="modal-tab-content" style="display: none;">
+                            <div class="activity-timeline" id="activityTimeline"></div>
+                            <div class="add-activity-bar">
+                                <select id="activityType">
+                                    <option value="note">Note</option>
+                                    <option value="call">Call</option>
+                                    <option value="email">Email</option>
+                                    <option value="meeting">Meeting</option>
+                                </select>
+                                <input type="text" id="activityDescription" placeholder="Add a note...">
+                                <button class="btn btn-primary btn-sm" onclick="addActivity()">Add</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer-sticky">
                         <button type="button" class="btn btn-secondary" onclick="closeViewDetailsModal()">Close</button>
@@ -5027,6 +5267,9 @@
                 </div>
             `;
             document.body.appendChild(modal);
+            loadPipelineStage(row.id).then(stage => renderPipelineStepper(stage));
+            loadCustomerTasks(row.id);
+            loadActivities(row.id);
         }
 
         // Helper function to render a form field
@@ -6534,9 +6777,11 @@
             const searchEl = document.getElementById('customerSearchInput');
             const statusEl = document.getElementById('customerStatusFilter');
             const productEl = document.getElementById('customerProductFilter');
+            const pipelineEl = document.getElementById('customerPipelineFilter');
             if (searchEl) searchEl.value = '';
             if (statusEl) statusEl.value = '';
             if (productEl) productEl.value = '';
+            if (pipelineEl) pipelineEl.value = '';
             columnFilters = {};
             currentPage = 1;
             currentFilteredData = null;
@@ -6556,14 +6801,16 @@
                 const searchEl = document.getElementById('customerSearchInput');
                 const statusEl = document.getElementById('customerStatusFilter');
                 const productEl = document.getElementById('customerProductFilter');
+                const pipelineEl = document.getElementById('customerPipelineFilter');
                 const globalSearchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
 
                 const searchTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
                 const statusFilter = statusEl ? statusEl.value : '';
                 const productFilter = productEl ? productEl.value : '';
+                const pipelineFilter = pipelineEl ? pipelineEl.value : '';
                 const globalTerm = globalSearchEl ? globalSearchEl.value.toLowerCase().trim() : '';
 
-                if (!searchTerm && !statusFilter && !productFilter && !globalTerm && Object.keys(columnFilters).length === 0) {
+                if (!searchTerm && !statusFilter && !productFilter && !pipelineFilter && !globalTerm && Object.keys(columnFilters).length === 0) {
                     currentFilteredData = null;
                     renderTable();
                     return;
@@ -6586,6 +6833,11 @@
                     if (productFilter) {
                         const product = String(row['PRODUCT'] || '').toLowerCase();
                         if (product !== productFilter.toLowerCase()) return false;
+                    }
+
+                    if (pipelineFilter) {
+                        const stage = pipelineStagesMap[row.id] || 'Lead';
+                        if (stage !== pipelineFilter) return false;
                     }
 
                     if (globalTerm) {
@@ -8021,6 +8273,326 @@
             }
             
             exportReportPDF(data, columns, displayColumns, title);
+        }
+
+        // ===== Modal Tabs =====
+        function switchModalTab(tabId) {
+            document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.modal-tab-content').forEach(c => c.style.display = 'none');
+            const tab = document.querySelector(`.modal-tab[data-tab="${tabId}"]`);
+            if (tab) tab.classList.add('active');
+            const content = document.getElementById('tab-' + tabId);
+            if (content) content.style.display = 'block';
+        }
+
+        // ===== Pipeline =====
+        function renderPipelineStepper(stage) {
+            const stepper = document.getElementById('modalPipelineStepper');
+            if (!stepper) return;
+            const stages = ['Lead', 'Contacted', 'Demo', 'Quotation', 'Won', 'Lost'];
+            const stageEls = stepper.querySelectorAll('.pipeline-stage');
+            stageEls.forEach(el => {
+                const s = el.getAttribute('data-stage');
+                el.classList.remove('active', 'completed', 'lost');
+                if (stage === 'Lost') {
+                    if (s === 'Lost') el.classList.add('lost');
+                } else {
+                    const idx = stages.indexOf(s);
+                    const currentIdx = stages.indexOf(stage);
+                    if (idx === currentIdx) el.classList.add('active');
+                    else if (idx < currentIdx) el.classList.add('completed');
+                }
+            });
+        }
+
+        async function loadPipelineStage(contactId) {
+            const { data } = await supabaseClient
+                .from('pipeline_stages')
+                .select('*')
+                .eq('contact_id', contactId)
+                .order('updated_at', { ascending: false })
+                .limit(1);
+            const stage = data && data.length > 0 ? data[0].stage : 'Lead';
+            pipelineStagesMap[contactId] = stage;
+            return stage;
+        }
+
+        async function updatePipelineStage(contactId, newStage) {
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const { data: existing } = await supabaseClient
+                .from('pipeline_stages')
+                .select('id')
+                .eq('contact_id', contactId)
+                .limit(1);
+            if (existing && existing.length > 0) {
+                await supabaseClient.from('pipeline_stages')
+                    .update({ stage: newStage, updated_by: currentUser.username, updated_at: new Date().toISOString() })
+                    .eq('contact_id', contactId);
+            } else {
+                await supabaseClient.from('pipeline_stages')
+                    .insert({ contact_id: contactId, stage: newStage, updated_by: currentUser.username });
+            }
+            pipelineStagesMap[contactId] = newStage;
+            await supabaseClient.from('activities').insert({
+                contact_id: contactId,
+                type: 'stage_change',
+                description: `Pipeline stage changed to "${newStage}"`,
+                created_by: currentUser.username
+            });
+            renderPipelineStepper(newStage);
+        }
+
+        // ===== Tasks =====
+        async function loadAllTasks(filter = 'all') {
+            currentTaskFilter = filter;
+            document.querySelectorAll('.task-filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-filter') === filter);
+            });
+            let query = supabaseClient.from('tasks').select('*').order('due_date', { ascending: true });
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const today = new Date().toISOString().split('T')[0];
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+            if (filter === 'my') query = query.eq('assigned_to', currentUser.username);
+            if (filter === 'overdue') query = query.lt('due_date', today).neq('status', 'Completed');
+            if (filter === 'today') query = query.eq('due_date', today);
+            if (filter === 'this_week') query = query.gte('due_date', today).lte('due_date', nextWeekStr);
+
+            const { data, error } = await query;
+            if (error) { console.error(error); return; }
+            renderTasksList(data || []);
+        }
+
+        function renderTasksList(tasks) {
+            const tbody = document.getElementById('tasksTableBody');
+            if (!tbody) return;
+            const today = new Date().toISOString().split('T')[0];
+            const in3Days = new Date(); in3Days.setDate(in3Days.getDate() + 3);
+            const in3Str = in3Days.toISOString().split('T')[0];
+
+            let html = '';
+            tasks.forEach(task => {
+                const customerRow = crmData.find(r => r.id === task.contact_id);
+                const customerName = customerRow ? (customerRow['CLINIC NAME'] || customerRow['ACCT NO'] || 'Unknown') : 'Unknown';
+                let rowClass = '';
+                let dueClass = '';
+                if (task.due_date < today && task.status !== 'Completed') { rowClass = 'overdue'; dueClass = 'overdue'; }
+                else if (task.due_date === today) { rowClass = 'due-today'; dueClass = 'due-today'; }
+                else if (task.due_date <= in3Str) { rowClass = 'due-soon'; dueClass = 'due-soon'; }
+                html += `<tr>
+                    <td>${escapeHtml(customerName)}</td>
+                    <td>${escapeHtml(task.title)}</td>
+                    <td><span class="task-due ${dueClass}">${task.due_date}</span></td>
+                    <td>${escapeHtml(task.status || 'Pending')}</td>
+                    <td>${escapeHtml(task.assigned_to || '-')}</td>
+                    <td>
+                        ${task.status !== 'Completed' ? `<button class="btn btn-success btn-sm" onclick="completeTask(${task.id})">Complete</button>` : '<span style="color:#10b981;font-weight:600;">Done</span>'}
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af;">No tasks found</td></tr>';
+        }
+
+        function setTaskFilter(filter) {
+            loadAllTasks(filter);
+        }
+
+        function openCreateTaskModal() {
+            populateTaskCustomerSelect();
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskDueDate').value = '';
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            document.getElementById('taskAssignedTo').value = currentUser.username || '';
+            document.getElementById('createTaskModal').classList.add('active');
+        }
+
+        function openCreateTaskModalForCustomer(contactId) {
+            populateTaskCustomerSelect(contactId);
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskDueDate').value = '';
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            document.getElementById('taskAssignedTo').value = currentUser.username || '';
+            document.getElementById('createTaskModal').classList.add('active');
+        }
+
+        function closeCreateTaskModal() {
+            document.getElementById('createTaskModal').classList.remove('active');
+        }
+
+        function populateTaskCustomerSelect(selectedId) {
+            const select = document.getElementById('taskCustomerSelect');
+            if (!select) return;
+            let html = '<option value="">-- Select Customer --</option>';
+            crmData.forEach(row => {
+                const label = `${row['ACCT NO'] || ''} - ${row['CLINIC NAME'] || ''}`.replace(/^ - /, '').trim() || 'Unknown';
+                const selected = row.id === selectedId ? 'selected' : '';
+                html += `<option value="${row.id}" ${selected}>${escapeHtml(label)}</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        async function saveTask() {
+            const contactId = document.getElementById('taskCustomerSelect').value;
+            const title = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDescription').value.trim();
+            const dueDate = document.getElementById('taskDueDate').value;
+            const assignedTo = document.getElementById('taskAssignedTo').value.trim();
+            if (!contactId || !title || !dueDate) {
+                alert('Please fill in Customer, Title and Due Date');
+                return;
+            }
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const { error } = await supabaseClient.from('tasks').insert({
+                contact_id: contactId,
+                title,
+                description,
+                due_date: dueDate,
+                assigned_to: assignedTo || currentUser.username,
+                status: 'Pending',
+                created_by: currentUser.username
+            });
+            if (error) { console.error(error); alert('Failed to save task'); return; }
+            await supabaseClient.from('activities').insert({
+                contact_id: contactId,
+                type: 'task_created',
+                description: `Task created: "${title}"`,
+                created_by: currentUser.username
+            });
+            closeCreateTaskModal();
+            if (document.getElementById('tasks').classList.contains('active')) {
+                loadAllTasks(currentTaskFilter);
+            }
+            if (document.getElementById('viewDetailsModal')) {
+                loadCustomerTasks(contactId);
+                loadActivities(contactId);
+            }
+        }
+
+        async function loadCustomerTasks(contactId) {
+            const { data, error } = await supabaseClient.from('tasks')
+                .select('*')
+                .eq('contact_id', contactId)
+                .order('due_date', { ascending: true });
+            if (error) { console.error(error); return; }
+            renderCustomerTasks(data || [], contactId);
+        }
+
+        function renderCustomerTasks(tasks, contactId) {
+            const container = document.getElementById('customerTasksList');
+            if (!container) return;
+            const today = new Date().toISOString().split('T')[0];
+            const in3Days = new Date(); in3Days.setDate(in3Days.getDate() + 3);
+            const in3Str = in3Days.toISOString().split('T')[0];
+
+            let html = '';
+            tasks.forEach(task => {
+                let itemClass = '';
+                let dueClass = '';
+                if (task.due_date < today && task.status !== 'Completed') { itemClass = 'overdue'; dueClass = 'overdue'; }
+                else if (task.due_date === today) { itemClass = 'due-today'; dueClass = 'due-today'; }
+                else if (task.due_date <= in3Str) { itemClass = 'due-soon'; dueClass = 'due-soon'; }
+                html += `<div class="task-item ${itemClass}">
+                    <input type="checkbox" class="task-checkbox" ${task.status === 'Completed' ? 'checked' : ''} onchange="completeTask(${task.id}, '${contactId}')">
+                    <div class="task-info">
+                        <div class="task-title">${escapeHtml(task.title)}</div>
+                        <div class="task-meta">${escapeHtml(task.description || '')} &middot; Assigned to ${escapeHtml(task.assigned_to || '-')}</div>
+                    </div>
+                    <span class="task-due ${dueClass}">${task.due_date}</span>
+                </div>`;
+            });
+            container.innerHTML = html || '<p style="color:#9ca3af;text-align:center;padding:20px;">No tasks for this customer</p>';
+        }
+
+        async function completeTask(taskId, contactId) {
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const { error } = await supabaseClient.from('tasks')
+                .update({ status: 'Completed', completed_at: new Date().toISOString() })
+                .eq('id', taskId);
+            if (error) { console.error(error); return; }
+            const { data: taskData } = await supabaseClient.from('tasks').select('title, contact_id').eq('id', taskId).single();
+            if (taskData) {
+                await supabaseClient.from('activities').insert({
+                    contact_id: taskData.contact_id,
+                    type: 'task_completed',
+                    description: `Task completed: "${taskData.title}"`,
+                    created_by: currentUser.username
+                });
+            }
+            if (document.getElementById('tasks').classList.contains('active')) {
+                loadAllTasks(currentTaskFilter);
+            }
+            if (contactId) {
+                loadCustomerTasks(contactId);
+                loadActivities(contactId);
+            } else if (taskData && taskData.contact_id) {
+                loadCustomerTasks(taskData.contact_id);
+                loadActivities(taskData.contact_id);
+            }
+        }
+
+        // ===== Activity Timeline =====
+        async function loadActivities(contactId) {
+            const { data, error } = await supabaseClient
+                .from('activities')
+                .select('*')
+                .eq('contact_id', contactId)
+                .order('created_at', { ascending: false })
+                .limit(50);
+            if (error) { console.error(error); return; }
+            renderActivityTimeline(data || []);
+        }
+
+        function renderActivityTimeline(activities) {
+            const container = document.getElementById('activityTimeline');
+            if (!container) return;
+            let html = '';
+            activities.forEach(act => {
+                const icon = getActivityIcon(act.type);
+                const date = new Date(act.created_at).toLocaleString();
+                html += `<div class="activity-item">
+                    <div class="activity-icon ${act.type}">${icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-text">${escapeHtml(act.description)}</div>
+                        <div class="activity-meta">${escapeHtml(act.created_by || 'System')} &middot; ${date}</div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html || '<p style="color:#9ca3af;text-align:center;padding:20px;">No activities yet</p>';
+        }
+
+        function getActivityIcon(type) {
+            const icons = {
+                note: '&#128221;',
+                call: '&#128222;',
+                email: '&#128231;',
+                meeting: '&#129309;',
+                stage_change: '&#128202;',
+                task_created: '&#9989;',
+                task_completed: '&#127881;'
+            };
+            return icons[type] || '&#128221;';
+        }
+
+        async function addActivity() {
+            const type = document.getElementById('activityType').value;
+            const description = document.getElementById('activityDescription').value.trim();
+            if (!description) return;
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const contactId = currentViewContactId;
+            if (!contactId) return;
+            const { error } = await supabaseClient.from('activities').insert({
+                contact_id: contactId,
+                type,
+                description,
+                created_by: currentUser.username
+            });
+            if (error) { console.error(error); return; }
+            document.getElementById('activityDescription').value = '';
+            loadActivities(contactId);
         }
 
     </script>
