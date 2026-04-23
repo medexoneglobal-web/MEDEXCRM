@@ -362,6 +362,25 @@
         .header-user-info { display: flex; flex-direction: column; align-items: flex-end; }
         .header-user-info .user-name { font-weight: 600; font-size: 14px; color: #1a1a2e; }
         .header-user-info .user-role { font-size: 12px; color: #6b7280; }
+        
+                .notification-bell { position: relative; cursor: pointer; font-size: 20px; }
+                .notif-badge {
+                    position: absolute; top: -8px; right: -8px;
+                    background: #ef4444; color: #fff; font-size: 10px;
+                    width: 18px; height: 18px; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                }
+                .notification-panel {
+                    position: absolute; top: 60px; right: 30px;
+                    width: 320px; background: #fff; border-radius: 12px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1000;
+                    max-height: 400px; overflow-y: auto; padding: 16px;
+                }
+                .notification-panel h4 { margin-bottom: 12px; font-size: 15px; color: #1a1a2e; }
+                .notif-item { padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+                .notif-item:last-child { border-bottom: none; }
+                .notif-item.unread { font-weight: 600; }
+                .notif-item small { color: #9ca3af; }
 
         /* Dashboard */
         .dashboard-welcome { margin-bottom: 8px; }
@@ -2379,11 +2398,19 @@
                     <div class="header-search">
                         <input type="text" placeholder="Search customers..." id="globalSearch" onkeyup="searchData()">
                     </div>
+                    <div class="notification-bell" onclick="toggleNotificationPanel()">
+                        &#128276; <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+                    </div>
                     <div class="header-user-info">
                         <span class="user-name" id="headerUserName">Admin</span>
                         <span class="user-role" id="headerUserRole">Administrator</span>
                     </div>
                 </div>
+            </div>
+
+            <div id="notificationPanel" class="notification-panel" style="display:none;">
+                <h4>Notifications</h4>
+                <div id="notificationList"></div>
             </div>
 
             <div class="content-wrapper">
@@ -3042,7 +3069,9 @@
                 </div>
                 <div class="form-group">
                     <label>Assigned To</label>
-                    <input type="text" id="taskAssignedTo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                    <select id="taskAssignedTo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                        <option value="">-- Select User --</option>
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -3363,6 +3392,9 @@
             if (stored) {
                 try {
                     currentUser = JSON.parse(stored);
+                    if (!localStorage.getItem('crmCurrentUser')) {
+                        localStorage.setItem('crmCurrentUser', stored);
+                    }
                     showApp();
                     return true;
                 } catch (e) {}
@@ -3379,6 +3411,15 @@
             document.getElementById('headerUserName').textContent = currentUser.username;
             document.getElementById('headerUserRole').textContent = currentUser.role;
             document.getElementById('dashboardUserName').textContent = currentUser.username;
+
+            // Load users cache for task display and populate notification polling
+            loadUsersCache();
+            const notifs = await loadNotifications();
+            updateNotifBadge(notifs.length);
+            setInterval(async () => {
+                const periodicNotifs = await loadNotifications();
+                updateNotifBadge(periodicNotifs.length);
+            }, 30000);
 
             // Show/hide admin-only sidebar items
             const settingsTab = document.getElementById('sidebarSettingsTab');
@@ -3622,6 +3663,7 @@
 
                 currentUser = { id: data.id, username: data.username, name: data.name, role: data.role };
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                localStorage.setItem('crmCurrentUser', JSON.stringify(currentUser));
                 showApp();
             } catch (err) {
                 showLoginError('Cannot connect to server. Please try again.');
@@ -3631,6 +3673,7 @@
         function logout() {
             currentUser = null;
             localStorage.removeItem('currentUser');
+            localStorage.removeItem('crmCurrentUser');
             showLoginScreen();
         }
 
@@ -8355,7 +8398,7 @@
             nextWeek.setDate(nextWeek.getDate() + 7);
             const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
-            if (filter === 'my') query = query.eq('assigned_to', currentUser.username);
+            if (filter === 'my') query = query.eq('assigned_to', currentUser.id ? currentUser.id.toString() : currentUser.username);
             if (filter === 'overdue') query = query.lt('due_date', today).neq('status', 'Completed');
             if (filter === 'today') query = query.eq('due_date', today);
             if (filter === 'this_week') query = query.gte('due_date', today).lte('due_date', nextWeekStr);
@@ -8386,7 +8429,7 @@
                     <td>${escapeHtml(task.title)}</td>
                     <td><span class="task-due ${dueClass}">${task.due_date}</span></td>
                     <td>${escapeHtml(task.status || 'Pending')}</td>
-                    <td>${escapeHtml(task.assigned_to || '-')}</td>
+                    <td>${escapeHtml(getUserDisplayName(task.assigned_to))}</td>
                     <td>
                         ${task.status !== 'Completed' ? `<button class="btn btn-success btn-sm" onclick="completeTask(${task.id})">Complete</button>` : '<span style="color:#10b981;font-weight:600;">Done</span>'}
                     </td>
@@ -8404,8 +8447,7 @@
             document.getElementById('taskTitle').value = '';
             document.getElementById('taskDescription').value = '';
             document.getElementById('taskDueDate').value = '';
-            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
-            document.getElementById('taskAssignedTo').value = currentUser.username || '';
+            populateAssignedToDropdown('taskAssignedTo');
             document.getElementById('createTaskModal').classList.add('active');
         }
 
@@ -8414,8 +8456,7 @@
             document.getElementById('taskTitle').value = '';
             document.getElementById('taskDescription').value = '';
             document.getElementById('taskDueDate').value = '';
-            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
-            document.getElementById('taskAssignedTo').value = currentUser.username || '';
+            populateAssignedToDropdown('taskAssignedTo');
             document.getElementById('createTaskModal').classList.add('active');
         }
 
@@ -8435,33 +8476,150 @@
             select.innerHTML = html;
         }
 
+        async function populateAssignedToDropdown(selectId) {
+            const { data: users } = await supabaseClient
+                .from('users')
+                .select('id, username, full_name')
+                .eq('status', 'active');
+
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Select User --</option>';
+            if (users) {
+                users.forEach(u => {
+                    const displayName = u.full_name || u.username;
+                    select.innerHTML += `<option value="${u.id}">${escapeHtml(displayName)} (${escapeHtml(u.username)})</option>`;
+                });
+            }
+        }
+
+        let usersCache = {};
+        async function loadUsersCache() {
+            const { data } = await supabaseClient.from('users').select('id, username, full_name');
+            if (data) {
+                data.forEach(u => { usersCache[u.id] = u; });
+            }
+        }
+
+        function getUserDisplayName(userId) {
+            const u = usersCache[userId];
+            if (!u) return userId || '-';
+            return u.full_name || u.username;
+        }
+
+        async function createNotification(userId, type, message, referenceId) {
+            await supabaseClient.from('notifications').insert({
+                user_id: parseInt(userId),
+                type: type,
+                message: message,
+                reference_id: referenceId
+            });
+        }
+
+        async function loadNotifications() {
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            if (!currentUser.id) return [];
+
+            const { data } = await supabaseClient
+                .from('notifications')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .eq('is_read', false)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            return data || [];
+        }
+
+        async function markNotificationRead(notifId) {
+            await supabaseClient.from('notifications')
+                .update({ is_read: true })
+                .eq('id', notifId);
+        }
+
+        function updateNotifBadge(count) {
+            const badge = document.getElementById('notifBadge');
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function toggleNotificationPanel() {
+            const panel = document.getElementById('notificationPanel');
+            if (!panel) return;
+            if (panel.style.display === 'none') {
+                renderNotificationPanel();
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        async function renderNotificationPanel() {
+            const list = document.getElementById('notificationList');
+            if (!list) return;
+            const notifs = await loadNotifications();
+            if (!notifs.length) {
+                list.innerHTML = '<p style="color:#9ca3af;font-size:13px;text-align:center;">No new notifications</p>';
+                updateNotifBadge(0);
+                return;
+            }
+            let html = '';
+            notifs.forEach(n => {
+                html += `<div class="notif-item unread" onclick="markNotificationRead(${n.id}); this.classList.remove('unread'); this.style.opacity='0.5';">
+                    <div>${escapeHtml(n.message)}</div>
+                    <small>${new Date(n.created_at).toLocaleString()}</small>
+                </div>`;
+            });
+            list.innerHTML = html;
+            updateNotifBadge(notifs.length);
+        }
+
         async function saveTask() {
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
             const contactId = document.getElementById('taskCustomerSelect').value;
             const title = document.getElementById('taskTitle').value.trim();
             const description = document.getElementById('taskDescription').value.trim();
             const dueDate = document.getElementById('taskDueDate').value;
-            const assignedTo = document.getElementById('taskAssignedTo').value.trim();
-            if (!contactId || !title || !dueDate) {
-                alert('Please fill in Customer, Title and Due Date');
+            const assignedTo = document.getElementById('taskAssignedTo').value;
+
+            if (!title) { alert('Title is required'); return; }
+            if (!dueDate) { alert('Due date is required'); return; }
+            if (!contactId) { alert('Please select a customer'); return; }
+
+            const { data, error } = await supabaseClient.from('tasks').insert({
+                contact_id: parseInt(contactId),
+                title: title,
+                description: description,
+                due_date: dueDate,
+                status: 'Pending',
+                assigned_to: assignedTo || null,
+                created_by: currentUser.id ? currentUser.id.toString() : currentUser.username
+            }).select();
+
+            if (error) {
+                console.error('Save task error:', error);
+                alert('Failed to save task: ' + error.message);
                 return;
             }
-            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
-            const { error } = await supabaseClient.from('tasks').insert({
-                contact_id: contactId,
-                title,
-                description,
-                due_date: dueDate,
-                assigned_to: assignedTo || currentUser.username,
-                status: 'Pending',
-                created_by: currentUser.username
-            });
-            if (error) { console.error(error); alert('Failed to save task'); return; }
+
             await supabaseClient.from('activities').insert({
-                contact_id: contactId,
+                contact_id: parseInt(contactId),
                 type: 'task_created',
                 description: `Task created: "${title}"`,
                 created_by: currentUser.username
             });
+
+            if (assignedTo) {
+                await createNotification(assignedTo, 'task_assigned',
+                    `You have been assigned a new task: "${title}"`,
+                    data && data[0] ? data[0].id : null);
+            }
+
             closeCreateTaskModal();
             if (document.getElementById('tasks').classList.contains('active')) {
                 loadAllTasks(currentTaskFilter);
@@ -8499,7 +8657,7 @@
                     <input type="checkbox" class="task-checkbox" ${task.status === 'Completed' ? 'checked' : ''} onchange="completeTask(${task.id}, '${contactId}')">
                     <div class="task-info">
                         <div class="task-title">${escapeHtml(task.title)}</div>
-                        <div class="task-meta">${escapeHtml(task.description || '')} &middot; Assigned to ${escapeHtml(task.assigned_to || '-')}</div>
+                        <div class="task-meta">${escapeHtml(task.description || '')} &middot; Assigned to ${escapeHtml(getUserDisplayName(task.assigned_to))}</div>
                     </div>
                     <span class="task-due ${dueClass}">${task.due_date}</span>
                 </div>`;
