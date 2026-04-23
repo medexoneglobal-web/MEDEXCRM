@@ -1136,6 +1136,20 @@
             color: #9e9e9e;
         }
 
+        /* Task Status Badges */
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-inprogress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
         /* Table Footer & Pagination */
         .table-footer {
             display: flex;
@@ -2349,6 +2363,13 @@
         }
         .task-filter-btn:hover { background: #f3f4f6; }
         .task-filter-btn.active { background: #4361ee; color: #fff; border-color: #4361ee; }
+        .task-status-btn {
+            padding: 6px 14px; border-radius: 6px; font-size: 13px;
+            border: 1px solid #d1d5db; background: #fff; color: #374151;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .task-status-btn:hover { background: #f3f4f6; }
+        .task-status-btn.active { background: #10b981; color: #fff; border-color: #10b981; }
     </style>
 </head>
 <body>
@@ -2564,6 +2585,16 @@
                                 <tbody id="licenseKeyTableBody"></tbody>
                             </table>
                         </div>
+                        <div class="table-footer" id="lkTableFooter" style="display: none;">
+                            <span class="table-info" id="lkTableInfo">Showing 0 to 0 of 0 entries</span>
+                            <div class="pagination" id="lkPaginationControls"></div>
+                            <select class="rows-select" onchange="changeLkRowsPerPage(this.value)">
+                                <option value="10" selected>10 rows</option>
+                                <option value="25">25 rows</option>
+                                <option value="50">50 rows</option>
+                                <option value="100">100 rows</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2716,6 +2747,12 @@
                         <button class="task-filter-btn" data-filter="overdue" onclick="setTaskFilter('overdue')">Overdue</button>
                         <button class="task-filter-btn" data-filter="today" onclick="setTaskFilter('today')">Today</button>
                         <button class="task-filter-btn" data-filter="this_week" onclick="setTaskFilter('this_week')">This Week</button>
+                    </div>
+                    <div class="task-filter-bar" style="margin-top:8px;">
+                        <button class="task-status-btn active" data-status="all" onclick="setTaskStatusFilter('all')">All Status</button>
+                        <button class="task-status-btn" data-status="Pending" onclick="setTaskStatusFilter('Pending')">Pending</button>
+                        <button class="task-status-btn" data-status="In Progress" onclick="setTaskStatusFilter('In Progress')">In Progress</button>
+                        <button class="task-status-btn" data-status="Completed" onclick="setTaskStatusFilter('Completed')">Completed</button>
                     </div>
                     <div class="table-container">
                         <table id="tasksTable">
@@ -3088,6 +3125,48 @@
         </div>
     </div>
 
+    <!-- Edit Task Modal -->
+    <div id="editTaskModal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Edit Task</h2>
+                <button class="close-btn" onclick="closeModal('editTaskModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="editTaskTitle" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editTaskDescription" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;resize:vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Due Date *</label>
+                    <input type="date" id="editTaskDueDate" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editTaskStatus" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assigned To</label>
+                    <select id="editTaskAssignedTo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;">
+                        <option value="">-- Select User --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editTaskModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEditTask()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Create Task Modal -->
     <div id="createTaskModal" class="modal">
         <div class="modal-content" style="max-width:500px;">
@@ -3140,11 +3219,16 @@
         let selectedRows = new Set();
         let pendingChanges = {}; // Store pending edits
         let currentFilteredData = null; // Holds filtered data when search/filters are active
-        let currentEditingLicenseKeyRow = null;
-        let currentViewingLicenseKeyRow = null;
+        let currentEditingLicenseKeyId = null;
+        let currentViewingLicenseKeyId = null;
         let licenseKeySearchTimer = null;
+        let lkCurrentPage = 1;
+        let lkRowsPerPage = 10;
+        let lkTotalRecords = 0;
+        let licenseKeyData = [];
         let pipelineStagesMap = {};
         let currentTaskFilter = 'all';
+        let currentTaskStatusFilter = 'all';
         let currentViewContactId = null;
         
         // Column options for dropdown fields (like Excel data validation)
@@ -3974,8 +4058,8 @@
                 populateProductFilter();
             } else if (sectionId === 'userManagement') {
                 renderUserList();
-            } else if (sectionId === 'licenseKey') {
-                renderLicenseKeyTable();
+                        } else if (sectionId === 'licenseKey') {
+                await renderLicenseKeyTable();
             } else if (sectionId === 'settings') {
                 renderAccessRightsPanel();
                 renderMasterFieldPanel();
@@ -7312,9 +7396,9 @@
         ];
 
         /**
-         * Render the License Key table with data from crmData
+         * Render the License Key table with paginated data from Supabase
          */
-        function renderLicenseKeyTable() {
+        async function renderLicenseKeyTable() {
             const thead = document.getElementById('licenseKeyTableHead');
             const tbody = document.getElementById('licenseKeyTableBody');
             
@@ -7328,6 +7412,7 @@
             if (!hasViewPermission) {
                 thead.innerHTML = '';
                 tbody.innerHTML = `<tr><td colspan="100" style="text-align: center; padding: 40px;">You don't have permission to view license key data.</td></tr>`;
+                document.getElementById('lkTableFooter').style.display = 'none';
                 return;
             }
             
@@ -7342,25 +7427,36 @@
             headerHTML += '</tr>';
             thead.innerHTML = headerHTML;
             
-            // Get filtered data
-            const filteredData = getFilteredLicenseKeyData();
+            // Fetch paginated data from Supabase
+            const searchTerm = document.getElementById('licenseKeySearchInput')?.value?.trim() || '';
+            const result = await fetchLicenseKeyPage(lkCurrentPage, lkRowsPerPage, searchTerm);
+            
+            if (result.error) {
+                tbody.innerHTML = `<tr><td colspan="100" style="text-align: center; padding: 40px; color: var(--danger);">Error loading data: ${escapeHtml(result.error.message || 'Unknown error')}</td></tr>`;
+                document.getElementById('lkTableFooter').style.display = 'none';
+                return;
+            }
+            
+            licenseKeyData = result.data;
+            lkTotalRecords = result.total;
             
             // Update stats
-            updateLicenseKeyStats(filteredData);
+            updateLicenseKeyStats(licenseKeyData, lkTotalRecords);
             
             // Render body
             const totalCols = 3 + LICENSE_KEY_COLUMNS.length;
-            if (filteredData.length === 0) {
+            if (licenseKeyData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align: center; padding: 40px;">No data available.</td></tr>`;
+                document.getElementById('lkTableFooter').style.display = 'none';
                 return;
             }
             
             let bodyHTML = '';
-            filteredData.forEach((row, idx) => {
+            licenseKeyData.forEach((row) => {
                 const hasAnyKey = hasLicenseKeys(row);
                 const rowClass = hasAnyKey ? 'license-key-row has-keys' : 'license-key-row no-keys';
                 
-                bodyHTML += `<tr class="${rowClass}" data-row-index="${row._rowIndex}">`;
+                bodyHTML += `<tr class="${rowClass}" data-contact-id="${row.id}">`;
                 bodyHTML += `<td>${escapeHtml(row['ACCT NO'] || '')}</td>`;
                 bodyHTML += `<td>${escapeHtml(row['CLINIC NAME'] || '')}</td>`;
                 
@@ -7375,9 +7471,9 @@
                 
                 // Actions column with View and Edit buttons - show based on permissions
                 bodyHTML += `<td>`;
-                bodyHTML += `<button class="btn-view-lkey" onclick="viewLicenseKey(${row._rowIndex})">View</button>`;
+                bodyHTML += `<button class="btn-view-lkey" onclick="viewLicenseKey(${row.id})">View</button>`;
                 if (hasEditPermission) {
-                    bodyHTML += `<button class="btn-edit-lkey" onclick="editLicenseKey(${row._rowIndex})" style="margin-left: 6px;">Edit</button>`;
+                    bodyHTML += `<button class="btn-edit-lkey" onclick="editLicenseKey(${row.id})" style="margin-left: 6px;">Edit</button>`;
                 }
                 bodyHTML += `</td>`;
                 
@@ -7385,6 +7481,120 @@
             });
             
             tbody.innerHTML = bodyHTML;
+            renderLicenseKeyPagination();
+        }
+        
+        /**
+         * Fetch a page of license key data from Supabase with server-side pagination
+         */
+        async function fetchLicenseKeyPage(page, perPage, searchTerm) {
+            const from = (page - 1) * perPage;
+            const to = from + perPage - 1;
+            
+            let query = supabaseClient
+                .from('contacts')
+                .select('*', { count: 'exact' })
+                .order('id');
+            
+            // Apply search filter if present (case-insensitive on JSONB fields)
+            if (searchTerm) {
+                const term = searchTerm.replace(/%/g, '\\%').replace(/_/g, '\\_');
+                const orClause = [
+                    `data->>ACCT NO.ilike.%${term}%`,
+                    `data->>CLINIC NAME.ilike.%${term}%`,
+                    `data->>PRODUCT.ilike.%${term}%`,
+                    `data->>Address1.ilike.%${term}%`,
+                    `data->>Address2.ilike.%${term}%`,
+                    `data->>Address3.ilike.%${term}%`,
+                    `data->>Contact Tel1.ilike.%${term}%`
+                ].join(',');
+                query = query.or(orClause);
+            }
+            
+            const { data, error, count } = await query.range(from, to);
+            
+            if (error) {
+                console.error('Error fetching license key page:', error);
+                return { data: [], total: 0, error };
+            }
+            
+            // Map Supabase records to flat row objects
+            const mapped = (data || []).map(record => {
+                const row = { id: record.id };
+                Object.entries(record.data || {}).forEach(([key, value]) => {
+                    row[key] = value || '';
+                });
+                return row;
+            });
+            
+            return { data: mapped, total: count || 0, error: null };
+        }
+        
+        /**
+         * Render License Key pagination controls
+         */
+        function renderLicenseKeyPagination() {
+            const footer = document.getElementById('lkTableFooter');
+            const info = document.getElementById('lkTableInfo');
+            const controls = document.getElementById('lkPaginationControls');
+            
+            if (lkTotalRecords === 0) {
+                footer.style.display = 'none';
+                return;
+            }
+            
+            footer.style.display = 'flex';
+            
+            const totalPages = Math.ceil(lkTotalRecords / lkRowsPerPage);
+            const start = lkTotalRecords === 0 ? 0 : (lkCurrentPage - 1) * lkRowsPerPage + 1;
+            const end = Math.min(lkCurrentPage * lkRowsPerPage, lkTotalRecords);
+            info.textContent = `Showing ${start} to ${end} of ${lkTotalRecords} entries`;
+            
+            let html = '';
+            html += `<button class="page-btn" onclick="changeLkPage(-1)" ${lkCurrentPage === 1 ? 'disabled' : ''}>&#8249;</button>`;
+            
+            const maxVisible = 5;
+            let startPage = Math.max(1, lkCurrentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            if (startPage > 1) {
+                html += `<button class="page-btn" onclick="goToLkPage(1)">1</button>`;
+                if (startPage > 2) html += `<span style="padding:0 4px;">...</span>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="page-btn ${i === lkCurrentPage ? 'active' : ''}" onclick="goToLkPage(${i})">${i}</button>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<span style="padding:0 4px;">...</span>`;
+                html += `<button class="page-btn" onclick="goToLkPage(${totalPages})">${totalPages}</button>`;
+            }
+            
+            html += `<button class="page-btn" onclick="changeLkPage(1)" ${lkCurrentPage === totalPages ? 'disabled' : ''}>&#8250;</button>`;
+            controls.innerHTML = html;
+        }
+        
+        function goToLkPage(page) {
+            lkCurrentPage = page;
+            renderLicenseKeyTable();
+        }
+        
+        function changeLkPage(delta) {
+            const totalPages = Math.ceil(lkTotalRecords / lkRowsPerPage);
+            lkCurrentPage += delta;
+            if (lkCurrentPage < 1) lkCurrentPage = 1;
+            if (totalPages > 0 && lkCurrentPage > totalPages) lkCurrentPage = totalPages;
+            renderLicenseKeyTable();
+        }
+        
+        function changeLkRowsPerPage(value) {
+            lkRowsPerPage = parseInt(value, 10);
+            lkCurrentPage = 1;
+            renderLicenseKeyTable();
         }
         
         /**
@@ -7399,7 +7609,7 @@
         }
         
         /**
-         * Get filtered license key data based on search input
+         * Get filtered license key data based on search input (client-side, for export)
          */
         function getFilteredLicenseKeyData() {
             const searchTerm = document.getElementById('licenseKeySearchInput')?.value?.toLowerCase() || '';
@@ -7430,13 +7640,12 @@
         /**
          * Update the stats display for license keys
          */
-        function updateLicenseKeyStats(data) {
-            const totalRecords = data.length;
-            const recordsWithKeys = data.filter(row => hasLicenseKeys(row)).length;
+        function updateLicenseKeyStats(pageData, totalRecords) {
+            const recordsWithKeys = pageData.filter(row => hasLicenseKeys(row)).length;
             
             const statsElement = document.getElementById('licenseKeyStats');
             if (statsElement) {
-                statsElement.innerHTML = `Total: <strong>${totalRecords}</strong> | With License Keys: <strong>${recordsWithKeys}</strong>`;
+                statsElement.innerHTML = `Total: <strong>${totalRecords}</strong> | With License Keys: <strong>${recordsWithKeys}</strong> (page)`;
             }
         }
         
@@ -7448,6 +7657,9 @@
             if (licenseKeySearchTimer) {
                 clearTimeout(licenseKeySearchTimer);
             }
+            
+            // Reset to page 1 on new search
+            lkCurrentPage = 1;
             
             // Set new timer with 300ms debounce
             licenseKeySearchTimer = setTimeout(() => {
@@ -7463,17 +7675,21 @@
             if (searchInput) {
                 searchInput.value = '';
             }
+            lkCurrentPage = 1;
             renderLicenseKeyTable();
         }
         
         /**
          * Open the view modal for a license key row (Medex License Key Request Form)
          */
-        function viewLicenseKey(rowIndex) {
-            const row = crmData[rowIndex];
+        function viewLicenseKey(contactId) {
+            let row = crmData.find(r => r.id === contactId);
+            if (!row) {
+                row = licenseKeyData.find(r => r.id === contactId);
+            }
             if (!row) return;
             
-            currentViewingLicenseKeyRow = rowIndex;
+            currentViewingLicenseKeyId = contactId;
             
             const tbody = document.getElementById('licenseKeyFormBody');
             if (!tbody) return;
@@ -7549,9 +7765,12 @@
          * Save the editable license key view field values to crmData and localStorage
          */
         function saveLicenseKeyView() {
-            if (currentViewingLicenseKeyRow === null) return;
+            if (currentViewingLicenseKeyId === null) return;
             
-            const row = crmData[currentViewingLicenseKeyRow];
+            let row = crmData.find(r => r.id === currentViewingLicenseKeyId);
+            if (!row) {
+                row = licenseKeyData.find(r => r.id === currentViewingLicenseKeyId);
+            }
             if (!row) return;
             
             // Get values from editable inputs
@@ -7581,7 +7800,10 @@
          * Copy all form data to clipboard as readable plain text
          */
         function copyLicenseFormAll() {
-            const row = crmData[currentViewingLicenseKeyRow];
+            let row = crmData.find(r => r.id === currentViewingLicenseKeyId);
+            if (!row) {
+                row = licenseKeyData.find(r => r.id === currentViewingLicenseKeyId);
+            }
             if (!row) return;
             
             // Get current values from editable inputs (or fall back to saved/crm data)
@@ -7638,7 +7860,10 @@
          * Copy table data as HTML table format for Excel/Word
          */
         function copyLicenseFormTable() {
-            const row = crmData[currentViewingLicenseKeyRow];
+            let row = crmData.find(r => r.id === currentViewingLicenseKeyId);
+            if (!row) {
+                row = licenseKeyData.find(r => r.id === currentViewingLicenseKeyId);
+            }
             if (!row) return;
             
             // Get current values from editable inputs (or fall back to saved/crm data)
@@ -7749,17 +7974,20 @@
         /**
          * Open the edit modal for a license key row
          */
-        function editLicenseKey(rowIndex) {
+        function editLicenseKey(contactId) {
             // Check edit permission
             if (!hasPermission('licenseKey', 'edit')) {
                 alert("You don't have permission to perform this action");
                 return;
             }
             
-            const row = crmData[rowIndex];
+            let row = crmData.find(r => r.id === contactId);
+            if (!row) {
+                row = licenseKeyData.find(r => r.id === contactId);
+            }
             if (!row) return;
             
-            currentEditingLicenseKeyRow = rowIndex;
+            currentEditingLicenseKeyId = contactId;
             
             // Populate read-only fields
             document.getElementById('editLkeyAcctNo').value = row['ACCT NO'] || '';
@@ -7778,8 +8006,8 @@
         /**
          * Save the edited license key values
          */
-        function saveLicenseKeyEdit() {
-            if (currentEditingLicenseKeyRow === null) return;
+        async function saveLicenseKeyEdit() {
+            if (currentEditingLicenseKeyId === null) return;
             
             // Check edit permission
             if (!hasPermission('licenseKey', 'edit')) {
@@ -7793,14 +8021,42 @@
             const address3 = document.getElementById('editLkeyAddress3').value.trim();
             const contactTel1 = document.getElementById('editLkeyContactTel1').value.trim();
             
-            // Update crmData
-            crmData[currentEditingLicenseKeyRow]['Address1'] = address1;
-            crmData[currentEditingLicenseKeyRow]['Address2'] = address2;
-            crmData[currentEditingLicenseKeyRow]['Address3'] = address3;
-            crmData[currentEditingLicenseKeyRow]['Contact Tel1'] = contactTel1;
+            // Update in crmData if present
+            const crmRow = crmData.find(r => r.id === currentEditingLicenseKeyId);
+            if (crmRow) {
+                crmRow['Address1'] = address1;
+                crmRow['Address2'] = address2;
+                crmRow['Address3'] = address3;
+                crmRow['Contact Tel1'] = contactTel1;
+            }
             
-            // Save to localStorage
-            saveCRMData();
+            // Update in licenseKeyData if present
+            const lkRow = licenseKeyData.find(r => r.id === currentEditingLicenseKeyId);
+            if (lkRow) {
+                lkRow['Address1'] = address1;
+                lkRow['Address2'] = address2;
+                lkRow['Address3'] = address3;
+                lkRow['Contact Tel1'] = contactTel1;
+            }
+            
+            // Persist to Supabase
+            const baseRow = crmRow || lkRow;
+            if (baseRow) {
+                try {
+                    const rowData = {};
+                    Object.entries(baseRow).forEach(([k, v]) => {
+                        if (k !== 'id' && k !== '_rowIndex' && !k.includes('_EMPTY_') && !k.startsWith('__')) {
+                            rowData[k] = v || '';
+                        }
+                    });
+                    const { error } = await supabaseClient.from('contacts').update({ data: rowData }).eq('id', currentEditingLicenseKeyId);
+                    if (error) { console.error('Failed to update in Supabase:', error); showNotification('Save failed: ' + error.message, 'error'); return; }
+                } catch(err) {
+                    console.error('Error saving to Supabase:', err);
+                    showNotification('Save failed', 'error');
+                    return;
+                }
+            }
             
             // Close modal
             closeModal('editLicenseKeyModal');
@@ -7812,7 +8068,7 @@
             showNotification('License key updated successfully!', 'success');
             
             // Reset current editing row
-            currentEditingLicenseKeyRow = null;
+            currentEditingLicenseKeyId = null;
         }
         
         /**
@@ -8474,10 +8730,14 @@
         }
 
         // ===== Tasks =====
-        async function loadAllTasks(filter = 'all') {
-            currentTaskFilter = filter;
+        async function loadAllTasks(filter, statusFilter) {
+            if (filter !== undefined && filter !== null) currentTaskFilter = filter;
+            if (statusFilter !== undefined && statusFilter !== null) currentTaskStatusFilter = statusFilter;
             document.querySelectorAll('.task-filter-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-filter') === filter);
+                btn.classList.toggle('active', btn.getAttribute('data-filter') === currentTaskFilter);
+            });
+            document.querySelectorAll('.task-status-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-status') === currentTaskStatusFilter);
             });
             let query = supabaseClient.from('tasks').select('*').order('due_date', { ascending: true });
             const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
@@ -8486,14 +8746,34 @@
             nextWeek.setDate(nextWeek.getDate() + 7);
             const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
-            if (filter === 'my') query = query.eq('assigned_to', currentUser.id ? currentUser.id.toString() : currentUser.username);
-            if (filter === 'overdue') query = query.lt('due_date', today).neq('status', 'Completed');
-            if (filter === 'today') query = query.eq('due_date', today);
-            if (filter === 'this_week') query = query.gte('due_date', today).lte('due_date', nextWeekStr);
+            if (currentTaskFilter === 'my') query = query.eq('assigned_to', currentUser.id ? currentUser.id.toString() : currentUser.username);
+            if (currentTaskFilter === 'overdue') query = query.lt('due_date', today).neq('status', 'Completed');
+            if (currentTaskFilter === 'today') query = query.eq('due_date', today);
+            if (currentTaskFilter === 'this_week') query = query.gte('due_date', today).lte('due_date', nextWeekStr);
+            if (currentTaskStatusFilter && currentTaskStatusFilter !== 'all') query = query.eq('status', currentTaskStatusFilter);
 
             const { data, error } = await query;
             if (error) { console.error(error); return; }
             renderTasksList(data || []);
+        }
+
+        function getTaskStatusBadge(status) {
+            const s = (status || 'Pending');
+            if (s === 'Completed') return `<span class="status-badge status-completed">Completed</span>`;
+            if (s === 'In Progress') return `<span class="status-badge status-inprogress">In Progress</span>`;
+            return `<span class="status-badge status-pending">Pending</span>`;
+        }
+
+        function getTaskPermissions(task) {
+            const cu = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const isAdmin = cu.role === 'admin';
+            const isCreator = task.created_by && (String(task.created_by) === String(cu.id) || task.created_by === cu.username);
+            const isAssigned = task.assigned_to && String(task.assigned_to) === String(cu.id);
+            return {
+                canComplete: isAdmin || isAssigned || isCreator,
+                canEdit: isAdmin || isCreator,
+                canDelete: isAdmin || isCreator
+            };
         }
 
         function renderTasksList(tasks) {
@@ -8507,19 +8787,27 @@
             tasks.forEach(task => {
                 const customerRow = crmData.find(r => r.id === task.contact_id);
                 const customerName = customerRow ? (customerRow['CLINIC NAME'] || customerRow['ACCT NO'] || 'Unknown') : 'Unknown';
-                let rowClass = '';
                 let dueClass = '';
-                if (task.due_date < today && task.status !== 'Completed') { rowClass = 'overdue'; dueClass = 'overdue'; }
-                else if (task.due_date === today) { rowClass = 'due-today'; dueClass = 'due-today'; }
-                else if (task.due_date <= in3Str) { rowClass = 'due-soon'; dueClass = 'due-soon'; }
+                if (task.due_date < today && task.status !== 'Completed') { dueClass = 'overdue'; }
+                else if (task.due_date === today) { dueClass = 'due-today'; }
+                else if (task.due_date <= in3Str) { dueClass = 'due-soon'; }
+                const perm = getTaskPermissions(task);
+                const isCompleted = task.status === 'Completed';
+                const completeBtnHtml = (!isCompleted && perm.canComplete)
+                    ? `<button class="btn btn-success btn-sm" onclick="completeTask(${task.id})" title="Mark as Completed">&#10003; Complete</button>` : '';
+                const editBtnHtml = perm.canEdit
+                    ? `<button class="btn btn-outline btn-sm" onclick="openEditTaskModal(${task.id})" title="Edit Task">&#9998; Edit</button>` : '';
+                const deleteBtnHtml = perm.canDelete
+                    ? `<button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})" title="Delete Task">&#128465; Delete</button>` : '';
                 html += `<tr>
                     <td>${escapeHtml(customerName)}</td>
-                    <td>${escapeHtml(task.title)}</td>
-                    <td><span class="task-due ${dueClass}">${task.due_date}</span></td>
-                    <td>${escapeHtml(task.status || 'Pending')}</td>
+                    <td style="font-weight:600;">${escapeHtml(task.title)}<br><small style="font-weight:normal;color:#6b7280;">${escapeHtml(task.description || '')}</small></td>
+                    <td><span class="task-due ${dueClass}">${task.due_date || '-'}</span></td>
+                    <td>${getTaskStatusBadge(task.status)}</td>
                     <td>${escapeHtml(getUserDisplayName(task.assigned_to))}</td>
-                    <td>
-                        ${task.status !== 'Completed' ? `<button class="btn btn-success btn-sm" onclick="completeTask(${task.id})">Complete</button>` : '<span style="color:#10b981;font-weight:600;">Done</span>'}
+                    <td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap;">
+                        ${completeBtnHtml}${editBtnHtml}${deleteBtnHtml}
+                        ${!completeBtnHtml && !editBtnHtml && !deleteBtnHtml ? '<span style="color:#9ca3af;font-size:12px;">View only</span>' : ''}
                     </td>
                 </tr>`;
             });
@@ -8527,7 +8815,67 @@
         }
 
         function setTaskFilter(filter) {
-            loadAllTasks(filter);
+            loadAllTasks(filter, null);
+        }
+
+        function setTaskStatusFilter(status) {
+            loadAllTasks(null, status);
+        }
+
+        // ===== Edit Task =====
+        let editingTaskId = null;
+
+        async function openEditTaskModal(taskId) {
+            const { data: task, error } = await supabaseClient.from('tasks').select('*').eq('id', taskId).single();
+            if (error || !task) { showToast('Failed to load task', 'error'); return; }
+            const perm = getTaskPermissions(task);
+            if (!perm.canEdit) { showToast('You do not have permission to edit this task', 'error'); return; }
+            editingTaskId = taskId;
+            document.getElementById('editTaskTitle').value = task.title || '';
+            document.getElementById('editTaskDescription').value = task.description || '';
+            document.getElementById('editTaskDueDate').value = task.due_date || '';
+            document.getElementById('editTaskStatus').value = task.status || 'Pending';
+            await populateAssignedToDropdown('editTaskAssignedTo');
+            document.getElementById('editTaskAssignedTo').value = task.assigned_to || '';
+            document.getElementById('editTaskModal').classList.add('active');
+        }
+
+        async function saveEditTask() {
+            if (!editingTaskId) return;
+            const title = document.getElementById('editTaskTitle').value.trim();
+            const description = document.getElementById('editTaskDescription').value.trim();
+            const dueDate = document.getElementById('editTaskDueDate').value;
+            const status = document.getElementById('editTaskStatus').value;
+            const assignedTo = document.getElementById('editTaskAssignedTo').value;
+            if (!title) { showToast('Title is required', 'error'); return; }
+            if (!dueDate) { showToast('Due date is required', 'error'); return; }
+            const { data: task } = await supabaseClient.from('tasks').select('*').eq('id', editingTaskId).single();
+            if (task) {
+                const perm = getTaskPermissions(task);
+                if (!perm.canEdit) { showToast('You do not have permission to edit this task', 'error'); return; }
+            }
+            const { error } = await supabaseClient.from('tasks').update({
+                title, description, due_date: dueDate, status, assigned_to: assignedTo || null
+            }).eq('id', editingTaskId);
+            if (error) { showToast('Failed to update task: ' + error.message, 'error'); return; }
+            closeModal('editTaskModal');
+            showToast('Task updated successfully', 'success');
+            loadAllTasks();
+        }
+
+        // ===== Delete Task =====
+        async function deleteTask(taskId) {
+            const { data: task } = await supabaseClient.from('tasks').select('*').eq('id', taskId).single();
+            if (task) {
+                const perm = getTaskPermissions(task);
+                if (!perm.canDelete) { showToast('You do not have permission to delete this task', 'error'); return; }
+            }
+            openConfirmModal('Are you sure you want to delete this task?', async () => {
+                const { error } = await supabaseClient.from('tasks').delete().eq('id', taskId);
+                if (error) { showToast('Failed to delete task: ' + error.message, 'error'); return; }
+                showToast('Task deleted', 'success');
+                loadAllTasks();
+            });
         }
 
         function openCreateTaskModal() {
@@ -8763,10 +9111,17 @@
 
         async function completeTask(taskId, contactId) {
             const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            // Permission check
+            const { data: task } = await supabaseClient.from('tasks').select('*').eq('id', taskId).single();
+            if (task) {
+                const perm = getTaskPermissions(task);
+                if (!perm.canComplete) { showToast('You do not have permission to complete this task', 'error'); return; }
+            }
             const { error } = await supabaseClient.from('tasks')
                 .update({ status: 'Completed', completed_at: new Date().toISOString() })
                 .eq('id', taskId);
-            if (error) { console.error(error); return; }
+            if (error) { console.error(error); showToast('Failed to complete task', 'error'); return; }
+            showToast('Task marked as completed', 'success');
             const { data: taskData } = await supabaseClient.from('tasks').select('title, contact_id').eq('id', taskId).single();
             if (taskData) {
                 await supabaseClient.from('activities').insert({
@@ -8777,7 +9132,7 @@
                 });
             }
             if (document.getElementById('tasks').classList.contains('active')) {
-                loadAllTasks(currentTaskFilter);
+                loadAllTasks();
             }
             if (contactId) {
                 loadCustomerTasks(contactId);
