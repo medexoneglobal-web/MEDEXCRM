@@ -7578,7 +7578,7 @@
         }
         
         /**
-         * Copy all form data to clipboard as HTML table format
+         * Copy all form data to clipboard as readable plain text
          */
         function copyLicenseFormAll() {
             const row = crmData[currentViewingLicenseKeyRow];
@@ -7599,95 +7599,39 @@
             const whatsappNumber = whatsappNumberInput ? whatsappNumberInput.value.trim() : (row['_lk_whatsapp_number'] || row['Whatsapp Account Number'] || '');
             const whatsappApiKey = whatsappApiKeyInput ? whatsappApiKeyInput.value.trim() : (row['_lk_whatsapp_api_key'] || row['Whatsapp API Key'] || '');
             
-            // Build HTML table
-            let html = '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11pt;">';
-            html += '<tr style="background:#0066cc;color:white;"><td colspan="3" style="padding:8px;text-align:center;font-weight:bold;">Medex License Key Request Form</td></tr>';
+            // Build readable plain text
+            let text = 'Medex License Key Request Form\n';
+            text += '================================\n\n';
+            text += '1.  Program Type:                 ' + (row['PRODUCT'] || '') + '\n';
+            text += '2.  MTN Start Date:               ' + (formatExcelDate(row['CMS/MHIS MTN START DATE']) || '') + '\n';
+            text += '3.  MTN End Date:                 ' + (formatExcelDate(row['CMS/MHIS MTN END DATE']) || '') + '\n';
+            text += '3.  Clinic Name:                  ' + (row['CLINIC NAME'] || '') + '\n';
+            text += '    Clinic Name Remark:           For Internal Testing key: Clinic Name must be Klink + Tester Name\n';
+            text += '4.  Clinic Client Code:           ' + (row['ACCT NO'] || '') + '\n';
+            text += '    Clinic Client Code Remark:    For Internal Testing Client Code must start with: S - for support, R - for RnD\n';
+            text += '5.  Info 1 (Address 1):           ' + (row['Address1'] || '') + '\n';
+            text += '6.  Info 2 (Address 2):           ' + (row['Address2'] || '') + '\n';
+            text += '7.  Info 3 (Address 3):           ' + (row['Address3'] || '') + '\n';
+            text += '8.  Tel: (TEL & FAX):             ' + (row['Contact Tel1'] || '') + '\n';
+            text += '\n';
+            text += '21. Environment (TEST / LIVE):    ' + environment + '\n';
+            text += '22. For Internal Use *:           Yes / No\n';
+            text += '23. Server Name:                  ' + serverName + '\n';
+            text += '24. Server Device Control ID:     ' + serverDeviceId + '\n';
+            text += '\n';
+            text += '25. eInvoiceClientAPI Port No:    ' + einvoicePort + '\n';
+            text += '\n';
+            text += '* Only 1 Whatsapp account will be used to sending message. Other Whatsapp account register will used for backup\n';
+            text += '24. Whatsapp Account Number**:    ' + whatsappNumber + '\n';
+            text += '25. Whatsapp API Key:             ' + whatsappApiKey + '\n';
             
-            // Helper function to add a data row
-            const addRow = (num, label, value, isSection = false) => {
-                if (isSection) {
-                    html += `<tr style="background:#333;color:white;"><td colspan="3" style="padding:6px;font-weight:bold;">${label}</td></tr>`;
-                } else {
-                    const bgStyle = num ? '' : 'background:#f5f5f5;';
-                    html += `<tr style="${bgStyle}"><td style="padding:5px;border:1px solid #ccc;width:40px;text-align:center;">${num}</td><td style="padding:5px;border:1px solid #ccc;width:250px;">${label}</td><td style="padding:5px;border:1px solid #ccc;">${value || ''}</td></tr>`;
-                }
-            };
-            
-            addRow('1', 'Program Type', row['PRODUCT'] || '');
-            addRow('2', 'MTN Start Date', formatExcelDate(row['CMS/MHIS MTN START DATE']) || '');
-            addRow('3', 'MTN End Date', formatExcelDate(row['CMS/MHIS MTN END DATE']) || '');
-            addRow('3', 'Clinic Name', row['CLINIC NAME'] || '');
-            addRow('', 'Clinic Name Remark', 'For Internal Testing key: Clinic Name must be Klink + Tester Name');
-            addRow('4', 'Clinic Client Code', row['ACCT NO'] || '');
-            addRow('', 'Clinic Client Code Remark', 'For Internal Testing Client Code must start with: S - for support, R - for RnD');
-            addRow('5', 'Info 1 (Address 1)', row['Address1'] || '');
-            addRow('6', 'Info 2 (Address 2)', row['Address2'] || '');
-            addRow('7', 'Info 3 (Address 3)', row['Address3'] || '');
-            addRow('8', 'Tel: (TEL & FAX)', row['Contact Tel1'] || '');
-            addRow('', '', '');
-            addRow('21', 'Environment (TEST / LIVE)', environment);
-            addRow('22', 'For Internal Use *', 'Yes / No');
-            addRow('23', 'Server Name', serverName);
-            addRow('24', 'Server Device Control ID', serverDeviceId);
-            addRow('', '', '');
-            addRow('25', 'eInvoiceClientAPI Port No', einvoicePort);
-            addRow('', '', '');
-            addRow('', '* Only 1 Whatsapp account will be used to sending message. Other Whatsapp account register will used for backup', '');
-            addRow('24', 'Whatsapp Account Number**', whatsappNumber);
-            addRow('25', 'Whatsapp API Key', whatsappApiKey);
-            
-            html += '</table>';
-            
-            // Build plain text as tab-separated fallback
-            let text = 'Medex License Key Request Form\n\n';
-            text += '1\tProgram Type\t' + (row['PRODUCT'] || '') + '\n';
-            text += '2\tMTN Start Date\t' + (formatExcelDate(row['CMS/MHIS MTN START DATE']) || '') + '\n';
-            text += '3\tMTN End Date\t' + (formatExcelDate(row['CMS/MHIS MTN END DATE']) || '') + '\n';
-            text += '3\tClinic Name\t' + (row['CLINIC NAME'] || '') + '\n';
-            text += '\tClinic Name Remark\tFor Internal Testing key: Clinic Name must be Klink + Tester Name\n';
-            text += '4\tClinic Client Code\t' + (row['ACCT NO'] || '') + '\n';
-            text += '\tClinic Client Code Remark\tFor Internal Testing Client Code must start with: S - for support, R - for RnD\n';
-            text += '5\tInfo 1 (Address 1)\t' + (row['Address1'] || '') + '\n';
-            text += '6\tInfo 2 (Address 2)\t' + (row['Address2'] || '') + '\n';
-            text += '7\tInfo 3 (Address 3)\t' + (row['Address3'] || '') + '\n';
-            text += '8\tTel: (TEL & FAX)\t' + (row['Contact Tel1'] || '') + '\n';
-            text += '\t\t\n';
-            text += '21\tEnvironment (TEST / LIVE)\t' + environment + '\n';
-            text += '22\tFor Internal Use *\tYes / No\n';
-            text += '23\tServer Name\t' + serverName + '\n';
-            text += '24\tServer Device Control ID\t' + serverDeviceId + '\n';
-            text += '\t\t\n';
-            text += '25\teInvoiceClientAPI Port No\t' + einvoicePort + '\n';
-            text += '\t\t\n';
-            text += '\t* Only 1 Whatsapp account will be used to sending message. Other Whatsapp account register will used for backup\t\n';
-            text += '24\tWhatsapp Account Number**\t' + whatsappNumber + '\n';
-            text += '25\tWhatsapp API Key\t' + whatsappApiKey + '\n';
-            
-            // Copy both formats
-            if (navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
-                const htmlBlob = new Blob([html], {type: 'text/html'});
-                const textBlob = new Blob([text], {type: 'text/plain'});
-                navigator.clipboard.write([new ClipboardItem({
-                    'text/html': htmlBlob,
-                    'text/plain': textBlob
-                })]).then(() => {
-                    showNotification('Form data copied to clipboard (table format)!', 'success');
-                }).catch(err => {
-                    console.error('Failed to copy:', err);
-                    // Fallback to plain text
-                    navigator.clipboard.writeText(text).then(() => {
-                        showNotification('Form data copied to clipboard!', 'success');
-                    });
-                });
-            } else {
-                // Fallback for older browsers
-                navigator.clipboard.writeText(text).then(() => {
-                    showNotification('Form data copied to clipboard!', 'success');
-                }).catch(err => {
-                    console.error('Failed to copy:', err);
-                    showNotification('Failed to copy to clipboard', 'error');
-                });
-            }
+            // Copy as plain text only
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Copied as readable text!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                showNotification('Failed to copy to clipboard', 'error');
+            });
         }
         
         /**
