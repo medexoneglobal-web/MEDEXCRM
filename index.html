@@ -220,6 +220,57 @@
             border-color: #3451d1;
             color: #3451d1;
         }
+
+        .btn-secondary {
+            background: #fff;
+            color: #374151;
+            border: 1.5px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+            color: #1f2937;
+        }
+
+        /* Edit Customer Modal Styles */
+        .edit-customer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .edit-customer-grid { grid-template-columns: 1fr; }
+        }
+
+        .edit-card {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .edit-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-footer-sticky {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            padding: 16px 24px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
         
         .btn-sm {
             padding: 6px 12px;
@@ -2284,6 +2335,7 @@
                     <h2>Customer Records</h2>
                     <div style="display: flex; gap: 10px; flex-shrink: 0;">
                         <button class="btn btn-success" onclick="showNewCustomerModal()">+ New Customer</button>
+                        <button class="btn btn-secondary" onclick="exportToExcel()">📥 Export to Excel</button>
                         <button class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
                     </div>
                 </div>
@@ -2903,7 +2955,8 @@
             'CMS/MHIS MTN START DATE',
             'CMS/MHIS MTN END DATE',
             'CLOUD START DATE',
-            'CLOUD END DATE'
+            'CLOUD END DATE',
+            'CMS INSTALL DATE/LIVE DATE'
         ];
 
         // Convert date from data format (M/D/YYYY or DD/MM/YYYY) to YYYY-MM-DD for input
@@ -4888,97 +4941,86 @@
 
         // Field groups for organizing the form
         const FIELD_GROUPS = {
-            'Basic Info': ['ACCT NO', 'CLINIC NAME', 'PHONE'],
-            'Maintenance Dates': ['CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'CLOUD START DATE', 'CLOUD END DATE'],
-            'Product Info': ['PRODUCT', 'PRODUCT TYPE', 'PC TOTAL', 'M1G/ DEALER CASE'],
-            'Status': ['RENEWAL STATUS 2', 'STATUS RENEWAL', 'REMARKS - FOLLOW UP'],
-            'Company Info': ['GROUP', 'COMPANY NAME', 'CO. REG & BRN'],
-            'Contact': ['State', 'Contact Name', 'Contact Tel1', 'EMAIL ID MAIN', 'EMAIL ID 2']
+            'Basic Info': ['ACCT NO', 'CLINIC NAME', 'PHONE', 'Contact Name', 'Contact Tel1', 'State', 'COMPANY NAME', 'CO. REG & BRN', 'Customer ID- Certificate No.'],
+            'Product Info': ['PRODUCT', 'PRODUCT TYPE', 'GROUP', 'M1G/ DEALER CASE', 'PC TOTAL'],
+            'Maintenance Dates': ['CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'CLOUD START DATE', 'CLOUD END DATE', 'CMS INSTALL DATE/LIVE DATE']
         };
 
         // Group colors for visual separation
         const GROUP_COLORS = {
             'Basic Info': '#3b82f6',
-            'Maintenance Dates': '#10b981',
             'Product Info': '#8b5cf6',
-            'Status': '#f59e0b',
-            'Company Info': '#ec4899',
-            'Contact': '#06b6d4'
+            'Maintenance Dates': '#10b981',
+            'Status & Other': '#6b7280'
         };
 
         function viewRowDetails(rowIndex) {
             currentViewRowIndex = rowIndex;
             const row = crmData[rowIndex];
             const hasEdit = hasPermission('crm', 'edit');
-            
+
             // Get customer identifier for title
             const acctNo = row['ACCT NO'] || '';
             const clinicName = row['CLINIC NAME'] || '';
             const titleText = acctNo ? `Edit Customer - ${acctNo}` : (clinicName ? `Edit Customer - ${clinicName}` : 'Customer Details');
-            
+
+            // Status badge
+            const status = getRowStatus(row);
+
             // Track which headers are in groups
             const groupedHeaders = new Set();
             Object.values(FIELD_GROUPS).forEach(fields => fields.forEach(f => groupedHeaders.add(f)));
-            
-            // Build form HTML
-            let formHTML = '<div class="customer-form">';
-            
-            // Render grouped fields
-            Object.keys(FIELD_GROUPS).forEach(groupName => {
-                const groupColor = GROUP_COLORS[groupName] || '#6b7280';
-                formHTML += `
-                    <div class="form-section" style="margin-bottom: 24px;">
-                        <div class="section-header" style="background: ${groupColor}15; border-left: 4px solid ${groupColor}; padding: 10px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-                            <h3 style="margin: 0; color: ${groupColor}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(groupName)}</h3>
-                        </div>
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                `;
-                
-                FIELD_GROUPS[groupName].forEach(headerName => {
-                    if (headers.includes(headerName)) {
-                        const colIdx = headers.indexOf(headerName);
-                        formHTML += renderFormField(headerName, row[headerName] || '', colIdx, hasEdit);
-                    }
+
+            // Helper to render a card
+            function renderCard(groupName, fields) {
+                const cardFields = fields.filter(h => headers.includes(h));
+                if (cardFields.length === 0) return '';
+                let fieldsHTML = '';
+                cardFields.forEach(headerName => {
+                    const colIdx = headers.indexOf(headerName);
+                    fieldsHTML += renderFormField(headerName, row[headerName] || '', colIdx, hasEdit);
                 });
-                
-                formHTML += '</div></div>';
+                return `
+                    <div class="edit-card">
+                        <h4 class="edit-card-title">${escapeHtml(groupName)}</h4>
+                        <div class="edit-customer-grid">
+                            ${fieldsHTML}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Build form HTML
+            let formHTML = '';
+
+            // Render grouped fields as cards
+            Object.keys(FIELD_GROUPS).forEach(groupName => {
+                formHTML += renderCard(groupName, FIELD_GROUPS[groupName]);
             });
-            
+
             // Render remaining fields (not in any group)
             const otherFields = headers.filter(h => !groupedHeaders.has(h));
             if (otherFields.length > 0) {
-                formHTML += `
-                    <div class="form-section" style="margin-bottom: 24px;">
-                        <div class="section-header" style="background: #6b728015; border-left: 4px solid #6b7280; padding: 10px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
-                            <h3 style="margin: 0; color: #6b7280; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Other Fields</h3>
-                        </div>
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                `;
-                
-                otherFields.forEach(headerName => {
-                    const colIdx = headers.indexOf(headerName);
-                    formHTML += renderFormField(headerName, row[headerName] || '', colIdx, hasEdit);
-                });
-                
-                formHTML += '</div></div>';
+                formHTML += renderCard('Status & Other', otherFields);
             }
-            
-            formHTML += '</div>';
-            
+
             // Build modal
             const modal = document.createElement('div');
             modal.id = 'viewDetailsModal';
             modal.className = 'modal active';
             modal.innerHTML = `
-                <div class="modal-content" style="max-width: 900px; max-height: 90vh; display: flex; flex-direction: column;">
+                <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
                     <div class="modal-header" style="flex-shrink: 0;">
-                        <h2>${escapeHtml(titleText)}</h2>
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <h2 style="margin: 0;">${escapeHtml(titleText)}</h2>
+                            <span class="status-badge ${status.class}" style="font-size: 12px; padding: 4px 10px;">${status.label}</span>
+                        </div>
                         <button class="close-btn" onclick="closeViewDetailsModal()">&times;</button>
                     </div>
                     <div style="flex: 1; overflow-y: auto; padding: 20px;">
                         ${formHTML}
                     </div>
-                    <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; flex-shrink: 0;">
+                    <div class="modal-footer-sticky">
                         <button type="button" class="btn btn-secondary" onclick="closeViewDetailsModal()">Close</button>
                         ${hasEdit ? '<button type="button" class="btn btn-primary" onclick="saveViewDetails()">Save Changes</button>' : ''}
                     </div>
@@ -5181,19 +5223,18 @@
 
         async function deleteCustomerById(id) {
             if (!hasPermission('crm', 'delete')) {
-                alert("You don't have permission to perform this action");
+                console.warn('Delete permission denied');
                 return;
             }
             if (!id || id === 'undefined' || id === 'null') {
-                alert('Cannot delete: record has no database ID');
+                console.warn('Cannot delete: record has no database ID');
                 return;
             }
-            if (!confirm('Are you sure you want to delete this customer?')) return;
 
             // Find the row in crmData by ID
             const rowIndex = crmData.findIndex(r => String(r.id) === String(id));
             if (rowIndex === -1) {
-                alert('Record not found in local data. Please refresh the table.');
+                console.warn('Record not found in local data');
                 return;
             }
 
@@ -5216,12 +5257,10 @@
                 const { error } = await supabaseClient.from('contacts').delete().eq('id', id);
                 if (error) {
                     console.error(`Failed to delete record ${id} from Supabase:`, error);
-                    alert('Error deleting customer: ' + error.message);
                     return;
                 }
             } catch (err) {
                 console.error(`Error deleting record ${id}:`, err);
-                alert('Error deleting customer: ' + err.message);
                 return;
             }
 
@@ -5233,7 +5272,38 @@
 
             saveCRMData();
             renderTable();
-            showNotification('Customer deleted successfully!', 'success');
+        }
+
+        function exportToExcel() {
+            if (!crmData || crmData.length === 0) {
+                console.warn('No data to export');
+                return;
+            }
+
+            // Get ALL columns from the data (not just the visible table columns)
+            const exportData = crmData.map(row => {
+                const cleanRow = {};
+                // Copy all data fields except internal ones (_rowIndex, id, _supabaseId, etc.)
+                for (const [key, value] of Object.entries(row)) {
+                    if (!key.startsWith('_') && key !== 'id') {
+                        cleanRow[key] = value || '';
+                    }
+                }
+                return cleanRow;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Customers');
+
+            // Auto-size columns
+            const maxWidth = 30;
+            const cols = Object.keys(exportData[0] || {}).map(key => ({
+                wch: Math.min(maxWidth, Math.max(key.length, 12))
+            }));
+            worksheet['!cols'] = cols;
+
+            XLSX.writeFile(workbook, 'CRM_Customers_Export.xlsx');
         }
 
         function duplicateRow(rowIndex) {
