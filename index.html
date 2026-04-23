@@ -2136,6 +2136,21 @@
             border-collapse: separate;
             border-spacing: 0;
         }
+
+        /* Profile form styles */
+        .profile-form .form-group {
+            margin-bottom: 16px;
+        }
+        .profile-form label {
+            display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #374151;
+        }
+        .profile-form input, .profile-form select {
+            width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px;
+            font-size: 14px; box-sizing: border-box;
+        }
+        .profile-form input:focus {
+            border-color: #4361ee; outline: none; box-shadow: 0 0 0 3px rgba(67,97,238,0.1);
+        }
     </style>
 </head>
 <body>
@@ -2186,6 +2201,9 @@
                 </a>
                 <a class="nav-item" data-section="users" id="sidebarUsersTab" onclick="showSection('users')">
                     <span class="nav-icon">&#128100;</span> Users
+                </a>
+                <a class="nav-item" data-section="profile" onclick="showSection('profile')">
+                    <span class="nav-icon">&#128100;</span> Profile
                 </a>
             </nav>
             <div class="sidebar-footer">
@@ -2487,6 +2505,52 @@
                         <tbody id="usersTableBody">
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profile" class="content-section" style="display:none;">
+                <div class="section-card" style="max-width:600px;">
+                    <h2 style="margin-bottom:24px;">My Profile</h2>
+                    
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="profileUsername" readonly style="background:#f0f2f5;cursor:not-allowed;">
+                        </div>
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="profileFullName" placeholder="Enter your full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profileEmail" placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" id="profilePhone" placeholder="Enter your phone number">
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <input type="text" id="profileRole" readonly style="background:#f0f2f5;cursor:not-allowed;">
+                        </div>
+                        <button class="btn-primary" onclick="saveProfile()">Save Profile</button>
+                    </div>
+
+                    <hr style="margin:30px 0;border-color:#e5e7eb;">
+
+                    <h3 style="margin-bottom:16px;">Change Password</h3>
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" id="profileNewPassword" placeholder="Enter new password">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input type="password" id="profileConfirmPassword" placeholder="Confirm new password">
+                        </div>
+                        <button class="btn-primary" onclick="changeProfilePassword()">Change Password</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3315,6 +3379,76 @@
             showLoginScreen();
         }
 
+        async function loadProfile() {
+            const stored = localStorage.getItem('currentUser');
+            const currentUser = stored ? JSON.parse(stored) : {};
+            if (!currentUser.id) return;
+
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (error || !data) { console.error('Load profile error:', error); return; }
+
+            document.getElementById('profileUsername').value = data.username || '';
+            document.getElementById('profileFullName').value = data.full_name || data.name || '';
+            document.getElementById('profileEmail').value = data.email || '';
+            document.getElementById('profilePhone').value = data.phone || '';
+            document.getElementById('profileRole').value = data.role || '';
+        }
+
+        async function saveProfile() {
+            const stored = localStorage.getItem('currentUser');
+            const currentUser = stored ? JSON.parse(stored) : {};
+            if (!currentUser.id) { alert('Not logged in'); return; }
+
+            const fullName = document.getElementById('profileFullName').value.trim();
+            const email = document.getElementById('profileEmail').value.trim();
+            const phone = document.getElementById('profilePhone').value.trim();
+
+            const { error } = await supabaseClient
+                .from('users')
+                .update({ full_name: fullName, email: email, phone: phone })
+                .eq('id', currentUser.id);
+
+            if (error) { alert('Error saving profile: ' + error.message); return; }
+
+            currentUser.full_name = fullName;
+            currentUser.email = email;
+            currentUser.phone = phone;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+            alert('Profile updated successfully!');
+        }
+
+        async function changeProfilePassword() {
+            const newPass = document.getElementById('profileNewPassword').value;
+            const confirmPass = document.getElementById('profileConfirmPassword').value;
+
+            if (!newPass || !confirmPass) { alert('Please fill in both password fields'); return; }
+            if (newPass !== confirmPass) { alert('Passwords do not match'); return; }
+            if (newPass.length < 6) { alert('Password must be at least 6 characters'); return; }
+
+            const stored = localStorage.getItem('currentUser');
+            const currentUser = stored ? JSON.parse(stored) : {};
+            if (!currentUser.id) { alert('Not logged in'); return; }
+
+            const hashedPassword = dcodeIO.bcrypt.hashSync(newPass, 10);
+
+            const { error } = await supabaseClient
+                .from('users')
+                .update({ password: hashedPassword })
+                .eq('id', currentUser.id);
+
+            if (error) { alert('Error changing password: ' + error.message); return; }
+
+            document.getElementById('profileNewPassword').value = '';
+            document.getElementById('profileConfirmPassword').value = '';
+            alert('Password changed successfully!');
+        }
+
         function renderDashboard() {
             if (!crmData || crmData.length === 0) {
                 document.getElementById('dashTotalCustomers').textContent = '0';
@@ -3445,7 +3579,8 @@
                 'reports': 'Reports',
                 'settings': 'Settings',
                 'users': 'Users',
-                'userManagement': 'User Management'
+                'userManagement': 'User Management',
+                'profile': 'My Profile'
             };
             document.getElementById('pageTitle').textContent = pageTitles[sectionId] || 'CRM System';
 
@@ -3467,6 +3602,8 @@
                 await renderAllReports();
             } else if (sectionId === 'users') {
                 await loadUsers();
+            } else if (sectionId === 'profile') {
+                await loadProfile();
             }
         }
 
