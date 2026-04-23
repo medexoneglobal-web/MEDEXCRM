@@ -1224,7 +1224,32 @@
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(100%); opacity: 0; }
         }
-        
+
+        /* Toast notification system */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 14px 24px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 280px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+        }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
         /* Two column layout for new customer form */
         #newCustomerFields {
             display: grid;
@@ -2737,10 +2762,10 @@
             </div>
 
             <!-- Profile Section -->
-            <div id="profile" class="content-section" style="display:none;">
+            <div id="profile" class="content-section">
                 <div class="section-card" style="max-width:600px;">
                     <h2 style="margin-bottom:24px;">My Profile</h2>
-                    
+
                     <div class="profile-form">
                         <div class="form-group">
                             <label>Username</label>
@@ -2770,11 +2795,15 @@
                     <h3 style="margin-bottom:16px;">Change Password</h3>
                     <div class="profile-form">
                         <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" id="profileCurrentPassword" placeholder="Enter current password">
+                        </div>
+                        <div class="form-group">
                             <label>New Password</label>
                             <input type="password" id="profileNewPassword" placeholder="Enter new password">
                         </div>
                         <div class="form-group">
-                            <label>Confirm Password</label>
+                            <label>Confirm New Password</label>
                             <input type="password" id="profileConfirmPassword" placeholder="Confirm new password">
                         </div>
                         <button class="btn-primary" onclick="changeProfilePassword()">Change Password</button>
@@ -2932,6 +2961,22 @@
         </div>
     </div>
 
+    <!-- Confirm Delete Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h2>Confirm Action</h2>
+                <button class="close-btn" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalMessage" style="font-size: 15px; color: var(--text);">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="handleConfirmDelete()">OK</button>
+            </div>
+        </div>
+    </div>
     <!-- Edit License Key Modal -->
     <div id="editLicenseKeyModal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
@@ -3678,29 +3723,39 @@
         }
 
         async function loadProfile() {
-            const stored = localStorage.getItem('currentUser');
-            const currentUser = stored ? JSON.parse(stored) : {};
-            if (!currentUser.id) return;
+            try {
+                const stored = localStorage.getItem('currentUser') || localStorage.getItem('crmCurrentUser');
+                const user = stored ? JSON.parse(stored) : {};
+                if (!user.id) {
+                    console.error('loadProfile: No logged in user found in localStorage');
+                    return;
+                }
 
-            const { data, error } = await supabaseClient
-                .from('users')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
 
-            if (error || !data) { console.error('Load profile error:', error); return; }
+                if (error || !data) {
+                    console.error('Load profile error:', error);
+                    return;
+                }
 
-            document.getElementById('profileUsername').value = data.username || '';
-            document.getElementById('profileFullName').value = data.full_name || data.name || '';
-            document.getElementById('profileEmail').value = data.email || '';
-            document.getElementById('profilePhone').value = data.phone || '';
-            document.getElementById('profileRole').value = data.role || '';
+                document.getElementById('profileUsername').value = data.username || '';
+                document.getElementById('profileFullName').value = data.full_name || data.name || '';
+                document.getElementById('profileEmail').value = data.email || '';
+                document.getElementById('profilePhone').value = data.phone || '';
+                document.getElementById('profileRole').value = data.role || '';
+            } catch (err) {
+                console.error('loadProfile exception:', err);
+            }
         }
 
         async function saveProfile() {
-            const stored = localStorage.getItem('currentUser');
-            const currentUser = stored ? JSON.parse(stored) : {};
-            if (!currentUser.id) { alert('Not logged in'); return; }
+            const stored = localStorage.getItem('currentUser') || localStorage.getItem('crmCurrentUser');
+            const user = stored ? JSON.parse(stored) : {};
+            if (!user.id) { alert('Not logged in'); return; }
 
             const fullName = document.getElementById('profileFullName').value.trim();
             const email = document.getElementById('profileEmail').value.trim();
@@ -3709,42 +3764,72 @@
             const { error } = await supabaseClient
                 .from('users')
                 .update({ full_name: fullName, email: email, phone: phone })
-                .eq('id', currentUser.id);
+                .eq('id', user.id);
 
             if (error) { alert('Error saving profile: ' + error.message); return; }
 
-            currentUser.full_name = fullName;
-            currentUser.email = email;
-            currentUser.phone = phone;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            user.full_name = fullName;
+            user.email = email;
+            user.phone = phone;
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            localStorage.setItem('crmCurrentUser', JSON.stringify(user));
 
             alert('Profile updated successfully!');
         }
 
         async function changeProfilePassword() {
+            const currentPass = document.getElementById('profileCurrentPassword').value;
             const newPass = document.getElementById('profileNewPassword').value;
             const confirmPass = document.getElementById('profileConfirmPassword').value;
 
-            if (!newPass || !confirmPass) { alert('Please fill in both password fields'); return; }
-            if (newPass !== confirmPass) { alert('Passwords do not match'); return; }
+            if (!currentPass || !newPass || !confirmPass) { alert('Please fill in all password fields'); return; }
+            if (newPass !== confirmPass) { alert('New passwords do not match'); return; }
             if (newPass.length < 6) { alert('Password must be at least 6 characters'); return; }
 
-            const stored = localStorage.getItem('currentUser');
-            const currentUser = stored ? JSON.parse(stored) : {};
-            if (!currentUser.id) { alert('Not logged in'); return; }
+            const stored = localStorage.getItem('currentUser') || localStorage.getItem('crmCurrentUser');
+            const user = stored ? JSON.parse(stored) : {};
+            if (!user.id) { alert('Not logged in'); return; }
 
-            const hashedPassword = dcodeIO.bcrypt.hashSync(newPass, 10);
+            try {
+                const { data, error: fetchError } = await supabaseClient
+                    .from('users')
+                    .select('password')
+                    .eq('id', user.id)
+                    .single();
 
-            const { error } = await supabaseClient
-                .from('users')
-                .update({ password: hashedPassword })
-                .eq('id', currentUser.id);
+                if (fetchError || !data) {
+                    alert('Unable to verify current password. Please try again.');
+                    console.error('Fetch password error:', fetchError);
+                    return;
+                }
 
-            if (error) { alert('Error changing password: ' + error.message); return; }
+                const valid = dcodeIO.bcrypt.compareSync(currentPass, data.password);
+                if (!valid) {
+                    alert('Current password is incorrect');
+                    return;
+                }
 
-            document.getElementById('profileNewPassword').value = '';
-            document.getElementById('profileConfirmPassword').value = '';
-            alert('Password changed successfully!');
+                const hashedPassword = dcodeIO.bcrypt.hashSync(newPass, 10);
+
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({ password: hashedPassword })
+                    .eq('id', user.id);
+
+                if (error) {
+                    alert('Error changing password: ' + error.message);
+                    console.error('Update password error:', error);
+                    return;
+                }
+
+                document.getElementById('profileCurrentPassword').value = '';
+                document.getElementById('profileNewPassword').value = '';
+                document.getElementById('profileConfirmPassword').value = '';
+                alert('Password changed successfully!');
+            } catch (err) {
+                console.error('changeProfilePassword exception:', err);
+                alert('An unexpected error occurred. Please try again.');
+            }
         }
 
         function renderDashboard() {
@@ -5459,6 +5544,42 @@
             }, 3000);
         }
 
+        function showToast(message, type = 'info') {
+            let container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + (type === 'success' ? 'success' : (type === 'error' ? 'error' : ''));
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        let confirmDeleteCallback = null;
+        function openConfirmModal(message, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            const msgEl = document.getElementById('confirmModalMessage');
+            if (modal && msgEl) {
+                msgEl.textContent = message;
+                confirmDeleteCallback = onConfirm;
+                modal.classList.add('active');
+            } else if (confirm(message)) {
+                onConfirm();
+            }
+        }
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            if (modal) modal.classList.remove('active');
+            confirmDeleteCallback = null;
+        }
+        function handleConfirmDelete() {
+            if (confirmDeleteCallback) confirmDeleteCallback();
+            closeConfirmModal();
+        }
 
         async function deleteRow(rowIndex) {
             // Check delete permission before deleting
@@ -8763,4 +8884,113 @@
 
     </script>
 </body>
+</html>
+                meeting: '&#129309;',
+                stage_change: '&#128202;',
+                task_created: '&#9989;',
+                task_completed: '&#127881;'
+            };
+            return icons[type] || '&#128221;';
+        }
+
+        async function addActivity() {
+            const type = document.getElementById('activityType').value;
+            const description = document.getElementById('activityDescription').value.trim();
+            if (!description) return;
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const contactId = currentViewContactId;
+            if (!contactId) return;
+            const { error } = await supabaseClient.from('activities').insert({
+                contact_id: contactId,
+                type,
+                description,
+                created_by: currentUser.username
+            });
+            if (error) { console.error(error); return; }
+            document.getElementById('activityDescription').value = '';
+            loadActivities(contactId);
+        }
+
+    </script>
+</body>
+</html>
+                        <div class="activity-meta">${escapeHtml(act.created_by || 'System')} &middot; ${date}</div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html || '<p style="color:#9ca3af;text-align:center;padding:20px;">No activities yet</p>';
+        }
+
+        function getActivityIcon(type) {
+            const icons = {
+                note: '&#128221;',
+                call: '&#128222;',
+                email: '&#128231;',
+                meeting: '&#129309;',
+                stage_change: '&#128202;',
+                task_created: '&#9989;',
+                task_completed: '&#127881;'
+            };
+            return icons[type] || '&#128221;';
+        }
+
+        async function addActivity() {
+            const type = document.getElementById('activityType').value;
+            const description = document.getElementById('activityDescription').value.trim();
+            if (!description) return;
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const contactId = currentViewContactId;
+            if (!contactId) return;
+            const { error } = await supabaseClient.from('activities').insert({
+                contact_id: contactId,
+                type,
+                description,
+                created_by: currentUser.username
+            });
+            if (error) { console.error(error); return; }
+            document.getElementById('activityDescription').value = '';
+            loadActivities(contactId);
+        }
+
+    </script>
+</body>
+</html>
+            });
+            container.innerHTML = html || '<p style="color:#9ca3af;text-align:center;padding:20px;">No activities yet</p>';
+        }
+
+        function getActivityIcon(type) {
+            const icons = {
+                note: '&#128221;',
+                call: '&#128222;',
+                email: '&#128231;',
+                meeting: '&#129309;',
+                stage_change: '&#128202;',
+                task_created: '&#9989;',
+                task_completed: '&#127881;'
+            };
+            return icons[type] || '&#128221;';
+        }
+
+        async function addActivity() {
+            const type = document.getElementById('activityType').value;
+            const description = document.getElementById('activityDescription').value.trim();
+            if (!description) return;
+            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
+            const contactId = currentViewContactId;
+            if (!contactId) return;
+            const { error } = await supabaseClient.from('activities').insert({
+                contact_id: contactId,
+                type,
+                description,
+                created_by: currentUser.username
+            });
+            if (error) { console.error(error); return; }
+            document.getElementById('activityDescription').value = '';
+            loadActivities(contactId);
+        }
+
+    </script>
+    <div id="toastContainer" class="toast-container"></div>
+    </body>
 </html>
