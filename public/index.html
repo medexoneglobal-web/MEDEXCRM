@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -303,7 +303,7 @@
         }
         
         .header h1::before {
-            content: '◆';
+            content: 'â—†';
             color: var(--accent);
             font-size: 18px;
         }
@@ -749,7 +749,7 @@
         
         /* Dropdown indicator for cells with options */
         .editable.has-options::after {
-            content: '▼';
+            content: 'â–¼';
             font-size: 8px;
             color: #4361ee;
             margin-left: 4px;
@@ -2493,7 +2493,7 @@
                     <h2>Customer Records</h2>
                     <div style="display: flex; gap: 10px; flex-shrink: 0;">
                         <button class="btn btn-success" onclick="showNewCustomerModal()">+ New Customer</button>
-                        <button class="btn btn-secondary" onclick="exportToExcel()">📥 Export to Excel</button>
+                        <button class="btn btn-secondary" onclick="exportToExcel()">ðŸ“¥ Export to Excel</button>
                         <button class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
                     </div>
                 </div>
@@ -3587,7 +3587,7 @@
                     populateProductFilter();
                     return true;
                 } else {
-                    // No data in Supabase — use default headers so UI works
+                    // No data in Supabase â€” use default headers so UI works
                     headers = [...DEFAULT_HEADERS];
                     crmData = [];
                     visibleColumns = [];
@@ -5902,7 +5902,7 @@
                         <li>
                             <span class="audit-field-name">${escapeHtml(field)}:</span>
                             <span class="audit-old-value">${escapeHtml(oldValue) || '(empty)'}</span>
-                            <span class="audit-arrow">→</span>
+                            <span class="audit-arrow">â†’</span>
                             <span class="audit-new-value">${escapeHtml(newValue) || '(empty)'}</span>
                         </li>
                     `;
@@ -6553,7 +6553,7 @@
             });
             
             if (missingFields.length > 0) {
-                alert('Please fill in all mandatory fields:\n• ' + missingFields.join('\n• '));
+                alert('Please fill in all mandatory fields:\nâ€¢ ' + missingFields.join('\nâ€¢ '));
                 return;
             }
             
@@ -8870,114 +8870,6 @@
                         <div class="activity-meta">${escapeHtml(act.created_by || 'System')} &middot; ${date}</div>
                     </div>
                 </div>`;
-            });
-            container.innerHTML = html || '<p style="color:#9ca3af;text-align:center;padding:20px;">No activities yet</p>';
-        }
-
-        function getActivityIcon(type) {
-            const icons = {
-                note: '&#128221;',
-                call: '&#128222;',
-                email: '&#128231;',
-                meeting: '&#129309;',
-                stage_change: '&#128202;',
-                task_created: '&#9989;',
-                task_completed: '&#127881;'
-            };
-            return icons[type] || '&#128221;';
-        }
-
-        async function addActivity() {
-            const type = document.getElementById('activityType').value;
-            const description = document.getElementById('activityDescription').value.trim();
-            if (!description) return;
-            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
-            const contactId = currentViewContactId;
-            if (!contactId) return;
-            const { error } = await supabaseClient.from('activities').insert({
-                contact_id: contactId,
-                type,
-                description,
-                created_by: currentUser.username
-            });
-            if (error) { console.error(error); return; }
-            document.getElementById('activityDescription').value = '';
-            loadActivities(contactId);
-        }
-
-    </script>
-</body>
-</html>
-                meeting: '&#129309;',
-                stage_change: '&#128202;',
-                task_created: '&#9989;',
-                task_completed: '&#127881;'
-            };
-            return icons[type] || '&#128221;';
-        }
-
-        async function addActivity() {
-            const type = document.getElementById('activityType').value;
-            const description = document.getElementById('activityDescription').value.trim();
-            if (!description) return;
-            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
-            const contactId = currentViewContactId;
-            if (!contactId) return;
-            const { error } = await supabaseClient.from('activities').insert({
-                contact_id: contactId,
-                type,
-                description,
-                created_by: currentUser.username
-            });
-            if (error) { console.error(error); return; }
-            document.getElementById('activityDescription').value = '';
-            loadActivities(contactId);
-        }
-
-    </script>
-</body>
-</html>
-                        <div class="activity-meta">${escapeHtml(act.created_by || 'System')} &middot; ${date}</div>
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html || '<p style="color:#9ca3af;text-align:center;padding:20px;">No activities yet</p>';
-        }
-
-        function getActivityIcon(type) {
-            const icons = {
-                note: '&#128221;',
-                call: '&#128222;',
-                email: '&#128231;',
-                meeting: '&#129309;',
-                stage_change: '&#128202;',
-                task_created: '&#9989;',
-                task_completed: '&#127881;'
-            };
-            return icons[type] || '&#128221;';
-        }
-
-        async function addActivity() {
-            const type = document.getElementById('activityType').value;
-            const description = document.getElementById('activityDescription').value.trim();
-            if (!description) return;
-            const currentUser = JSON.parse(localStorage.getItem('crmCurrentUser') || '{}');
-            const contactId = currentViewContactId;
-            if (!contactId) return;
-            const { error } = await supabaseClient.from('activities').insert({
-                contact_id: contactId,
-                type,
-                description,
-                created_by: currentUser.username
-            });
-            if (error) { console.error(error); return; }
-            document.getElementById('activityDescription').value = '';
-            loadActivities(contactId);
-        }
-
-    </script>
-</body>
-</html>
             });
             container.innerHTML = html || '<p style="color:#9ca3af;text-align:center;padding:20px;">No activities yet</p>';
         }
