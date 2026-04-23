@@ -8477,19 +8477,27 @@
         }
 
         async function populateAssignedToDropdown(selectId) {
-            const { data: users } = await supabaseClient
-                .from('users')
-                .select('id, username, full_name')
-                .eq('status', 'active');
-
             const select = document.getElementById(selectId);
-            if (!select) return;
+            if (!select) { console.error('Select element not found:', selectId); return; }
+
             select.innerHTML = '<option value="">-- Select User --</option>';
-            if (users) {
+
+            const { data: users, error } = await supabaseClient
+                .from('users')
+                .select('id, username, full_name');
+
+            if (error) {
+                console.error('Failed to load users:', error);
+                return;
+            }
+
+            if (users && users.length > 0) {
                 users.forEach(u => {
                     const displayName = u.full_name || u.username;
                     select.innerHTML += `<option value="${u.id}">${escapeHtml(displayName)} (${escapeHtml(u.username)})</option>`;
                 });
+            } else {
+                console.warn('No users found in users table');
             }
         }
 
