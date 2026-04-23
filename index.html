@@ -5587,7 +5587,7 @@
                 alert("You don't have permission to perform this action");
                 return;
             }
-            if (confirm('Are you sure you want to delete this row?')) {
+            openConfirmModal('Are you sure you want to delete this customer?', async () => {
                 const recordId = crmData[rowIndex].id;
                 const recordData = { ...crmData[rowIndex] };
                 delete recordData.id;
@@ -5610,9 +5610,13 @@
                         const { error } = await supabaseClient.from('contacts').delete().eq('id', recordId);
                         if (error) {
                             console.error(`Failed to delete record ${recordId} from Supabase:`, error);
+                            showToast('Failed to delete customer: ' + error.message, 'error');
+                            return;
                         }
                     } catch (err) {
                         console.error(`Error deleting record ${recordId}:`, err);
+                        showToast('Failed to delete customer', 'error');
+                        return;
                     }
                 }
                 
@@ -5625,7 +5629,8 @@
                 
                 saveCRMData();
                 renderTable();
-            }
+                showToast('Customer deleted successfully', 'success');
+            });
         }
 
         async function deleteCustomerById(id) {
@@ -5645,40 +5650,45 @@
                 return;
             }
 
-            const recordData = { ...crmData[rowIndex] };
-            delete recordData.id;
+            openConfirmModal('Are you sure you want to delete this customer?', async () => {
+                const recordData = { ...crmData[rowIndex] };
+                delete recordData.id;
 
-            // Insert audit log before deleting
-            try {
-                await supabaseClient.from('audit_log').insert([{
-                    contacts_id: id,
-                    action: 'DELETE',
-                    changed_by: currentUser ? currentUser.username : 'Unknown',
-                    old_data: recordData
-                }]);
-            } catch (auditErr) {
-                console.error('Failed to insert audit log for delete:', auditErr);
-            }
+                // Insert audit log before deleting
+                try {
+                    await supabaseClient.from('audit_log').insert([{
+                        contacts_id: id,
+                        action: 'DELETE',
+                        changed_by: currentUser ? currentUser.username : 'Unknown',
+                        old_data: recordData
+                    }]);
+                } catch (auditErr) {
+                    console.error('Failed to insert audit log for delete:', auditErr);
+                }
 
-            try {
-                const { error } = await supabaseClient.from('contacts').delete().eq('id', id);
-                if (error) {
-                    console.error(`Failed to delete record ${id} from Supabase:`, error);
+                try {
+                    const { error } = await supabaseClient.from('contacts').delete().eq('id', id);
+                    if (error) {
+                        console.error(`Failed to delete record ${id} from Supabase:`, error);
+                        showToast('Failed to delete customer: ' + error.message, 'error');
+                        return;
+                    }
+                } catch (err) {
+                    console.error(`Error deleting record ${id}:`, err);
+                    showToast('Failed to delete customer', 'error');
                     return;
                 }
-            } catch (err) {
-                console.error(`Error deleting record ${id}:`, err);
-                return;
-            }
 
-            // Remove from local data and re-index
-            crmData.splice(rowIndex, 1);
-            crmData.forEach((row, idx) => {
-                row._rowIndex = idx;
+                // Remove from local data and re-index
+                crmData.splice(rowIndex, 1);
+                crmData.forEach((row, idx) => {
+                    row._rowIndex = idx;
+                });
+
+                saveCRMData();
+                renderTable();
+                showToast('Customer deleted successfully', 'success');
             });
-
-            saveCRMData();
-            renderTable();
         }
 
         function exportToExcel() {
@@ -6048,13 +6058,18 @@
                     
                     updatePromises.push(
                         supabaseClient.from('contacts').update({ data: rowData }).eq('id', recordId)
-                            .catch(err => console.error(`Failed to update record ${recordId}:`, err))
+                            .then(res => { if (res.error) throw res.error; })
+                            .catch(err => {
+                                console.error(`Failed to update record ${recordId}:`, err);
+                                return { error: err };
+                            })
                     );
                 }
             }
 
             // Wait for all API calls to complete
-            await Promise.all(updatePromises);
+            const updateResults = await Promise.all(updatePromises);
+            const updateErrors = updateResults.filter(r => r && r.error);
 
             // Insert audit logs for each changed row
             for (const rowIdx of Object.keys(rowChanges)) {
@@ -6086,7 +6101,11 @@
             pendingChanges = {};
             saveCRMData();
             renderTable();
-            showNotification('Info Updated', 'success');
+            if (updateErrors.length > 0) {
+                showToast('Some customer updates failed', 'error');
+            } else {
+                showToast('Customer updated successfully', 'success');
+            }
         }
 
         // ==================== ACCESS RIGHTS & SETTINGS MODULE ====================
@@ -6598,7 +6617,7 @@
                 const { data: result, error } = await supabaseClient.from('contacts').insert([{ data: newCustomer }]).select();
                 if (error) {
                     console.error('Failed to save customer to Supabase:', error);
-                    alert('Error creating customer: ' + error.message);
+                    showToast('Error creating customer: ' + error.message, 'error');
                     return; // Don't close modal on error
                 } else if (result && result[0]) {
                     newCustomer.id = result[0].id;
@@ -6606,7 +6625,7 @@
                 }
             } catch (err) {
                 console.error('Error saving customer to Supabase:', err);
-                alert('Error creating customer: ' + err.message);
+                showToast('Error creating customer: ' + err.message, 'error');
                 return; // Don't close modal on error
             }
             
@@ -6634,7 +6653,7 @@
             closeModal('newCustomerModal');
             
             // Show success message
-            showNotification('Customer created successfully!', 'success');
+            showToast('Customer saved successfully', 'success');
             
             // Refresh table
             if (newId) {
@@ -7179,65 +7198,69 @@
                 return;
             }
 
-            if (!confirm(`Are you sure you want to delete ${selectedRows.size} selected row(s)?`)) {
-                return;
-            }
-
-            // Get selected row indices and sort in descending order to avoid index shifting issues
-            const indicesToDelete = Array.from(selectedRows).sort((a, b) => b - a);
-            
-            // Delete from Supabase first for records with IDs
-            for (const index of indicesToDelete) {
-                const recordId = crmData[index].id;
-                if (recordId) {
-                    const recordData = { ...crmData[index] };
-                    delete recordData.id;
-                    
-                    // Insert audit log before deleting
-                    try {
-                        await supabaseClient.from('audit_log').insert([{
-                            contacts_id: recordId,
-                            action: 'DELETE',
-                            changed_by: currentUser ? currentUser.username : 'Unknown',
-                            old_data: recordData
-                        }]);
-                    } catch (auditErr) {
-                        console.error('Failed to insert audit log for delete:', auditErr);
-                    }
-                    
-                    try {
-                        const { error } = await supabaseClient.from('contacts').delete().eq('id', recordId);
-                        if (error) {
-                            console.error(`Failed to delete record ${recordId} from Supabase:`, error);
+            openConfirmModal(`Are you sure you want to delete ${selectedRows.size} selected row(s)?`, async () => {
+                // Get selected row indices and sort in descending order to avoid index shifting issues
+                const indicesToDelete = Array.from(selectedRows).sort((a, b) => b - a);
+                let hasError = false;
+                
+                // Delete from Supabase first for records with IDs
+                for (const index of indicesToDelete) {
+                    const recordId = crmData[index].id;
+                    if (recordId) {
+                        const recordData = { ...crmData[index] };
+                        delete recordData.id;
+                        
+                        // Insert audit log before deleting
+                        try {
+                            await supabaseClient.from('audit_log').insert([{
+                                contacts_id: recordId,
+                                action: 'DELETE',
+                                changed_by: currentUser ? currentUser.username : 'Unknown',
+                                old_data: recordData
+                            }]);
+                        } catch (auditErr) {
+                            console.error('Failed to insert audit log for delete:', auditErr);
                         }
-                    } catch (err) {
-                        console.error(`Error deleting record ${recordId}:`, err);
+                        
+                        try {
+                            const { error } = await supabaseClient.from('contacts').delete().eq('id', recordId);
+                            if (error) {
+                                console.error(`Failed to delete record ${recordId} from Supabase:`, error);
+                                hasError = true;
+                            }
+                        } catch (err) {
+                            console.error(`Error deleting record ${recordId}:`, err);
+                            hasError = true;
+                        }
                     }
                 }
-            }
-            
-            // Delete rows from crmData
-            indicesToDelete.forEach(index => {
-                crmData.splice(index, 1);
+                
+                // Delete rows from crmData
+                indicesToDelete.forEach(index => {
+                    crmData.splice(index, 1);
+                });
+
+                // Re-index remaining rows
+                crmData.forEach((row, idx) => {
+                    row._rowIndex = idx;
+                });
+
+                // Clear selection
+                selectedRows.clear();
+                updateDeleteSelectedButton();
+
+                // Save to localStorage
+                saveCRMData();
+
+                // Re-render table
+                renderTable();
+
+                if (hasError) {
+                    showToast('Some records failed to delete', 'error');
+                } else {
+                    showToast(`${indicesToDelete.length} row(s) deleted successfully`, 'success');
+                }
             });
-
-            // Re-index remaining rows
-            crmData.forEach((row, idx) => {
-                row._rowIndex = idx;
-            });
-
-            // Clear selection
-            selectedRows.clear();
-            updateDeleteSelectedButton();
-
-            // Save to localStorage
-            saveCRMData();
-
-            // Re-render table
-            renderTable();
-
-            // Show success notification
-            showNotification(`${indicesToDelete.length} row(s) deleted successfully!`, 'success');
         }
 
         function downloadCSV(csv, filename) {
