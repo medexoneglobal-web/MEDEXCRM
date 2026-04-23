@@ -6637,7 +6637,7 @@
             });
             
             if (missingFields.length > 0) {
-                alert('Please fill in all mandatory fields:\nâ€¢ ' + missingFields.join('\nâ€¢ '));
+                showToast('Please fill in all mandatory fields: ' + missingFields.join(', '), 'error');
                 return;
             }
             
@@ -6679,18 +6679,26 @@
             // Check for duplicate ACCT NO
             const acctNo = newCustomer['ACCT NO'];
             if (acctNo) {
-                const { data: existing, error: dupError } = await supabaseClient
-                    .from('contacts')
-                    .select('id')
-                    .eq('data->>ACCT NO', acctNo)
-                    .limit(1);
+                try {
+                    const { data: existing, error: dupError } = await supabaseClient
+                        .from('contacts')
+                        .select('id')
+                        .eq('data->>ACCT NO', acctNo)
+                        .limit(1);
 
-                if (dupError) {
-                    console.error('Error checking duplicate ACCT NO:', dupError);
-                }
+                    if (dupError) {
+                        console.error('Error checking duplicate ACCT NO:', dupError);
+                        showToast('Failed to save customer: Error checking duplicate ACCT NO - ' + dupError.message, 'error');
+                        return;
+                    }
 
-                if (existing && existing.length > 0) {
-                    alert('ACCT NO "' + acctNo + '" already exists. Please use a unique ACCT NO.');
+                    if (existing && existing.length > 0) {
+                        showToast('ACCT NO "' + acctNo + '" already exists. Please use a unique ACCT NO.', 'error');
+                        return;
+                    }
+                } catch (err) {
+                    console.error('Exception checking duplicate ACCT NO:', err);
+                    showToast('Failed to save customer: ' + err.message, 'error');
                     return;
                 }
             }
@@ -6701,15 +6709,16 @@
                 const { data: result, error } = await supabaseClient.from('contacts').insert([{ data: newCustomer }]).select();
                 if (error) {
                     console.error('Failed to save customer to Supabase:', error);
-                    showToast('Error creating customer: ' + error.message, 'error');
+                    showToast('Failed to save customer: ' + error.message, 'error');
                     return; // Don't close modal on error
-                } else if (result && result[0]) {
+                }
+                if (result && result[0]) {
                     newCustomer.id = result[0].id;
                     newId = result[0].id;
                 }
             } catch (err) {
                 console.error('Error saving customer to Supabase:', err);
-                showToast('Error creating customer: ' + err.message, 'error');
+                showToast('Failed to save customer: ' + err.message, 'error');
                 return; // Don't close modal on error
             }
             
@@ -6729,21 +6738,62 @@
                 }
             }
             
-            // Add to data
-            crmData.push(newCustomer);
-            saveCRMData();
-            
             // Close modal
             closeModal('newCustomerModal');
             
             // Show success message
             showToast('Customer saved successfully', 'success');
             
-            // Refresh table
-            if (newId) {
-                await refreshTableFromSupabase();
-            } else {
+            // Refresh the customer list from Supabase and re-render
+            try {
+                const records = await fetchAllContacts();
+                if (records && records.length > 0) {
+                    const allKeys = new Set();
+                    records.forEach(r => Object.keys(r.data || {}).forEach(k => {
+                        if (!k.includes('_EMPTY_') && !k.startsWith('__')) allKeys.add(k);
+                    }));
+                    headers = Array.from(allKeys);
+                    crmData = records.map((record, idx) => {
+                        const row = { id: record.id, _rowIndex: idx };
+                        for (const [key, value] of Object.entries(record.data || {})) {
+                            if (!key.includes('_EMPTY_') && !key.startsWith('__')) {
+                                row[key] = value;
+                            }
+                        }
+                        return row;
+                    });
+                    visibleColumns = [];
+                    VISIBLE_COLUMN_NAMES.forEach(colName => {
+                        const idx = headers.findIndex(h => h.trim() === colName);
+                        if (idx !== -1) {
+                            visibleColumns.push(idx);
+                        }
+                    });
+                    if (visibleColumns.length === 0 && headers.length > 0) {
+                        visibleColumns = headers.map((_, idx) => idx);
+                    }
+                    // Ensure newly created customer is present if insert succeeded but not yet in fetch result
+                    if (newId && !crmData.some(r => r.id === newId)) {
+                        crmData.push(newCustomer);
+                    }
+                } else {
+                    // If fetch returned empty but insert succeeded, keep the new customer
+                    if (!crmData.some(r => r.id === newCustomer.id || r['ACCT NO'] === newCustomer['ACCT NO'])) {
+                        crmData.push(newCustomer);
+                    }
+                }
+                populateProductFilter();
+                await loadPipelineStagesMap();
                 renderTable();
+                saveCRMData();
+            } catch (refreshErr) {
+                console.error('Error refreshing customer list after save:', refreshErr);
+                // Fallback: append to local data and render
+                if (!crmData.some(r => r.id === newCustomer.id || r['ACCT NO'] === newCustomer['ACCT NO'])) {
+                    crmData.push(newCustomer);
+                }
+                renderTable();
+                saveCRMData();
             }
         }
 
