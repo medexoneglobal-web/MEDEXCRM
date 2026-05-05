@@ -458,7 +458,7 @@
         
         /* Table Styles - Professional */
         .table-container {
-            overflow-x: auto;
+            overflow-x: hidden;
             overflow-y: auto;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
@@ -644,14 +644,77 @@
         .crm-table {
             table-layout: fixed;
             width: 100%;
+            border-collapse: collapse;
         }
-
+        .crm-table th, .crm-table td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 8px 6px;
+        }
+        .col-acctno {
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            white-space: nowrap;
+        }
+        .col-clinicname {
+            width: auto;
+            min-width: 150px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .col-product {
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
+            white-space: nowrap;
+        }
+        .col-mtnstart, .col-mtnend {
+            width: 110px;
+            min-width: 110px;
+            max-width: 110px;
+            white-space: nowrap;
+        }
+        .col-status {
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .col-tel {
+            width: 140px;
+            min-width: 140px;
+            max-width: 140px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .col-einvoice {
-            width: 50px !important;
-            max-width: 50px !important;
-            min-width: 50px !important;
-            text-align: center !important;
+            width: 50px;
+            min-width: 50px;
+            max-width: 50px;
+            text-align: center;
             padding: 4px !important;
+            white-space: nowrap;
+        }
+        .col-cloudbackup {
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .col-action {
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            text-align: center;
             white-space: nowrap;
         }
 
@@ -2246,8 +2309,8 @@
             font-weight: 600;
         }
         
-        /* Ensure all tables have proper overflow for scrolling */
-        .table-container, .report-table-container {
+        /* Ensure report tables have proper overflow for scrolling */
+        .report-table-container {
             overflow-x: auto;
             overflow-y: auto;
         }
@@ -3519,7 +3582,7 @@
             'REMARKS - FOLLOW UP'
         ];
 
-        // Fixed 9-column table display for Customers section
+        // Fixed 10-column table display for Customers section
         const TABLE_COLUMNS = [
             { key: 'ACCT NO', label: 'ACCT NO' },
             { key: 'CLINIC NAME', label: 'CLINIC NAME' },
@@ -3529,8 +3592,26 @@
             { key: '_status', label: 'STATUS' },
             { key: 'PHONE', label: 'TEL (TEL & FAX)' },
             { key: 'E-INV PO RCVD DATE', label: 'E-Invoice' },
+            { key: 'CLOUD END DATE', label: 'Cloud Backup' },
             { key: '_action', label: 'ACTION' }
         ];
+
+        // Map column keys to CSS classes
+        function getColClass(key) {
+            switch(key) {
+                case 'ACCT NO': return 'col-acctno';
+                case 'CLINIC NAME': return 'col-clinicname';
+                case 'PRODUCT': return 'col-product';
+                case 'CMS/MHIS MTN START DATE': return 'col-mtnstart';
+                case 'CMS/MHIS MTN END DATE': return 'col-mtnend';
+                case '_status': return 'col-status';
+                case 'PHONE': return 'col-tel';
+                case 'E-INV PO RCVD DATE': return 'col-einvoice';
+                case 'CLOUD END DATE': return 'col-cloudbackup';
+                case '_action': return 'col-action';
+                default: return '';
+            }
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -5445,8 +5526,8 @@
             const thead = document.getElementById('tableHead');
             let headerHTML = '<tr>';
             TABLE_COLUMNS.forEach(col => {
-                const thClass = col.key === 'E-INV PO RCVD DATE' ? ' class="col-einvoice"' : '';
-                headerHTML += `<th${thClass}>${escapeHtml(col.label)}</th>`;
+                const thClass = getColClass(col.key);
+                headerHTML += `<th class="${thClass}">${escapeHtml(col.label)}</th>`;
             });
             headerHTML += '</tr>';
             thead.innerHTML = headerHTML;
@@ -5486,30 +5567,45 @@
                 bodyHTML += `<tr data-row-index="${globalIdx}">`;
 
                 TABLE_COLUMNS.forEach(col => {
+                    const colClass = getColClass(col.key);
                     if (col.key === '_action') {
-                        bodyHTML += `<td class="action-cell">
+                        bodyHTML += `<td class="action-cell ${colClass}">
                             <button class="action-btn view-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">&#128065;</button>
                             <button class="action-btn edit-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">&#9998;</button>
                             <button class="action-btn delete-btn" onclick="deleteCustomerById('${row.id}')" ${!canDelete ? 'disabled' : ''} title="Delete">&#128465;</button>
                         </td>`;
                     } else if (col.key === '_status') {
                         const status = getRowStatus(row);
-                        bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
+                        bodyHTML += `<td class="${colClass}"><span class="status-badge ${status.class}">${status.label}</span></td>`;
                     } else if (col.key === 'E-INV PO RCVD DATE') {
                         const eInvDate = row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE'] || '';
                         const hasEInvoice = eInvDate && String(eInvDate).trim() !== '' && String(eInvDate).trim() !== '0';
                         if (hasEInvoice) {
                             const formattedDate = formatExcelDate(eInvDate);
-                            bodyHTML += `<td class="col-einvoice"><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 14px;">&#9989;</span></td>`;
+                            bodyHTML += `<td class="${colClass}"><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 14px;">&#9989;</span></td>`;
                         } else {
-                            bodyHTML += `<td class="col-einvoice"></td>`;
+                            bodyHTML += `<td class="${colClass}"></td>`;
+                        }
+                    } else if (col.key === 'CLOUD END DATE') {
+                        const cloudEndDate = row['CLOUD END DATE'] || '';
+                        if (cloudEndDate && String(cloudEndDate).trim() !== '' && String(cloudEndDate).trim() !== '0') {
+                            const endDate = parseDateToJs(cloudEndDate);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            if (endDate && endDate >= today) {
+                                bodyHTML += `<td class="${colClass}"><span style="background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">Active</span></td>`;
+                            } else {
+                                bodyHTML += `<td class="${colClass}"><span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">Inactive</span></td>`;
+                            }
+                        } else {
+                            bodyHTML += `<td class="${colClass}"></td>`;
                         }
                     } else {
                         let value = row[col.key] || '';
                         if (isDateColumn(col.key)) {
                             value = formatExcelDate(value);
                         }
-                        bodyHTML += `<td>${escapeHtml(String(value).substring(0, 100))}</td>`;
+                        bodyHTML += `<td class="${colClass}">${escapeHtml(String(value).substring(0, 100))}</td>`;
                     }
                 });
                 bodyHTML += '</tr>';
@@ -7502,30 +7598,45 @@
                 bodyHTML += `<tr data-row-index="${globalIdx}">`;
 
                 TABLE_COLUMNS.forEach(col => {
+                    const colClass = getColClass(col.key);
                     if (col.key === '_action') {
-                        bodyHTML += `<td class="action-cell">
+                        bodyHTML += `<td class="action-cell ${colClass}">
                             <button class="action-btn view-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">&#128065;</button>
                             <button class="action-btn edit-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">&#9998;</button>
                             <button class="action-btn delete-btn" onclick="deleteCustomerById('${row.id}')" ${!canDelete ? 'disabled' : ''} title="Delete">&#128465;</button>
                         </td>`;
                     } else if (col.key === '_status') {
                         const status = getRowStatus(row);
-                        bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
+                        bodyHTML += `<td class="${colClass}"><span class="status-badge ${status.class}">${status.label}</span></td>`;
                     } else if (col.key === 'E-INV PO RCVD DATE') {
                         const eInvDate = row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE'] || '';
                         const hasEInvoice = eInvDate && String(eInvDate).trim() !== '' && String(eInvDate).trim() !== '0';
                         if (hasEInvoice) {
                             const formattedDate = formatExcelDate(eInvDate);
-                            bodyHTML += `<td class="col-einvoice"><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 14px;">&#9989;</span></td>`;
+                            bodyHTML += `<td class="${colClass}"><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 14px;">&#9989;</span></td>`;
                         } else {
-                            bodyHTML += `<td class="col-einvoice"></td>`;
+                            bodyHTML += `<td class="${colClass}"></td>`;
+                        }
+                    } else if (col.key === 'CLOUD END DATE') {
+                        const cloudEndDate = row['CLOUD END DATE'] || '';
+                        if (cloudEndDate && String(cloudEndDate).trim() !== '' && String(cloudEndDate).trim() !== '0') {
+                            const endDate = parseDateToJs(cloudEndDate);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            if (endDate && endDate >= today) {
+                                bodyHTML += `<td class="${colClass}"><span style="background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">Active</span></td>`;
+                            } else {
+                                bodyHTML += `<td class="${colClass}"><span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">Inactive</span></td>`;
+                            }
+                        } else {
+                            bodyHTML += `<td class="${colClass}"></td>`;
                         }
                     } else {
                         let value = row[col.key] || '';
                         if (isDateColumn(col.key)) {
                             value = formatExcelDate(value);
                         }
-                        bodyHTML += `<td>${escapeHtml(String(value).substring(0, 100))}</td>`;
+                        bodyHTML += `<td class="${colClass}">${escapeHtml(String(value).substring(0, 100))}</td>`;
                     }
                 });
                 bodyHTML += '</tr>';
