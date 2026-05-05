@@ -2710,6 +2710,7 @@
                     <div class="report-subtabs">
                         <button class="report-subtab active" id="maintenanceReportSubTab" onclick="showReportPanel('maintenanceReport')">Maintenance Report</button>
                         <button class="report-subtab" id="cloudBackupReportSubTab" onclick="showReportPanel('cloudBackupReport')">Cloud Backup Report</button>
+                        <button class="report-subtab" id="eInvoiceReportSubTab" onclick="showReportPanel('eInvoiceReport')">E-Invoice Report</button>
                     </div>
                     
                     <!-- Maintenance Report Panel -->
@@ -2729,6 +2730,12 @@
                     <div id="cloudBackupReportPanel" class="report-panel">
                         <div id="cloudBackupSummaryCards" class="maintenance-cards-container"></div>
                         <div id="cloudBackupDetailContainer" class="maintenance-detail-container" style="display: none;"></div>
+                    </div>
+                    
+                    <!-- E-Invoice Report Panel -->
+                    <div id="eInvoiceReportPanel" class="report-panel">
+                        <div id="eInvoiceSummaryCards" class="maintenance-cards-container"></div>
+                        <div id="eInvoiceDetailContainer" class="maintenance-detail-container" style="display: none;"></div>
                     </div>
                     
                 </div>
@@ -3496,7 +3503,7 @@
             'REMARKS - FOLLOW UP'
         ];
 
-        // Fixed 8-column table display for Customers section
+        // Fixed 9-column table display for Customers section
         const TABLE_COLUMNS = [
             { key: 'ACCT NO', label: 'ACCT NO' },
             { key: 'CLINIC NAME', label: 'CLINIC NAME' },
@@ -3505,6 +3512,7 @@
             { key: 'CMS/MHIS MTN END DATE', label: 'MTN END DATE' },
             { key: '_status', label: 'STATUS' },
             { key: 'PHONE', label: 'TEL (TEL & FAX)' },
+            { key: 'E-INV PO RCVD DATE', label: 'E-INV PO RCVD DATE' },
             { key: '_action', label: 'ACTION' }
         ];
 
@@ -4083,10 +4091,12 @@
             // Hide all panels
             document.getElementById('maintenanceReportPanel').classList.remove('active');
             document.getElementById('cloudBackupReportPanel').classList.remove('active');
+            document.getElementById('eInvoiceReportPanel').classList.remove('active');
             
             // Reset tab styles
             document.getElementById('maintenanceReportSubTab').classList.remove('active');
             document.getElementById('cloudBackupReportSubTab').classList.remove('active');
+            document.getElementById('eInvoiceReportSubTab').classList.remove('active');
             
             // Show selected panel
             if (panelId === 'maintenanceReport') {
@@ -4099,6 +4109,13 @@
                     await refreshTableFromSupabase();
                 }
                 renderCloudBackupReport();
+            } else if (panelId === 'eInvoiceReport') {
+                document.getElementById('eInvoiceReportPanel').classList.add('active');
+                document.getElementById('eInvoiceReportSubTab').classList.add('active');
+                if (crmData.length === 0) {
+                    await refreshTableFromSupabase();
+                }
+                renderEInvoiceReport();
             }
         }
 
@@ -4965,6 +4982,268 @@
             exportReportPDF(data, columns, displayColumns, title);
         }
         
+        // ==================== E-INVOICE REPORT ====================
+        
+        let currentEInvoiceDetailType = null;
+        
+        /**
+         * Render the E-Invoice Report with 3 summary cards
+         */
+        function renderEInvoiceReport() {
+            const container = document.getElementById('eInvoiceSummaryCards');
+            if (!container) return;
+            
+            if (crmData.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">No data available.</div>';
+                return;
+            }
+            
+            let totalCustomers = crmData.length;
+            let eInvoiceEnabled = 0;
+            let eInvoiceNotEnabled = 0;
+            
+            crmData.forEach(row => {
+                const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                if (eInvDate && String(eInvDate).trim() !== '') {
+                    eInvoiceEnabled++;
+                } else {
+                    eInvoiceNotEnabled++;
+                }
+            });
+            
+            container.innerHTML = `
+                <div class="maintenance-card card-active ${currentEInvoiceDetailType === 'all' ? 'active' : ''}" 
+                     onclick="showEInvoiceDetail('all')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="card-number">${totalCustomers}</div>
+                    <div class="card-label">Total Customers</div>
+                </div>
+                <div class="maintenance-card card-active ${currentEInvoiceDetailType === 'enabled' ? 'active' : ''}" 
+                     onclick="showEInvoiceDetail('enabled')" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+                    <div class="card-number">${eInvoiceEnabled}</div>
+                    <div class="card-label">E-Invoice Enabled</div>
+                </div>
+                <div class="maintenance-card card-expired ${currentEInvoiceDetailType === 'notEnabled' ? 'active' : ''}" 
+                     onclick="showEInvoiceDetail('notEnabled')" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white;">
+                    <div class="card-number">${eInvoiceNotEnabled}</div>
+                    <div class="card-label">Not Enabled</div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Show E-Invoice detail view for selected type
+         */
+        function showEInvoiceDetail(type) {
+            currentEInvoiceDetailType = type;
+            const container = document.getElementById('eInvoiceDetailContainer');
+            if (!container) return;
+            
+            // Re-render cards to update active state
+            renderEInvoiceReport();
+            
+            let data = [];
+            let title = '';
+            
+            switch (type) {
+                case 'all':
+                    data = crmData.map(row => ({...row}));
+                    title = `All Customers - ${data.length} Records`;
+                    break;
+                case 'enabled':
+                    data = crmData.filter(row => {
+                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        return eInvDate && String(eInvDate).trim() !== '';
+                    });
+                    title = `E-Invoice Enabled - ${data.length} Clinics`;
+                    break;
+                case 'notEnabled':
+                    data = crmData.filter(row => {
+                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        return !eInvDate || String(eInvDate).trim() === '';
+                    });
+                    title = `E-Invoice Not Enabled - ${data.length} Clinics`;
+                    break;
+            }
+            
+            const columns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
+            const displayColumns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
+            
+            // Get unique products for filter
+            const products = [...new Set(data.map(row => row['PRODUCT']).filter(Boolean))].sort();
+            
+            let html = `
+                <div class="maintenance-detail-header">
+                    <div class="maintenance-detail-title">${title}</div>
+                    <div class="maintenance-detail-actions">
+                        <button class="btn btn-success btn-sm" onclick="exportEInvoiceDetailExcel('${type}')">Export Excel</button>
+                        <button class="btn btn-outline btn-sm" onclick="closeEInvoiceDetail()">Close</button>
+                    </div>
+                </div>
+                <div class="maintenance-detail-content">
+                    <div class="maintenance-detail-toolbar">
+                        <div class="filter-group">
+                            <label for="eInvoiceSearchFilter">Search:</label>
+                            <input type="text" id="eInvoiceSearchFilter" placeholder="Search customer name..." 
+                                   oninput="filterEInvoiceDetail('${type}')" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; min-width: 200px;">
+                        </div>
+                        <div class="filter-group">
+                            <label for="eInvoiceProductFilter">Product:</label>
+                            <select id="eInvoiceProductFilter" onchange="filterEInvoiceDetail('${type}')">
+                                <option value="">All Products</option>
+                                ${products.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <span class="total-count">Total: ${data.length} clinics</span>
+                    </div>
+                    <div class="report-table-container">
+                        <table class="report-table" id="eInvoiceDetailTable">
+                            <thead>
+                                <tr>${displayColumns.map(col => `<th>${col}</th>`).join('')}<th>E-Invoice Status</th></tr>
+                            </thead>
+                            <tbody id="eInvoiceDetailTableBody">
+                                ${renderEInvoiceDetailRows(data, columns)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            container.style.display = 'block';
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        /**
+         * Render E-Invoice detail table rows
+         */
+        function renderEInvoiceDetailRows(data, columns) {
+            if (data.length === 0) {
+                return '<tr><td colspan="' + (columns.length + 1) + '" style="text-align: center; padding: 40px;">No records found.</td></tr>';
+            }
+            
+            return data.map(row => {
+                const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                const hasEInvoice = eInvDate && String(eInvDate).trim() !== '';
+                const statusHtml = hasEInvoice 
+                    ? '<span style="color: #10b981; font-weight: 600;">✅ Yes</span>' 
+                    : '<span style="color: #94a3b8;">❌ No</span>';
+                
+                return '<tr>' + columns.map(col => {
+                    let val = row[col] || '';
+                    if (col.includes('DATE')) {
+                        val = formatExcelDate(val);
+                    }
+                    return '<td>' + escapeHtml(String(val)) + '</td>';
+                }).join('') + '<td>' + statusHtml + '</td></tr>';
+            }).join('');
+        }
+        
+        /**
+         * Filter E-Invoice detail view
+         */
+        function filterEInvoiceDetail(type) {
+            const searchFilter = (document.getElementById('eInvoiceSearchFilter')?.value || '').toLowerCase();
+            const productFilter = document.getElementById('eInvoiceProductFilter')?.value || '';
+            
+            let data = [];
+            switch (type) {
+                case 'all':
+                    data = crmData.map(row => ({...row}));
+                    break;
+                case 'enabled':
+                    data = crmData.filter(row => {
+                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        return eInvDate && String(eInvDate).trim() !== '';
+                    });
+                    break;
+                case 'notEnabled':
+                    data = crmData.filter(row => {
+                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        return !eInvDate || String(eInvDate).trim() === '';
+                    });
+                    break;
+            }
+            
+            // Apply search filter
+            if (searchFilter) {
+                data = data.filter(row => {
+                    const clinicName = (row['CLINIC NAME'] || '').toLowerCase();
+                    const acctNo = (row['ACCT NO'] || '').toLowerCase();
+                    return clinicName.includes(searchFilter) || acctNo.includes(searchFilter);
+                });
+            }
+            
+            // Apply product filter
+            if (productFilter) {
+                data = data.filter(row => row['PRODUCT'] === productFilter);
+            }
+            
+            const columns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
+            const tbody = document.getElementById('eInvoiceDetailTableBody');
+            if (tbody) {
+                tbody.innerHTML = renderEInvoiceDetailRows(data, columns);
+            }
+            
+            // Update total count
+            const totalSpan = document.querySelector('#eInvoiceDetailContainer .total-count');
+            if (totalSpan) totalSpan.textContent = `Total: ${data.length} clinics`;
+        }
+        
+        /**
+         * Close the E-Invoice detail view
+         */
+        function closeEInvoiceDetail() {
+            const container = document.getElementById('eInvoiceDetailContainer');
+            if (container) {
+                container.style.display = 'none';
+                container.innerHTML = '';
+            }
+            currentEInvoiceDetailType = null;
+            renderEInvoiceReport();
+        }
+        
+        /**
+         * Export E-Invoice detail to Excel
+         */
+        function exportEInvoiceDetailExcel(type) {
+            let data = [];
+            switch (type) {
+                case 'all':
+                    data = crmData.map(row => ({...row}));
+                    break;
+                case 'enabled':
+                    data = crmData.filter(row => {
+                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        return eInvDate && String(eInvDate).trim() !== '';
+                    });
+                    break;
+                case 'notEnabled':
+                    data = crmData.filter(row => {
+                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        return !eInvDate || String(eInvDate).trim() === '';
+                    });
+                    break;
+            }
+            
+            const exportData = data.map(row => ({
+                'ACCT NO': row['ACCT NO'] || '',
+                'CLINIC NAME': row['CLINIC NAME'] || '',
+                'E-INV PO RCVD DATE': formatExcelDate(row['E-INV PO RCVD DATE'] || ''),
+                'PRODUCT': row['PRODUCT'] || '',
+                'PRODUCT TYPE': row['PRODUCT TYPE'] || '',
+                'Contact Name': row['Contact Name'] || '',
+                'Contact Tel1': row['Contact Tel1'] || '',
+                'State': row['State'] || '',
+                'E-Invoice Status': (row['E-INV PO RCVD DATE'] && String(row['E-INV PO RCVD DATE']).trim() !== '') ? 'Yes' : 'No'
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'E-Invoice Report');
+            XLSX.writeFile(wb, `E-Invoice_Report_${type}_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast('E-Invoice report exported successfully', 'success');
+        }
+        
         /**
          * Export maintenance detail to Excel
          */
@@ -5199,6 +5478,15 @@
                     } else if (col.key === '_status') {
                         const status = getRowStatus(row);
                         bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
+                    } else if (col.key === 'E-INV PO RCVD DATE') {
+                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        const hasEInvoice = eInvDate && String(eInvDate).trim() !== '';
+                        if (hasEInvoice) {
+                            const formattedDate = formatExcelDate(eInvDate);
+                            bodyHTML += `<td><span title="E-Invoice Enabled - ${formattedDate}" style="cursor: pointer; font-size: 16px;">&#9989;</span></td>`;
+                        } else {
+                            bodyHTML += `<td><span title="No E-Invoice" style="cursor: pointer; color: #cbd5e1; font-size: 16px;">&#8212;</span></td>`;
+                        }
                     } else {
                         let value = row[col.key] || '';
                         if (isDateColumn(col.key)) {
@@ -7204,6 +7492,15 @@
                     } else if (col.key === '_status') {
                         const status = getRowStatus(row);
                         bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
+                    } else if (col.key === 'E-INV PO RCVD DATE') {
+                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        const hasEInvoice = eInvDate && String(eInvDate).trim() !== '';
+                        if (hasEInvoice) {
+                            const formattedDate = formatExcelDate(eInvDate);
+                            bodyHTML += `<td><span title="E-Invoice Enabled - ${formattedDate}" style="cursor: pointer; font-size: 16px;">&#9989;</span></td>`;
+                        } else {
+                            bodyHTML += `<td><span title="No E-Invoice" style="cursor: pointer; color: #cbd5e1; font-size: 16px;">&#8212;</span></td>`;
+                        }
                     } else {
                         let value = row[col.key] || '';
                         if (isDateColumn(col.key)) {
