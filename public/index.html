@@ -5168,6 +5168,11 @@
 
         function renderTableBody() {
             const tbody = document.getElementById('tableBody');
+            // Validate currentPage
+            const maxPage = Math.max(1, Math.ceil(crmData.length / rowsPerPage));
+            if (currentPage > maxPage) {
+                currentPage = maxPage;
+            }
             const start = (currentPage - 1) * rowsPerPage;
             const end = start + rowsPerPage;
             const pageData = crmData.slice(start, end);
@@ -5770,8 +5775,13 @@
                 });
 
                 saveCRMData();
+                // Reset to page 1 or validate currentPage to avoid showing empty page
+                const maxPage = Math.max(1, Math.ceil(crmData.length / rowsPerPage));
+                if (currentPage > maxPage) {
+                    currentPage = maxPage;
+                }
                 renderTable();
-                showToast('Customer deleted successfully', 'success');
+                showToast('Customer successfully deleted.', 'success');
             });
         }
 
@@ -7385,6 +7395,12 @@
 
                 // Save to localStorage
                 saveCRMData();
+
+                // Reset to page 1 or validate currentPage to avoid showing empty page
+                const maxPage = Math.max(1, Math.ceil(crmData.length / rowsPerPage));
+                if (currentPage > maxPage) {
+                    currentPage = maxPage;
+                }
 
                 // Re-render table
                 renderTable();
