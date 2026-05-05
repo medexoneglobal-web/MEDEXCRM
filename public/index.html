@@ -3309,7 +3309,9 @@
             'CMS/MHIS MTN END DATE',
             'CLOUD START DATE',
             'CLOUD END DATE',
-            'CMS INSTALL DATE/LIVE DATE'
+            'CMS INSTALL DATE/LIVE DATE',
+            'E-INV PO RCVD DATE',
+            'EINV PO RCVD DATE'
         ];
 
         // Convert date from data format (M/D/YYYY or DD/MM/YYYY) to YYYY-MM-DD for input
@@ -3512,7 +3514,7 @@
             { key: 'CMS/MHIS MTN END DATE', label: 'MTN END DATE' },
             { key: '_status', label: 'STATUS' },
             { key: 'PHONE', label: 'TEL (TEL & FAX)' },
-            { key: 'E-INV PO RCVD DATE', label: 'E-INV PO RCVD DATE' },
+            { key: 'E-INV PO RCVD DATE', label: 'E-Invoice' },
             { key: '_action', label: 'ACTION' }
         ];
 
@@ -5003,7 +5005,7 @@
             let eInvoiceNotEnabled = 0;
             
             crmData.forEach(row => {
-                const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                const eInvDate = (row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || '';
                 if (eInvDate && String(eInvDate).trim() !== '') {
                     eInvoiceEnabled++;
                 } else {
@@ -5051,14 +5053,14 @@
                     break;
                 case 'enabled':
                     data = crmData.filter(row => {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        const eInvDate = (row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || '';
                         return eInvDate && String(eInvDate).trim() !== '';
                     });
                     title = `E-Invoice Enabled - ${data.length} Clinics`;
                     break;
                 case 'notEnabled':
                     data = crmData.filter(row => {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        const eInvDate = (row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || '';
                         return !eInvDate || String(eInvDate).trim() === '';
                     });
                     title = `E-Invoice Not Enabled - ${data.length} Clinics`;
@@ -5122,7 +5124,7 @@
             }
             
             return data.map(row => {
-                const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                const eInvDate = (row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || '';
                 const hasEInvoice = eInvDate && String(eInvDate).trim() !== '';
                 const statusHtml = hasEInvoice 
                     ? '<span style="color: #10b981; font-weight: 600;">✅ Yes</span>' 
@@ -5152,13 +5154,13 @@
                     break;
                 case 'enabled':
                     data = crmData.filter(row => {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        const eInvDate = (row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || '';
                         return eInvDate && String(eInvDate).trim() !== '';
                     });
                     break;
                 case 'notEnabled':
                     data = crmData.filter(row => {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        const eInvDate = (row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || '';
                         return !eInvDate || String(eInvDate).trim() === '';
                     });
                     break;
@@ -5213,13 +5215,13 @@
                     break;
                 case 'enabled':
                     data = crmData.filter(row => {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        const eInvDate = (row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || '';
                         return eInvDate && String(eInvDate).trim() !== '';
                     });
                     break;
                 case 'notEnabled':
                     data = crmData.filter(row => {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
+                        const eInvDate = (row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || '';
                         return !eInvDate || String(eInvDate).trim() === '';
                     });
                     break;
@@ -5228,13 +5230,13 @@
             const exportData = data.map(row => ({
                 'ACCT NO': row['ACCT NO'] || '',
                 'CLINIC NAME': row['CLINIC NAME'] || '',
-                'E-INV PO RCVD DATE': formatExcelDate(row['E-INV PO RCVD DATE'] || ''),
+                'E-INV PO RCVD DATE': formatExcelDate((row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || ''),
                 'PRODUCT': row['PRODUCT'] || '',
                 'PRODUCT TYPE': row['PRODUCT TYPE'] || '',
                 'Contact Name': row['Contact Name'] || '',
                 'Contact Tel1': row['Contact Tel1'] || '',
                 'State': row['State'] || '',
-                'E-Invoice Status': (row['E-INV PO RCVD DATE'] && String(row['E-INV PO RCVD DATE']).trim() !== '') ? 'Yes' : 'No'
+                'E-Invoice Status': ((row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) && String((row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE'])).trim() !== '') ? 'Yes' : 'No'
             }));
             
             const ws = XLSX.utils.json_to_sheet(exportData);
@@ -5479,13 +5481,13 @@
                         const status = getRowStatus(row);
                         bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
                     } else if (col.key === 'E-INV PO RCVD DATE') {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
-                        const hasEInvoice = eInvDate && String(eInvDate).trim() !== '';
+                        const eInvDate = row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE'] || '';
+                        const hasEInvoice = eInvDate && String(eInvDate).trim() !== '' && String(eInvDate).trim() !== '0';
                         if (hasEInvoice) {
                             const formattedDate = formatExcelDate(eInvDate);
-                            bodyHTML += `<td><span title="E-Invoice Enabled - ${formattedDate}" style="cursor: pointer; font-size: 16px;">&#9989;</span></td>`;
+                            bodyHTML += `<td><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 18px;">&#9989;</span></td>`;
                         } else {
-                            bodyHTML += `<td><span title="No E-Invoice" style="cursor: pointer; color: #cbd5e1; font-size: 16px;">&#8212;</span></td>`;
+                            bodyHTML += `<td></td>`;
                         }
                     } else {
                         let value = row[col.key] || '';
@@ -5654,7 +5656,8 @@
         const FIELD_GROUPS = {
             'Basic Info': ['ACCT NO', 'CLINIC NAME', 'PHONE', 'Contact Name', 'Contact Tel1', 'State', 'COMPANY NAME', 'CO. REG & BRN', 'Customer ID- Certificate No.'],
             'Product Info': ['PRODUCT', 'PRODUCT TYPE', 'GROUP', 'M1G/ DEALER CASE', 'PC TOTAL'],
-            'Maintenance Dates': ['CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'CLOUD START DATE', 'CLOUD END DATE', 'CMS INSTALL DATE/LIVE DATE']
+            'Maintenance Dates': ['CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'CLOUD START DATE', 'CLOUD END DATE', 'CMS INSTALL DATE/LIVE DATE'],
+            'E-Invoice': ['E-INV PO RCVD DATE', 'EINV PO RCVD DATE', 'E-INV START', 'E-INV END', 'E-INV LIVE DATE', 'E-INV TRACKING STATUS']
         };
 
         // Group colors for visual separation
@@ -5662,6 +5665,7 @@
             'Basic Info': '#3b82f6',
             'Product Info': '#8b5cf6',
             'Maintenance Dates': '#10b981',
+            'E-Invoice': '#f59e0b',
             'Status & Other': '#6b7280'
         };
 
@@ -7493,13 +7497,13 @@
                         const status = getRowStatus(row);
                         bodyHTML += `<td><span class="status-badge ${status.class}">${status.label}</span></td>`;
                     } else if (col.key === 'E-INV PO RCVD DATE') {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || '';
-                        const hasEInvoice = eInvDate && String(eInvDate).trim() !== '';
+                        const eInvDate = row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE'] || '';
+                        const hasEInvoice = eInvDate && String(eInvDate).trim() !== '' && String(eInvDate).trim() !== '0';
                         if (hasEInvoice) {
                             const formattedDate = formatExcelDate(eInvDate);
-                            bodyHTML += `<td><span title="E-Invoice Enabled - ${formattedDate}" style="cursor: pointer; font-size: 16px;">&#9989;</span></td>`;
+                            bodyHTML += `<td><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 18px;">&#9989;</span></td>`;
                         } else {
-                            bodyHTML += `<td><span title="No E-Invoice" style="cursor: pointer; color: #cbd5e1; font-size: 16px;">&#8212;</span></td>`;
+                            bodyHTML += `<td></td>`;
                         }
                     } else {
                         let value = row[col.key] || '';
