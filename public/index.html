@@ -641,6 +641,20 @@
             background: #f8fafc;
         }
 
+        .crm-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .col-einvoice {
+            width: 50px !important;
+            max-width: 50px !important;
+            min-width: 50px !important;
+            text-align: center !important;
+            padding: 4px !important;
+            white-space: nowrap;
+        }
+
         /* Section Card Utility */
         .section-card {
             background: #fff;
@@ -5431,7 +5445,8 @@
             const thead = document.getElementById('tableHead');
             let headerHTML = '<tr>';
             TABLE_COLUMNS.forEach(col => {
-                headerHTML += `<th>${escapeHtml(col.label)}</th>`;
+                const thClass = col.key === 'E-INV PO RCVD DATE' ? ' class="col-einvoice"' : '';
+                headerHTML += `<th${thClass}>${escapeHtml(col.label)}</th>`;
             });
             headerHTML += '</tr>';
             thead.innerHTML = headerHTML;
@@ -5485,9 +5500,9 @@
                         const hasEInvoice = eInvDate && String(eInvDate).trim() !== '' && String(eInvDate).trim() !== '0';
                         if (hasEInvoice) {
                             const formattedDate = formatExcelDate(eInvDate);
-                            bodyHTML += `<td><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 18px;">&#9989;</span></td>`;
+                            bodyHTML += `<td class="col-einvoice"><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 14px;">&#9989;</span></td>`;
                         } else {
-                            bodyHTML += `<td></td>`;
+                            bodyHTML += `<td class="col-einvoice"></td>`;
                         }
                     } else {
                         let value = row[col.key] || '';
@@ -7501,9 +7516,9 @@
                         const hasEInvoice = eInvDate && String(eInvDate).trim() !== '' && String(eInvDate).trim() !== '0';
                         if (hasEInvoice) {
                             const formattedDate = formatExcelDate(eInvDate);
-                            bodyHTML += `<td><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 18px;">&#9989;</span></td>`;
+                            bodyHTML += `<td class="col-einvoice"><span title="E-Invoice Available - ${formattedDate}" style="cursor: pointer; font-size: 14px;">&#9989;</span></td>`;
                         } else {
-                            bodyHTML += `<td></td>`;
+                            bodyHTML += `<td class="col-einvoice"></td>`;
                         }
                     } else {
                         let value = row[col.key] || '';
