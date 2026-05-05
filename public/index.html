@@ -3738,6 +3738,7 @@
                 }
                 populateProductFilter();
                 await loadPipelineStagesMap();
+                currentPage = 1;
                 renderTable();
             } catch (err) {
                 console.error('Refresh error:', err);
@@ -5768,20 +5769,9 @@
                     return;
                 }
 
-                // Remove from local data and re-index
-                crmData.splice(rowIndex, 1);
-                crmData.forEach((row, idx) => {
-                    row._rowIndex = idx;
-                });
-
-                saveCRMData();
-                // Reset to page 1 or validate currentPage to avoid showing empty page
-                const maxPage = Math.max(1, Math.ceil(crmData.length / rowsPerPage));
-                if (currentPage > maxPage) {
-                    currentPage = maxPage;
-                }
-                renderTable();
                 showToast('Customer successfully deleted.', 'success');
+                // Refresh data from Supabase to ensure consistency
+                await refreshTableFromSupabase();
             });
         }
 
@@ -7379,37 +7369,13 @@
                     }
                 }
                 
-                // Delete rows from crmData
-                indicesToDelete.forEach(index => {
-                    crmData.splice(index, 1);
-                });
-
-                // Re-index remaining rows
-                crmData.forEach((row, idx) => {
-                    row._rowIndex = idx;
-                });
-
                 // Clear selection
                 selectedRows.clear();
                 updateDeleteSelectedButton();
 
-                // Save to localStorage
-                saveCRMData();
-
-                // Reset to page 1 or validate currentPage to avoid showing empty page
-                const maxPage = Math.max(1, Math.ceil(crmData.length / rowsPerPage));
-                if (currentPage > maxPage) {
-                    currentPage = maxPage;
-                }
-
-                // Re-render table
-                renderTable();
-
-                if (hasError) {
-                    showToast('Some records failed to delete', 'error');
-                } else {
-                    showToast(`${indicesToDelete.length} row(s) deleted successfully`, 'success');
-                }
+                showToast(`${indicesToDelete.length} customer(s) successfully deleted.`, 'success');
+                // Refresh data from Supabase to ensure consistency
+                await refreshTableFromSupabase();
             });
         }
 
@@ -7439,13 +7405,16 @@
         }
 
         function saveCRMData() {
-            localStorage.setItem('crm_data', JSON.stringify({
-                data: crmData,
-                headers: headers,
-                visibleColumns: visibleColumns,
-                columnFilters: columnFilters,
-                columnOptions: columnOptions
-            }));
+            try {
+                localStorage.setItem('crm_metadata', JSON.stringify({
+                    headers: headers,
+                    visibleColumns: visibleColumns,
+                    columnFilters: columnFilters,
+                    columnOptions: columnOptions
+                }));
+            } catch (e) {
+                console.warn('Failed to save CRM metadata to localStorage:', e.message);
+            }
         }
 
         // ==================== LICENSE KEY MODULE ====================
