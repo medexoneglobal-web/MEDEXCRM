@@ -469,8 +469,7 @@
         }
         
         table {
-            width: max-content;
-            min-width: 100%;
+            width: 100%;
             border-collapse: separate;
             border-spacing: 0;
             font-size: 13px;
@@ -1357,7 +1356,9 @@
             position: sticky;
             left: 0;
             z-index: 25;
-            min-width: 80px;  /* ACCT NO */
+            width: 80px;
+            min-width: 80px;
+            white-space: nowrap;
         }
         
         #licenseKeyTable th:nth-child(2),
@@ -1365,16 +1366,17 @@
             position: sticky;
             left: 80px;
             z-index: 25;
-            min-width: 200px;  /* CLINIC NAME */
+            width: auto;
+            min-width: 180px;
         }
         
-        /* License Key table column min-widths */
-        #licenseKeyTable th:nth-child(3), #licenseKeyTable td:nth-child(3) { min-width: 200px; }  /* LKEY Line 1 */
-        #licenseKeyTable th:nth-child(4), #licenseKeyTable td:nth-child(4) { min-width: 200px; }  /* LKEY Line 2 */
-        #licenseKeyTable th:nth-child(5), #licenseKeyTable td:nth-child(5) { min-width: 200px; }  /* LKEY Line 3 */
-        #licenseKeyTable th:nth-child(6), #licenseKeyTable td:nth-child(6) { min-width: 200px; }  /* LKEY Line 4 */
-        #licenseKeyTable th:nth-child(7), #licenseKeyTable td:nth-child(7) { min-width: 200px; }  /* LKEY Line 5 */
-        #licenseKeyTable th:nth-child(n+8), #licenseKeyTable td:nth-child(n+8) { min-width: 100px; }  /* Actions */
+        /* License Key table column widths */
+        #licenseKeyTable th:nth-child(3), #licenseKeyTable td:nth-child(3) { width: 80px; min-width: 80px; white-space: nowrap; }  /* PRODUCT */
+        #licenseKeyTable th:nth-child(4), #licenseKeyTable td:nth-child(4) { max-width: 200px; white-space: normal; word-break: break-word; }  /* Info 1 */
+        #licenseKeyTable th:nth-child(5), #licenseKeyTable td:nth-child(5) { max-width: 200px; white-space: normal; word-break: break-word; }  /* Info 2 */
+        #licenseKeyTable th:nth-child(6), #licenseKeyTable td:nth-child(6) { max-width: 200px; white-space: normal; word-break: break-word; }  /* Info 3 */
+        #licenseKeyTable th:nth-child(7), #licenseKeyTable td:nth-child(7) { width: 120px; min-width: 120px; white-space: nowrap; }  /* Tel */
+        #licenseKeyTable th:nth-child(8), #licenseKeyTable td:nth-child(8) { width: 120px; min-width: 120px; text-align: center; white-space: nowrap; }  /* Actions */
         
         /* Actions column is now at the end, no longer sticky at position 3 */
         
@@ -1415,8 +1417,8 @@
         
         /* License Key Edit Button */
         .btn-edit-lkey {
-            padding: 4px 12px;
-            font-size: 12px;
+            padding: 4px 8px;
+            font-size: 14px;
             background: var(--accent);
             color: white;
             border: none;
@@ -1432,8 +1434,8 @@
         
         /* License Key View Button */
         .btn-view-lkey {
-            padding: 4px 12px;
-            font-size: 12px;
+            padding: 4px 8px;
+            font-size: 14px;
             background: var(--success);
             color: white;
             border: none;
@@ -1445,6 +1447,22 @@
         .btn-view-lkey:hover {
             background: var(--success-hover);
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+        
+        /* License Key Copy Button */
+        .btn-copy-lkey {
+            padding: 4px 8px;
+            font-size: 14px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-copy-lkey:hover {
+            background: #bfdbfe;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
         
         /* License Key Form Table Styles */
@@ -8179,11 +8197,12 @@
                     bodyHTML += `<td>${escapeHtml(value)}</td>`;
                 });
                 
-                // Actions column with View and Edit buttons - show based on permissions
-                bodyHTML += `<td>`;
-                bodyHTML += `<button class="btn-view-lkey" onclick="viewLicenseKey(${row.id})">View</button>`;
+                // Actions column with View, Copy and Edit buttons - show based on permissions
+                bodyHTML += `<td style="text-align: center;">`;
+                bodyHTML += `<button class="btn-view-lkey" onclick="viewLicenseKey(${row.id})" title="View Details">&#128065;</button>`;
+                bodyHTML += `<button class="btn-copy-lkey" onclick="copyLicenseKeyInfo(${row.id})" title="Copy License Key" style="margin-left: 4px;">&#128203;</button>`;
                 if (hasEditPermission) {
-                    bodyHTML += `<button class="btn-edit-lkey" onclick="editLicenseKey(${row.id})" style="margin-left: 6px;">Edit</button>`;
+                    bodyHTML += `<button class="btn-edit-lkey" onclick="editLicenseKey(${row.id})" title="Edit" style="margin-left: 4px;">&#9998;</button>`;
                 }
                 bodyHTML += `</td>`;
                 
@@ -8387,6 +8406,46 @@
             }
             lkCurrentPage = 1;
             renderLicenseKeyTable();
+        }
+        
+        /**
+         * Copy license key info to clipboard
+         */
+        function copyLicenseKeyInfo(contactId) {
+            let row = null;
+            if (crmData && crmData.length > 0) {
+                row = crmData.find(r => r.id === contactId);
+            }
+            if (!row && licenseKeyData && licenseKeyData.length > 0) {
+                row = licenseKeyData.find(r => r.id === contactId);
+            }
+            if (!row) {
+                showToast('Record not found', 'error');
+                return;
+            }
+            
+            const info = [
+                'ACCT NO: ' + (row['ACCT NO'] || ''),
+                'CLINIC NAME: ' + (row['CLINIC NAME'] || ''),
+                'PRODUCT: ' + (row['PRODUCT'] || ''),
+                'Info 1: ' + (row['Address1'] || ''),
+                'Info 2: ' + (row['Address2'] || ''),
+                'Info 3: ' + (row['Address3'] || ''),
+                'Tel: ' + (row['Contact Tel1'] || '')
+            ].join('\n');
+            
+            navigator.clipboard.writeText(info).then(() => {
+                showToast('License key info copied to clipboard!', 'success');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = info;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('License key info copied to clipboard!', 'success');
+            });
         }
         
         /**
