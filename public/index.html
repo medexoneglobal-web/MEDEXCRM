@@ -3155,6 +3155,12 @@
             </div>
         </div>
         <div class="section-body">
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
+                <span style="font-size:12px;color:#6b7280;font-weight:500;">Quick:</span>
+                <button onclick="setActivityDateRange('today')" style="padding:4px 10px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;">Today</button>
+                <button onclick="setActivityDateRange('yesterday')" style="padding:4px 10px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;">Yesterday</button>
+                <button onclick="setActivityDateRange('7days')" style="padding:4px 10px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;">Last 7 Days</button>
+            </div>
             <div class="activity-filters">
                 <div class="filter-group">
                     <label>From:</label>
@@ -3192,6 +3198,10 @@
                 <div class="filter-group">
                     <label>Search:</label>
                     <input type="text" id="activitySearchInput" placeholder="Customer or username..." oninput="filterActivityLog()">
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-warning" onclick="resetActivityFilters()" style="padding: 7px 12px; font-size: 13px;">Reset</button>
                 </div>
             </div>
             <div id="activityLogStats" style="text-align: right; color: #64748b; font-size: 13px; margin-bottom: 8px;"></div>
@@ -6555,6 +6565,7 @@
             openConfirmModal('Are you sure you want to delete this customer?', async () => {
                 const recordId = crmData[rowIndex].id;
                 const recordData = { ...crmData[rowIndex] };
+                const customerName = recordData['CLINIC NAME'] || recordData['ACCOUNT NAME'] || '';
                 delete recordData.id;
                 
                 // Delete from Supabase if record has an ID
@@ -6595,6 +6606,7 @@
                 saveCRMData();
                 renderTable();
                 showToast('Customer deleted successfully', 'success');
+                await logActivity({ module: 'CRM', action: 'DELETE', customerId: recordId, customerName: customerName, description: `${currentUser?.username || 'User'} deleted customer ${customerName}` });
             });
         }
 
@@ -10195,6 +10207,13 @@ async function renderActivityLog() {
     const statsEl = document.getElementById('activityLogStats');
     if (!tbody) return;
 
+    // Set default date filters to today if empty
+    const today = new Date().toISOString().split('T')[0];
+    const dateFromInput = document.getElementById('activityDateFrom');
+    const dateToInput = document.getElementById('activityDateTo');
+    if (dateFromInput && !dateFromInput.value) dateFromInput.value = today;
+    if (dateToInput && !dateToInput.value) dateToInput.value = today;
+
     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">Loading...</td></tr>';
 
     try {
@@ -10240,7 +10259,7 @@ async function renderActivityLog() {
         }
 
         if (activityLogData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">No activity logs found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">No activity found for selected date range. Try changing the date filter or use Quick filter buttons.</td></tr>';
             renderActivityPagination(totalCount);
             return;
         }
@@ -10288,6 +10307,43 @@ function getActionBadgeClass(actionType) {
 function filterActivityLog() {
     activityLogPage = 1;
     renderActivityLog();
+}
+
+function setActivityDateRange(range) {
+    const today = new Date();
+    const dateFrom = document.getElementById('activityDateFrom');
+    const dateTo = document.getElementById('activityDateTo');
+    const todayStr = today.toISOString().split('T')[0];
+
+    if (range === 'today') {
+        dateFrom.value = todayStr;
+        dateTo.value = todayStr;
+    } else if (range === 'yesterday') {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        dateFrom.value = yesterday.toISOString().split('T')[0];
+        dateTo.value = yesterday.toISOString().split('T')[0];
+    } else if (range === '7days') {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        dateFrom.value = weekAgo.toISOString().split('T')[0];
+        dateTo.value = todayStr;
+    }
+    filterActivityLog();
+}
+
+function resetActivityFilters() {
+    const dateFrom = document.getElementById('activityDateFrom');
+    const dateTo = document.getElementById('activityDateTo');
+    const moduleFilter = document.getElementById('activityModuleFilter');
+    const actionFilter = document.getElementById('activityActionFilter');
+    const searchInput = document.getElementById('activitySearchInput');
+    if (dateFrom) dateFrom.value = '';
+    if (dateTo) dateTo.value = '';
+    if (moduleFilter) moduleFilter.value = '';
+    if (actionFilter) actionFilter.value = '';
+    if (searchInput) searchInput.value = '';
+    filterActivityLog();
 }
 
 function renderActivityPagination(totalCount) {
