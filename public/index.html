@@ -86,38 +86,10 @@
             position: relative; z-index: 1;
             margin-bottom: 50px;
         }
-        .login-brand-name {
-            font-size: 36px;
-            font-weight: 700;
-            color: #1a3a5c;
-            letter-spacing: -0.5px;
-        }
-        .login-brand-name span.highlight {
-            color: #3b82f6;
-        }
-        .login-brand-name img {
-            height: 32px;
-            vertical-align: middle;
-            margin: 0 -2px;
-            border-radius: 50%;
-        }
-        .login-brand-tagline {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            color: #3b82f6;
-            text-transform: uppercase;
-        }
-        .login-brand-tagline::before,
-        .login-brand-tagline::after {
-            content: '';
-            width: 40px;
-            height: 2px;
-            background: #3b82f6;
+        .login-brand-name, .login-brand-tagline, .login-brand-tagline::before, .login-brand-tagline::after { display: none; }
+        .login-logo-img {
+            max-width: 380px;
+            height: auto;
         }
         .login-welcome {
             position: relative; z-index: 1;
@@ -2954,10 +2926,7 @@
     <div id="loginScreen" class="login-container">
         <div class="login-left">
             <div class="login-brand">
-                <div class="login-brand-name">
-                    <span class="highlight">Medex</span><img src="favicon.png" alt="o"><span class="highlight">ne</span> Global
-                </div>
-                <div class="login-brand-tagline">Collaborative Care</div>
+                <img src="logo.png" alt="Medexone Global" class="login-logo-img">
             </div>
             <div class="login-welcome">
                 <h2>Welcome Back!</h2>
