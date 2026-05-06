@@ -11048,16 +11048,7 @@ async function exportActivityLog() {
         // ============ logActivity() HELPER ============
         async function logActivity({ module, action, customerId, customerName, field, oldValue, newValue, description }) {
             try {
-                // Get IP address (best effort)
-                let ipAddress = '-';
-                try {
-                    const resp = await fetch('https://api.ipify.org?format=json');
-                    const ipData = await resp.json();
-                    ipAddress = ipData.ip || '-';
-                } catch(e) { /* IP fetch failed, continue */ }
-
                 const logEntry = {
-                    user_id: currentUser ? currentUser.id : null,
                     username: currentUser ? currentUser.username : 'Unknown',
                     user_role: currentUser ? currentUser.role : 'unknown',
                     module: module || 'CRM',
@@ -11067,11 +11058,11 @@ async function exportActivityLog() {
                     field_changed: field || null,
                     old_value: oldValue || null,
                     new_value: newValue || null,
-                    action_description: description || null,
-                    ip_address: ipAddress
+                    action_description: description || null
                 };
 
-                await supabaseClient.from('activity_log').insert([logEntry]);
+                const { error } = await supabaseClient.from('activity_log').insert([logEntry]);
+                if (error) console.error('Activity log insert error:', error);
             } catch (err) {
                 console.error('Failed to log activity:', err);
             }
