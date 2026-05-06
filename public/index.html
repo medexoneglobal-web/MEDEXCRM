@@ -10198,7 +10198,7 @@ async function renderActivityLog() {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">Loading...</td></tr>';
 
     try {
-        let query = supabaseClient.from('crm_activity_log').select('*', { count: 'exact' });
+        let query = supabaseClient.from('activity_log').select('*', { count: 'exact' });
 
         // Role-based filtering
         if (currentUser && currentUser.role !== 'admin') {
@@ -10332,7 +10332,7 @@ async function viewActivityDetail(logId) {
     const log = activityLogData.find(l => l.id === logId);
     if (!log) {
         // Fetch from Supabase if not in local data
-        const { data } = await supabaseClient.from('crm_activity_log').select('*').eq('id', logId).single();
+        const { data } = await supabaseClient.from('activity_log').select('*').eq('id', logId).single();
         if (!data) { showToast('Log not found', 'error'); return; }
         showActivityDetailModal(data);
     } else {
@@ -10400,7 +10400,7 @@ function closeActivityDetailModal() {
 
 async function exportActivityLog() {
     try {
-        let query = supabaseClient.from('crm_activity_log').select('*');
+        let query = supabaseClient.from('activity_log').select('*');
 
         if (currentUser && currentUser.role !== 'admin') {
             query = query.eq('username', currentUser.username);
@@ -10476,7 +10476,7 @@ async function exportActivityLog() {
                     ip_address: ipAddress
                 };
 
-                await supabaseClient.from('crm_activity_log').insert([logEntry]);
+                await supabaseClient.from('activity_log').insert([logEntry]);
             } catch (err) {
                 console.error('Failed to log activity:', err);
             }
