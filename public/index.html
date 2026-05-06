@@ -564,7 +564,7 @@
         }
 
         /* Main content */
-        .app-container { margin-left: 230px; height: 100vh; background: #f8fafc; display: flex; flex-direction: column; }
+        .app-container { margin-left: 230px; height: 100vh; background: #f8fafc; display: flex; flex-direction: column; overflow: hidden; }
 
         /* Top header */
         .top-header {
@@ -752,15 +752,13 @@
         .content-wrapper {
             padding: 16px 24px;
             flex: 1;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
         
         .content-section {
             display: none;
-            background: var(--card);
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+            padding: 0;
             height: 100%;
         }
         
