@@ -3312,9 +3312,7 @@
                         <select id="customerProductFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
                             <option value="">All Products</option>
                         </select>
-                        <select id="customerGroupFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
-                            <option value="">All Groups</option>
-                        </select>
+                        <input type="text" id="customerGroupFilter" oninput="searchData()" placeholder="Search Group..." style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff;">
                         <select id="customerPipelineFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
                             <option value="">All Pipeline Stages</option>
                             <option value="Lead">Lead</option>
@@ -5119,7 +5117,10 @@
             });
 
             Array.from(groups).sort().forEach(group => {
-                groupSelect.innerHTML += `<option value="${escapeHtml(group)}">${escapeHtml(group)}</option>`;
+                const opt = document.createElement('option');
+                opt.value = group;
+                opt.textContent = group;
+                groupSelect.appendChild(opt);
             });
 
             groupSelect.value = currentVal;
@@ -8632,7 +8633,7 @@
 
                     if (groupFilter) {
                         const group = String(row['GROUP'] || '').toLowerCase();
-                        if (group !== groupFilter.toLowerCase()) return false;
+                        if (!group.includes(groupFilter.toLowerCase())) return false;
                     }
 
                     if (pipelineFilter) {
