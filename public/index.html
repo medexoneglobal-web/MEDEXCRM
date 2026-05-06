@@ -1715,18 +1715,20 @@
         
         .maintenance-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             border: 2px solid transparent;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
         
         .maintenance-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
         
         .maintenance-card.active {
@@ -1770,10 +1772,46 @@
             box-shadow: 0 8px 24px rgba(139, 92, 246, 0.25);
         }
         
+        .maintenance-card .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .maintenance-card.card-active .card-icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .maintenance-card.card-expiring .card-icon {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .maintenance-card.card-expired .card-icon {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .maintenance-card.card-change .card-icon {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+        
+        .maintenance-card .card-content {
+            flex: 1;
+        }
+        
         .maintenance-card .card-number {
-            font-size: 42px;
+            font-size: 32px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
+            line-height: 1;
         }
         
         .maintenance-card.card-active .card-number {
@@ -1793,11 +1831,17 @@
         }
         
         .maintenance-card .card-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #374151;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
+        }
+        
+        .maintenance-card .card-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
         }
         
         /* Maintenance Detail Container */
@@ -1935,32 +1979,38 @@
         /* Report Sub-tabs */
         .report-subtabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
+            gap: 12px;
+            margin-bottom: 28px;
+            padding-bottom: 0;
+            border-bottom: none;
+            flex-wrap: wrap;
         }
         
         .report-subtab {
             padding: 10px 20px;
-            border: none;
-            background: transparent;
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
             cursor: pointer;
             font-weight: 500;
             font-size: 14px;
-            color: var(--text-muted);
-            transition: all 0.2s;
-            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .report-subtab:hover {
-            background: var(--bg);
-            color: var(--text);
+            background: #e5e7eb;
+            color: #1f2937;
         }
         
         .report-subtab.active {
-            background: var(--accent);
+            background: linear-gradient(135deg, #4f46e5, #3b82f6);
             color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
         }
         
         /* Report Panels */
@@ -1972,6 +2022,125 @@
         
         .report-panel.active {
             display: flex;
+        }
+        
+        /* Reports Header */
+        .reports-header {
+            margin-bottom: 24px;
+        }
+        .reports-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        .reports-header p {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        /* Available Reports Section */
+        .available-reports-section {
+            margin-bottom: 32px;
+        }
+        .available-reports-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        .available-reports-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        @media (max-width: 1024px) {
+            .available-reports-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 640px) {
+            .available-reports-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .report-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .report-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        .report-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .report-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .report-card-icon.green { background: #dcfce7; }
+        .report-card-icon.blue { background: #dbeafe; }
+        .report-card-icon.purple { background: #ede9fe; }
+        .report-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .report-card-desc {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .report-card-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 16px 0;
+        }
+        .report-card-features li {
+            font-size: 13px;
+            color: #4b5563;
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .report-card-features li::before {
+            content: "\2705";
+            font-size: 12px;
+        }
+        .report-card-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px;
+            background: white;
+            color: #4f46e5;
+            border: 1.5px solid #4f46e5;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .report-card-btn:hover {
+            background: #4f46e5;
+            color: white;
         }
         
         /* Report Section (Accordion) */
@@ -2764,15 +2933,65 @@
 
             <!-- Reports Section -->
             <div id="reports" class="content-section">
-                <div class="section-header">
+                <div class="reports-header">
                     <h2>Reports</h2>
+                    <p>View and analyze your business reports.</p>
                 </div>
                 <div class="section-body">
                     <!-- Report Sub-tabs -->
                     <div class="report-subtabs">
-                        <button class="report-subtab active" id="maintenanceReportSubTab" onclick="showReportPanel('maintenanceReport')">Maintenance Report</button>
-                        <button class="report-subtab" id="cloudBackupReportSubTab" onclick="showReportPanel('cloudBackupReport')">Cloud Backup Report</button>
-                        <button class="report-subtab" id="eInvoiceReportSubTab" onclick="showReportPanel('eInvoiceReport')">E-Invoice Report</button>
+                        <button class="report-subtab active" id="maintenanceReportSubTab" onclick="showReportPanel('maintenanceReport')">&#128295; Maintenance Report</button>
+                        <button class="report-subtab" id="cloudBackupReportSubTab" onclick="showReportPanel('cloudBackupReport')">&#9729; Cloud Backup Report</button>
+                        <button class="report-subtab" id="eInvoiceReportSubTab" onclick="showReportPanel('eInvoiceReport')">&#128196; E-Invoice Report</button>
+                    </div>
+                    
+                    <!-- Available Reports Section -->
+                    <div class="available-reports-section" id="availableReportsSection">
+                        <div class="available-reports-title">Available Reports</div>
+                        <div class="available-reports-grid">
+                            <div class="report-card">
+                                <div class="report-card-header">
+                                    <div class="report-card-icon green">&#128295;</div>
+                                    <div class="report-card-title">Maintenance Report</div>
+                                </div>
+                                <div class="report-card-desc">View all maintenance status, active, expiring, and expired records.</div>
+                                <ul class="report-card-features">
+                                    <li>Active Maintenance</li>
+                                    <li>Expiring Soon</li>
+                                    <li>Expired Maintenance</li>
+                                    <li>Summary & Analytics</li>
+                                </ul>
+                                <button class="report-card-btn" onclick="showReportPanel('maintenanceReport')">View Report &#8250;</button>
+                            </div>
+                            <div class="report-card">
+                                <div class="report-card-header">
+                                    <div class="report-card-icon blue">&#9729;</div>
+                                    <div class="report-card-title">Cloud Backup Report</div>
+                                </div>
+                                <div class="report-card-desc">View cloud backup status and expiry information.</div>
+                                <ul class="report-card-features">
+                                    <li>Cloud Backup Active</li>
+                                    <li>Expiring Soon</li>
+                                    <li>Expired Cloud Backup</li>
+                                    <li>Summary & Analytics</li>
+                                </ul>
+                                <button class="report-card-btn" onclick="showReportPanel('cloudBackupReport')">View Report &#8250;</button>
+                            </div>
+                            <div class="report-card">
+                                <div class="report-card-header">
+                                    <div class="report-card-icon purple">&#128196;</div>
+                                    <div class="report-card-title">E-Invoice Report</div>
+                                </div>
+                                <div class="report-card-desc">View e-invoice status and received records.</div>
+                                <ul class="report-card-features">
+                                    <li>E-Invoice Received</li>
+                                    <li>Pending E-Invoice</li>
+                                    <li>Summary & Analytics</li>
+                                    <li>Exportable Data</li>
+                                </ul>
+                                <button class="report-card-btn" onclick="showReportPanel('eInvoiceReport')">View Report &#8250;</button>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Maintenance Report Panel -->
@@ -4159,6 +4378,8 @@
                     await refreshTableFromSupabase();
                 }
                 await renderAllReports();
+                const availSection = document.getElementById('availableReportsSection');
+                if (availSection) availSection.style.display = 'block';
             } else if (sectionId === 'tasks') {
                 await loadAllTasks();
             } else if (sectionId === 'users') {
@@ -4170,6 +4391,9 @@
 
         // Report Panel Switching
         async function showReportPanel(panelId) {
+            const availSection = document.getElementById('availableReportsSection');
+            if (availSection) availSection.style.display = 'none';
+            
             // Hide all panels
             document.getElementById('maintenanceReportPanel').classList.remove('active');
             document.getElementById('cloudBackupReportPanel').classList.remove('active');
@@ -4266,20 +4490,36 @@
             // Render 4 cards
             container.innerHTML = `
                 <div class="maintenance-card card-active ${currentMaintenanceDetailType === 'active' ? 'active' : ''}" onclick="showMaintenanceDetail('active')">
-                    <div class="card-number">${activeCount}</div>
-                    <div class="card-label">Maintenance Active</div>
+                    <div class="card-icon">&#128295;</div>
+                    <div class="card-content">
+                        <div class="card-number">${activeCount}</div>
+                        <div class="card-label">Maintenance Active</div>
+                        <div class="card-desc">All active maintenance</div>
+                    </div>
                 </div>
                 <div class="maintenance-card card-expiring ${currentMaintenanceDetailType === 'expiring' ? 'active' : ''}" onclick="showMaintenanceDetail('expiring')">
-                    <div class="card-number">${expiringCount}</div>
-                    <div class="card-label">Maintenance Expiring (30 days)</div>
+                    <div class="card-icon">&#9200;</div>
+                    <div class="card-content">
+                        <div class="card-number">${expiringCount}</div>
+                        <div class="card-label">Expiring Soon (30 Days)</div>
+                        <div class="card-desc">Maintenance expiring soon</div>
+                    </div>
                 </div>
                 <div class="maintenance-card card-expired ${currentMaintenanceDetailType === 'expired' ? 'active' : ''}" onclick="showMaintenanceDetail('expired')">
-                    <div class="card-number">${expiredCount}</div>
-                    <div class="card-label">MTN Expired</div>
+                    <div class="card-icon">&#128197;</div>
+                    <div class="card-content">
+                        <div class="card-number">${expiredCount}</div>
+                        <div class="card-label">MTN Expired</div>
+                        <div class="card-desc">Maintenance expired</div>
+                    </div>
                 </div>
                 <div class="maintenance-card card-change ${currentMaintenanceDetailType === 'changed' ? 'active' : ''}" onclick="showMaintenanceDetail('changed')">
-                    <div class="card-number">${changeCount}</div>
-                    <div class="card-label">Clinic Change Provider</div>
+                    <div class="card-icon">&#128101;</div>
+                    <div class="card-content">
+                        <div class="card-number">${changeCount}</div>
+                        <div class="card-label">Clinic Change Provider</div>
+                        <div class="card-desc">Total clinics changed</div>
+                    </div>
                 </div>
             `;
         }
@@ -4331,20 +4571,36 @@
             // Render 4 cards
             container.innerHTML = `
                 <div class="maintenance-card card-active ${currentCloudDetailType === 'active' ? 'active' : ''}" onclick="showCloudBackupDetail('active')">
-                    <div class="card-number">${activeCount}</div>
-                    <div class="card-label">Cloud Backup Active</div>
+                    <div class="card-icon">&#9729;</div>
+                    <div class="card-content">
+                        <div class="card-number">${activeCount}</div>
+                        <div class="card-label">Cloud Backup Active</div>
+                        <div class="card-desc">All active cloud backups</div>
+                    </div>
                 </div>
                 <div class="maintenance-card card-expiring ${currentCloudDetailType === 'expiring' ? 'active' : ''}" onclick="showCloudBackupDetail('expiring')">
-                    <div class="card-number">${expiringCount}</div>
-                    <div class="card-label">Cloud Backup Expiring (30 days)</div>
+                    <div class="card-icon">&#9200;</div>
+                    <div class="card-content">
+                        <div class="card-number">${expiringCount}</div>
+                        <div class="card-label">Expiring Soon (30 Days)</div>
+                        <div class="card-desc">Cloud backup expiring soon</div>
+                    </div>
                 </div>
                 <div class="maintenance-card card-expired ${currentCloudDetailType === 'expired' ? 'active' : ''}" onclick="showCloudBackupDetail('expired')">
-                    <div class="card-number">${expiredCount}</div>
-                    <div class="card-label">Cloud Backup Expired</div>
+                    <div class="card-icon">&#128308;</div>
+                    <div class="card-content">
+                        <div class="card-number">${expiredCount}</div>
+                        <div class="card-label">Cloud Backup Expired</div>
+                        <div class="card-desc">Cloud backup expired</div>
+                    </div>
                 </div>
                 <div class="maintenance-card card-change ${currentCloudDetailType === 'terminated' ? 'active' : ''}" onclick="showCloudBackupDetail('terminated')">
-                    <div class="card-number">${terminatedCount}</div>
-                    <div class="card-label">Terminate Cloud Backup</div>
+                    <div class="card-icon">&#9940;</div>
+                    <div class="card-content">
+                        <div class="card-number">${terminatedCount}</div>
+                        <div class="card-label">Terminated</div>
+                        <div class="card-desc">Cloud backup terminated</div>
+                    </div>
                 </div>
             `;
         }
@@ -5094,20 +5350,29 @@
             });
             
             container.innerHTML = `
-                <div class="maintenance-card card-active ${currentEInvoiceDetailType === 'all' ? 'active' : ''}" 
-                     onclick="showEInvoiceDetail('all')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <div class="card-number">${totalCustomers}</div>
-                    <div class="card-label">Total Customers</div>
+                <div class="maintenance-card ${currentEInvoiceDetailType === 'all' ? 'active' : ''}" onclick="showEInvoiceDetail('all')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-color: transparent;">
+                    <div class="card-icon" style="background: rgba(255,255,255,0.2); color: white;">&#128202;</div>
+                    <div class="card-content">
+                        <div class="card-number" style="color: white;">${totalCustomers}</div>
+                        <div class="card-label" style="color: rgba(255,255,255,0.9);">Total Customers</div>
+                        <div class="card-desc" style="color: rgba(255,255,255,0.7);">All customer records</div>
+                    </div>
                 </div>
-                <div class="maintenance-card card-active ${currentEInvoiceDetailType === 'enabled' ? 'active' : ''}" 
-                     onclick="showEInvoiceDetail('enabled')" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
-                    <div class="card-number">${eInvoiceEnabled}</div>
-                    <div class="card-label">E-Invoice Enabled</div>
+                <div class="maintenance-card ${currentEInvoiceDetailType === 'enabled' ? 'active' : ''}" onclick="showEInvoiceDetail('enabled')" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-color: transparent;">
+                    <div class="card-icon" style="background: rgba(255,255,255,0.2); color: white;">&#9989;</div>
+                    <div class="card-content">
+                        <div class="card-number" style="color: white;">${eInvoiceEnabled}</div>
+                        <div class="card-label" style="color: rgba(255,255,255,0.9);">E-Invoice Enabled</div>
+                        <div class="card-desc" style="color: rgba(255,255,255,0.7);">Customers with E-Invoice</div>
+                    </div>
                 </div>
-                <div class="maintenance-card card-expired ${currentEInvoiceDetailType === 'notEnabled' ? 'active' : ''}" 
-                     onclick="showEInvoiceDetail('notEnabled')" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white;">
-                    <div class="card-number">${eInvoiceNotEnabled}</div>
-                    <div class="card-label">Not Enabled</div>
+                <div class="maintenance-card card-expired ${currentEInvoiceDetailType === 'notEnabled' ? 'active' : ''}" onclick="showEInvoiceDetail('notEnabled')" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); border-color: transparent;">
+                    <div class="card-icon" style="background: rgba(255,255,255,0.2); color: white;">&#10060;</div>
+                    <div class="card-content">
+                        <div class="card-number" style="color: white;">${eInvoiceNotEnabled}</div>
+                        <div class="card-label" style="color: rgba(255,255,255,0.9);">Not Enabled</div>
+                        <div class="card-desc" style="color: rgba(255,255,255,0.7);">Customers without E-Invoice</div>
+                    </div>
                 </div>
             `;
         }
@@ -7834,8 +8099,6 @@
         // License Key column configuration: [Display Name, Data Field]
         const LICENSE_KEY_COLUMNS = [
             ['PRODUCT', 'PRODUCT'],
-            ['MTN START DATE', 'CMS/MHIS MTN START DATE'],
-            ['MTN END DATE', 'CMS/MHIS MTN END DATE'],
             ['Info 1 (Address 1)', 'Address1'],
             ['Info 2 (Address 2)', 'Address2'],
             ['Info 3 (Address 3)', 'Address3'],
