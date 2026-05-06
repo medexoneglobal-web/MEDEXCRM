@@ -3312,6 +3312,9 @@
                         <select id="customerProductFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
                             <option value="">All Products</option>
                         </select>
+                        <select id="customerGroupFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
+                            <option value="">All Groups</option>
+                        </select>
                         <select id="customerPipelineFilter" onchange="searchData()" style="padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; min-width: 160px; background: #fff; cursor: pointer;">
                             <option value="">All Pipeline Stages</option>
                             <option value="Lead">Lead</option>
@@ -4643,6 +4646,7 @@
                     }
 
                     populateProductFilter();
+                    populateGroupFilter();
                     return true;
                 } else {
                     // No data in Supabase â€” use default headers so UI works
@@ -4659,6 +4663,7 @@
                         visibleColumns = headers.map((_, idx) => idx);
                     }
                     populateProductFilter();
+                    populateGroupFilter();
                     return true;
                 }
             } catch (err) {
@@ -4711,6 +4716,7 @@
                     }
                 }
                 populateProductFilter();
+                populateGroupFilter();
                 await loadPipelineStagesMap();
                 currentPage = 1;
                 renderTable();
@@ -5097,6 +5103,28 @@
             productSelect.value = currentVal;
         }
 
+        function populateGroupFilter() {
+            const groupSelect = document.getElementById('customerGroupFilter');
+            if (!groupSelect) return;
+
+            const currentVal = groupSelect.value;
+            groupSelect.innerHTML = '<option value="">All Groups</option>';
+
+            const groups = new Set();
+            crmData.forEach(row => {
+                const group = row['GROUP'];
+                if (group && String(group).trim()) {
+                    groups.add(String(group).trim());
+                }
+            });
+
+            Array.from(groups).sort().forEach(group => {
+                groupSelect.innerHTML += `<option value="${escapeHtml(group)}">${escapeHtml(group)}</option>`;
+            });
+
+            groupSelect.value = currentVal;
+        }
+
         // Navigation
         async function showSection(sectionId) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
@@ -5129,6 +5157,7 @@
                 renderDashboard();
             } else if (sectionId === 'crmData') {
                 populateProductFilter();
+                populateGroupFilter();
             } else if (sectionId === 'userManagement') {
                 renderUserList();
             } else if (sectionId === 'licenseKey') {
@@ -6698,7 +6727,8 @@
             const hasCustomerSearch = document.getElementById('customerSearchInput') && document.getElementById('customerSearchInput').value !== '';
             const hasStatusFilter = document.getElementById('customerStatusFilter') && document.getElementById('customerStatusFilter').value !== '';
             const hasProductFilter = document.getElementById('customerProductFilter') && document.getElementById('customerProductFilter').value !== '';
-            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0 || hasCustomerSearch || hasStatusFilter || hasProductFilter;
+            const hasGroupFilter = document.getElementById('customerGroupFilter') && document.getElementById('customerGroupFilter').value !== '';
+            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0 || hasCustomerSearch || hasStatusFilter || hasProductFilter || hasGroupFilter;
             const data = (isFiltered && currentFilteredData) ? currentFilteredData : crmData;
             const totalPages = Math.ceil(data.length / rowsPerPage);
 
@@ -6721,7 +6751,8 @@
             const hasCustomerSearch = document.getElementById('customerSearchInput') && document.getElementById('customerSearchInput').value !== '';
             const hasStatusFilter = document.getElementById('customerStatusFilter') && document.getElementById('customerStatusFilter').value !== '';
             const hasProductFilter = document.getElementById('customerProductFilter') && document.getElementById('customerProductFilter').value !== '';
-            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0 || hasCustomerSearch || hasStatusFilter || hasProductFilter;
+            const hasGroupFilter = document.getElementById('customerGroupFilter') && document.getElementById('customerGroupFilter').value !== '';
+            const isFiltered = hasSearch || Object.keys(columnFilters).length > 0 || hasCustomerSearch || hasStatusFilter || hasProductFilter || hasGroupFilter;
 
             if (isFiltered && currentFilteredData) {
                 renderFilteredTable(currentFilteredData);
@@ -6919,10 +6950,21 @@
             const hasOptions = columnOptions[colIdx] && columnOptions[colIdx].length > 0;
             const inputId = `viewDetail_${colIdx}`;
             const disabledAttr = hasEdit ? '' : 'disabled';
+            const isDropdownField = ['PRODUCT', 'PRODUCT TYPE', 'M1G/ DEALER CASE'].includes(headerName);
             
             let inputHTML = '';
             
-            if (hasOptions) {
+            if (isDropdownField) {
+                // Dropdown for PRODUCT, PRODUCT TYPE, M1G/ DEALER CASE populated from crmData
+                const uniqueValues = [...new Set(crmData.map(r => r[headerName]).filter(Boolean))].sort();
+                inputHTML = `<select id="${inputId}" ${disabledAttr} style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; background: ${hasEdit ? 'white' : '#f3f4f6'};">`;
+                inputHTML += `<option value="">-- Select --</option>`;
+                uniqueValues.forEach(opt => {
+                    const selected = opt === value ? 'selected' : '';
+                    inputHTML += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
+                });
+                inputHTML += `</select>`;
+            } else if (hasOptions) {
                 // Dropdown for enumerated fields
                 inputHTML = `<select id="${inputId}" ${disabledAttr} style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; background: ${hasEdit ? 'white' : '#f3f4f6'};">`;
                 inputHTML += `<option value="">-- Select --</option>`;
@@ -8214,6 +8256,7 @@
                     }
                 }
                 populateProductFilter();
+                populateGroupFilter();
                 await loadPipelineStagesMap();
                 renderTable();
                 saveCRMData();
@@ -8525,10 +8568,12 @@
             const searchEl = document.getElementById('customerSearchInput');
             const statusEl = document.getElementById('customerStatusFilter');
             const productEl = document.getElementById('customerProductFilter');
+            const groupEl = document.getElementById('customerGroupFilter');
             const pipelineEl = document.getElementById('customerPipelineFilter');
             if (searchEl) searchEl.value = '';
             if (statusEl) statusEl.value = '';
             if (productEl) productEl.value = '';
+            if (groupEl) groupEl.value = '';
             if (pipelineEl) pipelineEl.value = '';
             columnFilters = {};
             currentPage = 1;
@@ -8549,16 +8594,18 @@
                 const searchEl = document.getElementById('customerSearchInput');
                 const statusEl = document.getElementById('customerStatusFilter');
                 const productEl = document.getElementById('customerProductFilter');
+                const groupEl = document.getElementById('customerGroupFilter');
                 const pipelineEl = document.getElementById('customerPipelineFilter');
                 const globalSearchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
 
                 const searchTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
                 const statusFilter = statusEl ? statusEl.value : '';
                 const productFilter = productEl ? productEl.value : '';
+                const groupFilter = groupEl ? groupEl.value : '';
                 const pipelineFilter = pipelineEl ? pipelineEl.value : '';
                 const globalTerm = globalSearchEl ? globalSearchEl.value.toLowerCase().trim() : '';
 
-                if (!searchTerm && !statusFilter && !productFilter && !pipelineFilter && !globalTerm && Object.keys(columnFilters).length === 0) {
+                if (!searchTerm && !statusFilter && !productFilter && !groupFilter && !pipelineFilter && !globalTerm && Object.keys(columnFilters).length === 0) {
                     currentFilteredData = null;
                     renderTable();
                     return;
@@ -8581,6 +8628,11 @@
                     if (productFilter) {
                         const product = String(row['PRODUCT'] || '').toLowerCase();
                         if (product !== productFilter.toLowerCase()) return false;
+                    }
+
+                    if (groupFilter) {
+                        const group = String(row['GROUP'] || '').toLowerCase();
+                        if (group !== groupFilter.toLowerCase()) return false;
                     }
 
                     if (pipelineFilter) {
