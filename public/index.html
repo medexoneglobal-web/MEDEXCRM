@@ -970,11 +970,11 @@
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 14px 16px;
+            padding: 10px 12px;
             border-bottom: 1px solid #f1f5f9;
         }
         .crm-table td {
-            padding: 14px 16px;
+            padding: 10px 12px;
             border-bottom: 1px solid #f1f5f9;
             font-size: 13px;
         }
@@ -988,58 +988,56 @@
             border-collapse: collapse;
         }
         .crm-table th, .crm-table td {
-            padding: 6px 4px;
+            padding: 10px 12px;
             vertical-align: middle;
         }
-        .col-acctno {
+        .crm-table .col-acctno {
             width: 80px;
+            min-width: 80px;
             white-space: nowrap;
-            font-size: 12px;
         }
-        .col-clinicname {
-            width: auto;
-            min-width: 280px;
+        .crm-table .col-clinicname {
+            min-width: 220px;
+            max-width: 300px;
             white-space: normal;
             word-break: break-word;
             overflow-wrap: break-word;
         }
-        .col-product {
-            width: 60px;
-            white-space: nowrap;
-            font-size: 12px;
-        }
-        .col-mtnstart, .col-mtnend {
-            width: 85px;
-            max-width: 90px;
-            white-space: nowrap;
-            font-size: 12px;
-        }
-        .col-status {
+        .crm-table .col-product {
             width: 70px;
+            min-width: 70px;
+            white-space: nowrap;
+        }
+        .crm-table .col-mtnstart, .crm-table .col-mtnend {
+            width: 100px;
+            min-width: 100px;
+            white-space: nowrap;
+        }
+        .crm-table .col-status {
+            width: 70px;
+            min-width: 70px;
             text-align: center;
             white-space: nowrap;
         }
-        .col-tel {
-            width: 120px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 12px;
-        }
-        .col-einvoice {
-            width: 45px;
-            text-align: center;
-            padding: 4px 2px !important;
+        .crm-table .col-tel {
+            width: 110px;
+            min-width: 110px;
             white-space: nowrap;
         }
-        .col-cloudbackup {
-            width: 95px;
-            min-width: 95px;
+        .crm-table .col-einvoice {
+            width: 50px;
+            min-width: 50px;
             text-align: center;
             white-space: nowrap;
         }
-        .col-action {
-            width: 90px;
+        .crm-table .col-cloudbackup {
+            min-width: 120px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .crm-table .col-action {
+            width: 100px;
+            min-width: 100px;
             text-align: center;
             white-space: nowrap;
         }
