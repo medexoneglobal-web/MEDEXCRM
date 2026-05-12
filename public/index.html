@@ -4748,21 +4748,47 @@
             let hasMore = true;
 
             while (hasMore) {
-                const { data, error } = await supabaseClient
-                    .from('contacts')
-                    .select('*')
-                    .order('id')
-                    .range(from, from + PAGE_SIZE - 1);
+                let attempts = 0;
+                const maxAttempts = 3;
+                let pageData = null;
+                let pageError = null;
 
-                if (error) { console.error('Fetch error:', error); break; }
-                if (data && data.length > 0) {
-                    allData = allData.concat(data);
+                while (attempts < maxAttempts && !pageData) {
+                    attempts++;
+                    const { data, error } = await supabaseClient
+                        .from('contacts')
+                        .select('*')
+                        .order('id')
+                        .range(from, from + PAGE_SIZE - 1);
+
+                    if (error) {
+                        pageError = error;
+                        console.warn(`Fetch page ${from / PAGE_SIZE + 1} attempt ${attempts} failed:`, error);
+                        if (attempts < maxAttempts) await new Promise(r => setTimeout(r, 500 * attempts));
+                    } else {
+                        pageData = data || [];
+                    }
+                }
+
+                if (pageError && !pageData) {
+                    console.error('Fetch error after retries:', pageError);
+                    break;
+                }
+
+                if (pageData.length > 0) {
+                    allData = allData.concat(pageData);
+                    console.log(`Loaded ${pageData.length} records (total: ${allData.length})`);
                     from += PAGE_SIZE;
-                    if (data.length < PAGE_SIZE) hasMore = false;
+                    if (pageData.length < PAGE_SIZE) hasMore = false;
                 } else {
                     hasMore = false;
                 }
+
+                // Small delay between pages to avoid rate limiting
+                if (hasMore) await new Promise(r => setTimeout(r, 100));
             }
+
+            console.log(`fetchAllContacts completed: ${allData.length} total records`);
             return allData;
         }
 
