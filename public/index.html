@@ -3616,6 +3616,7 @@
             display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase;
         }
         .mtn-renewal-badge.overdue { background: #fef2f2; color: #dc2626; }
+        .mtn-renewal-badge.expiredbutstillusing { background: #fef2f2; color: #dc2626; }
         .mtn-renewal-badge.upcoming { background: #fffbeb; color: #d97706; }
         .mtn-renewal-badge.active { background: #f0fdf4; color: #16a34a; }
         .mtn-renewal-badge.completed { background: #f0fdf4; color: #059669; }
@@ -12430,7 +12431,7 @@ async function exportActivityLog() {
         let mtnRenewalSortDir = 'asc';
         let mtnRenewalStatusFilter = '';
         let mtnRenewalDealerFilter = '';
-        let mtnRenewalCustTypeFilter = '';
+        let mtnRenewalCustTypeFilter = ''; // REMOVED - no longer used
         let mtnRenewalDateFrom = null;
         let mtnRenewalDateTo = null;
         let mtnRenewalShowExcluded = false;
@@ -12459,7 +12460,7 @@ async function exportActivityLog() {
                     status = 'Excluded';
                     excluded++;
                 } else if (mtnEnd && mtnEnd < today) {
-                    status = 'Overdue';
+                    status = 'Expired but Still Using';
                     daysLeft = Math.ceil((mtnEnd - today) / 86400000);
                     overdue++;
                 } else if (mtnEnd && mtnEnd <= thirtyDays) {
@@ -12508,19 +12509,19 @@ async function exportActivityLog() {
             if (!container) return;
             const cards = [
                 { key: 'total', label: 'Total Accounts', value: data.total, icon: '&#128202;', color: 'blue' },
-                { key: 'overdue', label: 'Overdue', value: data.overdue, icon: '&#9888;&#65039;', color: 'red' },
+                { key: 'overdue', label: 'Expired but Still Using', value: data.overdue, icon: '&#9888;&#65039;', color: 'red' },
                 { key: 'upcoming', label: 'Upcoming Renewal', value: data.upcoming, icon: '&#128337;', color: 'orange' },
                 { key: 'completed', label: 'Completed This Month', value: data.completed, icon: '&#9989;', color: 'green' },
                 { key: 'excluded', label: 'Excluded Customers', value: data.excluded, icon: '&#128683;', color: 'grey' },
                 { key: 'rate', label: 'Staff Completion Rate', value: data.completionRate + '%', icon: '&#127942;', color: 'purple' }
             ];
             container.innerHTML = cards.map(c => {
-                const isActive = (c.key === 'overdue' && mtnRenewalStatusFilter === 'Overdue') ||
+                const isActive = (c.key === 'overdue' && mtnRenewalStatusFilter === 'Expired but Still Using') ||
                     (c.key === 'upcoming' && mtnRenewalStatusFilter === 'Upcoming Renewal') ||
                     (c.key === 'completed' && mtnRenewalStatusFilter === 'Completed') ||
                     (c.key === 'excluded' && mtnRenewalStatusFilter === 'Excluded') ||
                     (c.key === 'total' && mtnRenewalStatusFilter === '');
-                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Overdue' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'completed' ? 'Completed' : c.key === 'excluded' ? 'Excluded' : ''}')">
+                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Expired but Still Using' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'completed' ? 'Completed' : c.key === 'excluded' ? 'Excluded' : ''}')">
                     <div class="kpi-bar"></div>
                     <div class="kpi-icon">${c.icon}</div>
                     <div class="kpi-value">${c.value}</div>
@@ -12557,7 +12558,6 @@ async function exportActivityLog() {
                         if (!dealers.includes(dealer)) return false;
                     }
                 }
-                if (mtnRenewalCustTypeFilter && row._customerType !== mtnRenewalCustTypeFilter) return false;
                 if (mtnRenewalDateFrom || mtnRenewalDateTo) {
                     if (!row._mtnEndDate) return false;
                     const d = new Date(row._mtnEndDate.getFullYear(), row._mtnEndDate.getMonth(), row._mtnEndDate.getDate());
@@ -12614,7 +12614,6 @@ async function exportActivityLog() {
         function clearMTNRenewalFilters() {
             mtnRenewalStatusFilter = '';
             mtnRenewalDealerFilter = '';
-            mtnRenewalCustTypeFilter = '';
             mtnRenewalDateFrom = null;
             mtnRenewalDateTo = null;
             mtnRenewalShowExcluded = false;
@@ -12690,7 +12689,7 @@ async function exportActivityLog() {
                         <td><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleMTNRenewalSelect(${row.id}, this.checked)"></td>
                         <td>${escapeHtml(row['ACCT NO'] || '')}</td>
                         <td>${escapeHtml(row['CLINIC NAME'] || '')}</td>
-                        <td>${custTypeBadge(row._customerType)}</td>
+                        <td>${escapeHtml(row['PRODUCT TYPE'] || '-')}</td>
                         <td><span class="mtn-renewal-date-cell" onclick="startInlineEdit(${row.id}, 'start')">${mtnStart ? mtnRenewalFmt(mtnStart) : '-'}<span class="edit-icon">&#9998;</span></span></td>
                         <td><span class="mtn-renewal-date-cell" onclick="startInlineEdit(${row.id}, 'end')">${mtnEnd ? mtnRenewalFmt(mtnEnd) : '-'}<span class="edit-icon">&#9998;</span></span></td>
                         <td>${daysHtml(row._daysLeft, row._renewalStatus)}</td>
@@ -12729,19 +12728,11 @@ async function exportActivityLog() {
                         <option value="M1G" ${mtnRenewalDealerFilter === 'M1G' ? 'selected' : ''}>M1G</option>
                         <option value="Dealers" ${mtnRenewalDealerFilter === 'Dealers' ? 'selected' : ''}>Dealers</option>
                     </select>
-                    <select onchange="mtnRenewalCustTypeFilter=this.value;mtnRenewalCurrentPage=1;filterMTNRenewalData()">
-                        <option value="">All Types</option>
-                        <option value="Dealer" ${mtnRenewalCustTypeFilter === 'Dealer' ? 'selected' : ''}>Dealer</option>
-                        <option value="Corporate" ${mtnRenewalCustTypeFilter === 'Corporate' ? 'selected' : ''}>Corporate</option>
-                        <option value="Clinic" ${mtnRenewalCustTypeFilter === 'Clinic' ? 'selected' : ''}>Clinic</option>
-                        <option value="Pharmacy" ${mtnRenewalCustTypeFilter === 'Pharmacy' ? 'selected' : ''}>Pharmacy</option>
-                        <option value="Internal" ${mtnRenewalCustTypeFilter === 'Internal' ? 'selected' : ''}>Internal</option>
-                    </select>
                     <input type="date" id="mtnRenewalDateFrom" value="${mtnRenewalInputFmt(mtnRenewalDateFrom)}" onchange="applyMTNRenewalDatePicker()">
                     <span style="font-size:12px;color:#6b7280;">to</span>
                     <input type="date" id="mtnRenewalDateTo" value="${mtnRenewalInputFmt(mtnRenewalDateTo)}" onchange="applyMTNRenewalDatePicker()">
                     <label><input type="checkbox" ${mtnRenewalShowExcluded ? 'checked' : ''} onchange="toggleMTNRenewalExcluded(this)"> Show Excluded</label>
-                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalCustTypeFilter || mtnRenewalDateFrom || mtnRenewalDateTo || mtnRenewalShowExcluded) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
+                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalDateFrom || mtnRenewalDateTo || mtnRenewalShowExcluded) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalExcel()" style="font-size:12px;padding:4px 10px;">Export Excel</button>
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalPDF()" style="font-size:12px;padding:4px 10px;">Export PDF</button>
                     <span class="mtn-renewal-count">${total.toLocaleString()} records</span>
@@ -12753,7 +12744,7 @@ async function exportActivityLog() {
                                 <th style="width:30px;"><input type="checkbox" onchange="toggleMTNRenewalSelectAll(this.checked)"></th>
                                 <th class="sortable" onclick="sortMTNRenewalTable('ACCT NO')">Customer Code${sortArrow('ACCT NO')}</th>
                                 <th class="sortable" onclick="sortMTNRenewalTable('CLINIC NAME')">Customer Name${sortArrow('CLINIC NAME')}</th>
-                                <th class="sortable" onclick="sortMTNRenewalTable('_customerType')">Type${sortArrow('_customerType')}</th>
+                                <th class="sortable" onclick="sortMTNRenewalTable('PRODUCT TYPE')">Product Type${sortArrow('PRODUCT TYPE')}</th>
                                 <th>MTN Start</th>
                                 <th>MTN End</th>
                                 <th class="sortable" onclick="sortMTNRenewalTable('_daysLeft')">Days Left${sortArrow('_daysLeft')}</th>
@@ -13153,7 +13144,7 @@ async function exportActivityLog() {
             if (mtnRenewalFilteredData.length === 0) { alert('No data to export.'); return; }
             const rows = mtnRenewalFilteredData.map(r => ({
                 'Customer Code': r['ACCT NO'] || '', 'Customer Name': r['CLINIC NAME'] || '',
-                'Customer Type': r._customerType || '', 'MTN Start': r['CMS/MHIS MTN START DATE'] || '',
+                'Product Type': r['PRODUCT TYPE'] || '', 'MTN Start': r['CMS/MHIS MTN START DATE'] || '',
                 'MTN End': r['CMS/MHIS MTN END DATE'] || '', 'Days Left': r._daysLeft ?? '-',
                 'Status': r._renewalStatus, 'Excluded': r['EXCLUDE FROM MTN TRACKING'] ? 'Yes' : 'No',
                 'Updated By': r['LAST UPDATED BY'] || '', 'Updated At': r['LAST UPDATED AT'] || ''
@@ -13171,12 +13162,12 @@ async function exportActivityLog() {
             if (mtnRenewalFilteredData.length === 0) { alert('No data to export.'); return; }
             const data = mtnRenewalFilteredData.map(r => ({
                 'ACCT NO': r['ACCT NO'] || '', 'CLINIC NAME': r['CLINIC NAME'] || '',
-                'CUSTOMER TYPE': r._customerType || '-', 'MTN START': r['CMS/MHIS MTN START DATE'] || '-',
+                'PRODUCT TYPE': r['PRODUCT TYPE'] || '-', 'MTN START': r['CMS/MHIS MTN START DATE'] || '-',
                 'MTN END': r['CMS/MHIS MTN END DATE'] || '-', 'DAYS LEFT': r._daysLeft ?? '-',
                 'STATUS': r._renewalStatus, 'EXCLUDED': r['EXCLUDE FROM MTN TRACKING'] ? 'Yes' : 'No',
                 'UPDATED BY': r['LAST UPDATED BY'] || '-', 'UPDATED AT': r['LAST UPDATED AT'] || '-'
             }));
-            const columns = ['ACCT NO', 'CLINIC NAME', 'CUSTOMER TYPE', 'MTN START', 'MTN END', 'DAYS LEFT', 'STATUS', 'EXCLUDED', 'UPDATED BY', 'UPDATED AT'];
+            const columns = ['ACCT NO', 'CLINIC NAME', 'PRODUCT TYPE', 'MTN START', 'MTN END', 'DAYS LEFT', 'STATUS', 'EXCLUDED', 'UPDATED BY', 'UPDATED AT'];
             let title = 'MTN Renewal Tracking';
             if (mtnRenewalStatusFilter) title += ' - ' + mtnRenewalStatusFilter;
             if (mtnRenewalDealerFilter) title += ' - ' + mtnRenewalDealerFilter;
