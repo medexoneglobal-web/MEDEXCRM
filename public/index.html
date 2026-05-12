@@ -11967,11 +11967,14 @@ async function exportActivityLog() {
                 }
                 // Dealer/M1G filter
                 if (dealerFilterVal) {
-                    const dealer = String(row['M1G/ DEALER CASE'] || '').trim();
+                    const dealer = String(row['M1G/ DEALER CASE'] || '').trim().toUpperCase();
                     if (dealerFilterVal === 'M1G') {
-                        if (dealer !== '') return false;
-                    } else if (dealer !== dealerFilterVal) {
-                        return false;
+                        // M1G group: any value containing M1G (M1G, M1G_GFLEX, M1G_MHIS, M1G/PUSPA, M1G_CLAIMEX, etc.)
+                        if (!dealer.includes('M1G')) return false;
+                    } else if (dealerFilterVal === 'Dealers') {
+                        // Dealers group: known dealer names only
+                        const dealers = ['CENTRICORE', 'DPTA', 'PUSPA', 'KS IT', 'MAC SOFT', 'MAXWELL', 'SMARTCOM', 'TK'];
+                        if (!dealers.includes(dealer)) return false;
                     }
                 }
                 // Date range filter on MTN End Date
@@ -12139,14 +12142,7 @@ async function exportActivityLog() {
                         <select id="mtnCatDealerFilter" class="col-filter" style="width:auto;min-width:140px;font-size:12px;padding:4px 8px;" onchange="setMTNCatDealerFilter(this.value)">
                             <option value="" ${!mtnCatDealerFilter ? 'selected' : ''}>All M1G/Dealer</option>
                             <option value="M1G" ${mtnCatDealerFilter === 'M1G' ? 'selected' : ''}>M1G</option>
-                            <option value="CENTRICORE" ${mtnCatDealerFilter === 'CENTRICORE' ? 'selected' : ''}>CENTRICORE</option>
-                            <option value="DPTA" ${mtnCatDealerFilter === 'DPTA' ? 'selected' : ''}>DPTA</option>
-                            <option value="PUSPA" ${mtnCatDealerFilter === 'PUSPA' ? 'selected' : ''}>PUSPA</option>
-                            <option value="KS IT" ${mtnCatDealerFilter === 'KS IT' ? 'selected' : ''}>KS IT</option>
-                            <option value="MAC SOFT" ${mtnCatDealerFilter === 'MAC SOFT' ? 'selected' : ''}>MAC SOFT</option>
-                            <option value="MAXWELL" ${mtnCatDealerFilter === 'MAXWELL' ? 'selected' : ''}>MAXWELL</option>
-                            <option value="SMARTCOM" ${mtnCatDealerFilter === 'SMARTCOM' ? 'selected' : ''}>SMARTCOM</option>
-                            <option value="TK" ${mtnCatDealerFilter === 'TK' ? 'selected' : ''}>TK</option>
+                            <option value="Dealers" ${mtnCatDealerFilter === 'Dealers' ? 'selected' : ''}>Dealers</option>
                         </select>
                         <button class="btn btn-outline btn-sm ${mtnCatDateFrom && mtnCatDateTo && mtnCatDateFrom.getDate() === 1 && mtnCatDateTo.getDate() === new Date(mtnCatDateTo.getFullYear(), mtnCatDateTo.getMonth() + 1, 0).getDate() && mtnCatDateFrom.getMonth() === new Date().getMonth() ? 'active' : ''}" onclick="setMTNCatDateQuickFilter('currentMonth')" style="font-size:12px;padding:4px 10px;">Current Month</button>
                         <button class="btn btn-outline btn-sm ${mtnCatDateFrom && mtnCatDateTo && mtnCatDateFrom.getMonth() === 0 && mtnCatDateFrom.getDate() === 1 && mtnCatDateTo.getMonth() === 11 && mtnCatDateTo.getDate() === 31 && mtnCatDateFrom.getFullYear() === new Date().getFullYear() ? 'active' : ''}" onclick="setMTNCatDateQuickFilter('currentYear')" style="font-size:12px;padding:4px 10px;">Current Year</button>
