@@ -11765,6 +11765,15 @@ async function exportActivityLog() {
             const eStatuses = ['cancelled purchase', 'change service provider', 'closed down', 'terminated'];
             if (eStatuses.includes(renewalStatus2)) return 'E';
             if (renewalStatus2 === 'refuse to renew') return 'C';
+
+            // GP+EM2 customers: categorize by maintenance validity, never as ClaimEX Only
+            if (productType.includes('GP+EM2')) {
+                if (mtnEndDate) {
+                    return mtnEndDate >= today ? 'A' : 'B';
+                }
+                return 'B'; // No MTN end date = expired
+            }
+
             const hasClaimEX = productType.includes('CLAIMEX') || productType.includes('GFLEX') ||
                                productType.includes('EM2') || productType.includes('GEN');
             if (hasClaimEX && !usingCMSMHIS) return 'D';
