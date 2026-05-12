@@ -3617,6 +3617,9 @@
         }
         .mtn-renewal-badge.overdue { background: #fef2f2; color: #dc2626; }
         .mtn-renewal-badge.expiredbutstillusing { background: #fef2f2; color: #dc2626; }
+        .mtn-renewal-badge.refusedrenewal { background: #f5f5f4; color: #78716c; }
+        .mtn-renewal-badge.claimexonly { background: #faf5ff; color: #7c3aed; }
+        .mtn-renewal-badge.switchedclosed { background: #fef2f2; color: #991b1b; }
         .mtn-renewal-badge.upcoming { background: #fffbeb; color: #d97706; }
         .mtn-renewal-badge.active { background: #f0fdf4; color: #16a34a; }
         .mtn-renewal-badge.completed { background: #f0fdf4; color: #059669; }
@@ -12438,46 +12441,67 @@ async function exportActivityLog() {
         let mtnRenewalYearTo = new Date().getFullYear();
         let mtnRenewalShowExcluded = false;
         let mtnRenewalSelectedIds = new Set();
+        let mtnRenewalProductTypeFilter = '';
 
-        // Compute renewal data from crmData - only include customers with relevant product types
-        // (same logic as MTN Categorized Report)
+        // Compute renewal data from crmData - same logic as MTN Categorized Report
+        // Total = ALL crmData, Expired but Still Using = Category B only
         function computeRenewalData() {
             const today = new Date(); today.setHours(0,0,0,0);
             const thirtyDays = new Date(today); thirtyDays.setDate(today.getDate() + 30);
             const nowMonth = today.getMonth(); const nowYear = today.getFullYear();
 
             let total = 0, overdue = 0, upcoming = 0, completed = 0, excluded = 0;
+            let catA = 0, catB = 0, catC = 0, catD = 0, catE = 0;
             const enriched = [];
 
             crmData.forEach(row => {
-                // Only include customers with relevant product types (same as MTN Categorized)
-                const productType = String(row['PRODUCT TYPE'] || '').toUpperCase();
-                const product = String(row['PRODUCT'] || '').toUpperCase();
-                const usingCMSMHIS = product.includes('CMS') || product.includes('MHIS') ||
-                                     productType.includes('CMS') || productType.includes('MHIS');
-                const hasClaimEX = productType.includes('CLAIMEX') || productType.includes('GFLEX') ||
-                                   productType.includes('EM2') || productType.includes('GEN');
-                const isGP_EM2 = productType.includes('GP+EM2');
-                const hasRelevantProduct = usingCMSMHIS || hasClaimEX || isGP_EM2;
-                if (!hasRelevantProduct) return; // skip customers without CMS/MHIS/ClaimEX products
+                // Apply product type filter to both KPI counts and table data
+                if (mtnRenewalProductTypeFilter) {
+                    const pt = String(row['PRODUCT TYPE'] || '').trim();
+                    if (pt !== mtnRenewalProductTypeFilter) return;
+                }
 
-                const mtnEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']);
-                if (!mtnEnd && !row['EXCLUDE FROM MTN TRACKING']) return; // skip if no MTN date and not excluded
+                // Total = ALL customers (same as MTN Categorized Total Customer Base)
                 total++;
 
+                // Use same category logic as MTN Categorized Report
+                const cat = getMTNCategory(row);
+                if (cat === 'A') catA++;
+                else if (cat === 'B') catB++;
+                else if (cat === 'C') catC++;
+                else if (cat === 'D') catD++;
+                else if (cat === 'E') catE++;
+
+                // Expired but Still Using = Category B (same as MTN Categorized)
+                if (cat === 'B') overdue++;
+
+                // For table: only include customers that have a category (A-E)
+                // Customers without a category are counted in Total but not shown in table
+                if (!cat) return;
+
+                const mtnEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']);
+                const mtnStart = parseDateToJs(row['CMS/MHIS MTN START DATE']);
                 const isExcluded = row['EXCLUDE FROM MTN TRACKING'] === true || row['EXCLUDE FROM MTN TRACKING'] === 'true';
                 const completedDate = parseDateToJs(row['COMPLETED DATE']);
+
+                // Determine renewal status based on category
                 let status = 'Active';
                 let daysLeft = null;
 
                 if (isExcluded) {
                     status = 'Excluded';
                     excluded++;
-                } else if (mtnEnd && mtnEnd < today) {
+                } else if (cat === 'B') {
                     status = 'Expired but Still Using';
-                    daysLeft = Math.ceil((mtnEnd - today) / 86400000);
-                    overdue++;
-                } else if (mtnEnd && mtnEnd <= thirtyDays) {
+                    daysLeft = mtnEnd ? Math.ceil((mtnEnd - today) / 86400000) : null;
+                } else if (cat === 'C') {
+                    status = 'Refused Renewal';
+                } else if (cat === 'D') {
+                    status = 'ClaimEX Only';
+                } else if (cat === 'E') {
+                    status = 'Switched / Closed';
+                } else if (mtnEnd && mtnEnd >= today && mtnEnd <= thirtyDays) {
+                    // Category A but MTN expiring within 30 days
                     status = 'Upcoming Renewal';
                     daysLeft = Math.ceil((mtnEnd - today) / 86400000);
                     upcoming++;
@@ -12500,14 +12524,17 @@ async function exportActivityLog() {
                     _renewalStatus: status,
                     _daysLeft: daysLeft,
                     _customerType: custType,
-                    _mtnEndDate: mtnEnd
+                    _mtnEndDate: mtnEnd,
+                    _mtnStartDate: mtnStart,
+                    _category: cat
                 });
             });
 
             const completionRate = (overdue + upcoming + completed) > 0
                 ? Math.round((completed / (overdue + upcoming + completed)) * 100) : 0;
 
-            return { enriched, total, overdue, upcoming, completed, excluded, completionRate, nowMonth, nowYear };
+            return { enriched, total, overdue, upcoming, completed, excluded, completionRate, nowMonth, nowYear,
+                     catA, catB, catC, catD, catE };
         }
 
         // Main render function
@@ -12522,7 +12549,7 @@ async function exportActivityLog() {
             const container = document.getElementById('mtnRenewalKpiCards');
             if (!container) return;
             const cards = [
-                { key: 'total', label: 'Total Accounts', value: data.total, icon: '&#128202;', color: 'blue' },
+                { key: 'total', label: 'Total Customer Base', value: data.total, icon: '&#128202;', color: 'blue' },
                 { key: 'overdue', label: 'Expired but Still Using', value: data.overdue, icon: '&#9888;&#65039;', color: 'red' },
                 { key: 'upcoming', label: 'Upcoming Renewal', value: data.upcoming, icon: '&#128337;', color: 'orange' },
                 { key: 'completed', label: 'Completed This Month', value: data.completed, icon: '&#9989;', color: 'green' },
@@ -12623,9 +12650,18 @@ async function exportActivityLog() {
             filterMTNRenewalData();
         }
 
+        function applyMTNRenewalProductTypeFilter() {
+            mtnRenewalProductTypeFilter = document.getElementById('mtnRenewalProductType')?.value || '';
+            mtnRenewalCurrentPage = 1;
+            const data = computeRenewalData();
+            renderMTNRenewalKPIs(data);
+            filterMTNRenewalData();
+        }
+
         function clearMTNRenewalFilters() {
             mtnRenewalStatusFilter = '';
             mtnRenewalDealerFilter = '';
+            mtnRenewalProductTypeFilter = '';
             const now = new Date();
             mtnRenewalMonthFrom = now.getMonth() + 1;
             mtnRenewalYearFrom = now.getFullYear();
@@ -12743,6 +12779,12 @@ async function exportActivityLog() {
                         <option value="M1G" ${mtnRenewalDealerFilter === 'M1G' ? 'selected' : ''}>M1G</option>
                         <option value="Dealers" ${mtnRenewalDealerFilter === 'Dealers' ? 'selected' : ''}>Dealers</option>
                     </select>
+                    <select id="mtnRenewalProductType" onchange="applyMTNRenewalProductTypeFilter()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;color:#374151;">
+                        <option value="">All Product Types</option>
+                        ${[...new Set(crmData.map(r => r['PRODUCT TYPE']).filter(Boolean))].sort().map(pt =>
+                            `<option value="${escapeHtml(pt)}" ${mtnRenewalProductTypeFilter === pt ? 'selected' : ''}>${escapeHtml(pt)}</option>`
+                        ).join('')}
+                    </select>
                     <select id="mtnRenewalMonthFrom" onchange="applyMTNRenewalMonthPicker()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;color:#374151;">
                         <option value="1" ${mtnRenewalMonthFrom === 1 ? 'selected' : ''}>January</option>
                         <option value="2" ${mtnRenewalMonthFrom === 2 ? 'selected' : ''}>February</option>
@@ -12775,7 +12817,7 @@ async function exportActivityLog() {
                     </select>
                     <input type="number" id="mtnRenewalYearTo" value="${mtnRenewalYearTo}" min="2020" max="2040" onchange="applyMTNRenewalMonthPicker()" style="width:75px;padding:7px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;">
                     <label><input type="checkbox" ${mtnRenewalShowExcluded ? 'checked' : ''} onchange="toggleMTNRenewalExcluded(this)"> Show Excluded</label>
-                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalShowExcluded) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
+                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalProductTypeFilter || mtnRenewalShowExcluded) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalExcel()" style="font-size:12px;padding:4px 10px;">Export Excel</button>
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalPDF()" style="font-size:12px;padding:4px 10px;">Export PDF</button>
                     <span class="mtn-renewal-count">${total.toLocaleString()} records</span>
