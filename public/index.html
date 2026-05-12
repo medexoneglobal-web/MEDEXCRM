@@ -3560,6 +3560,126 @@
             padding: 6px 10px; border: 1px solid #d1d5db;
             border-radius: 8px; font-size: 13px; background: #fff; color: #374151;
         }
+
+        /* ===== MTN RENEWAL TRACKING MODULE ===== */
+        .mtn-renewal-kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .mtn-renewal-kpi-card {
+            background: #fff; border-radius: 12px; padding: 20px;
+            border: 1px solid #e5e7eb; cursor: pointer;
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .mtn-renewal-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .mtn-renewal-kpi-card.active { border-color: #4f46e5; box-shadow: 0 0 0 2px rgba(79,70,229,0.2); }
+        .mtn-renewal-kpi-card .kpi-icon { font-size: 24px; margin-bottom: 8px; }
+        .mtn-renewal-kpi-card .kpi-value { font-size: 28px; font-weight: 700; color: #1f2937; }
+        .mtn-renewal-kpi-card .kpi-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+        .mtn-renewal-kpi-card .kpi-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .mtn-renewal-kpi-card.blue .kpi-bar { background: #3b82f6; }
+        .mtn-renewal-kpi-card.red .kpi-bar { background: #ef4444; }
+        .mtn-renewal-kpi-card.orange .kpi-bar { background: #f59e0b; }
+        .mtn-renewal-kpi-card.green .kpi-bar { background: #10b981; }
+        .mtn-renewal-kpi-card.grey .kpi-bar { background: #9ca3af; }
+        .mtn-renewal-kpi-card.purple .kpi-bar { background: #8b5cf6; }
+
+        .mtn-renewal-content { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; }
+        .mtn-renewal-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+        .mtn-renewal-toolbar input[type="text"] {
+            flex: 1; min-width: 200px; max-width: 320px;
+            padding: 8px 12px 8px 36px; border: 1px solid #d1d5db;
+            border-radius: 8px; font-size: 13px; color: #374151;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat 12px center;
+        }
+        .mtn-renewal-toolbar input[type="text"]:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147,197,253,0.3); }
+        .mtn-renewal-toolbar select, .mtn-renewal-toolbar input[type="date"] {
+            padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 12px; background: #fff; color: #374151;
+        }
+        .mtn-renewal-toolbar label { font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .mtn-renewal-count { font-size: 13px; color: #6b7280; font-weight: 500; margin-left: auto; }
+
+        .mtn-renewal-table-wrap { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 8px; }
+        .mtn-renewal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .mtn-renewal-table thead th {
+            background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 600;
+            color: #374151; border-bottom: 2px solid #e5e7eb; white-space: nowrap; position: sticky; top: 0; z-index: 1;
+        }
+        .mtn-renewal-table thead th.sortable { cursor: pointer; user-select: none; }
+        .mtn-renewal-table thead th.sortable:hover { background: #f1f5f9; }
+        .mtn-renewal-table tbody td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .mtn-renewal-table tbody tr:hover { background: #f8fafc; }
+        .mtn-renewal-table tbody tr.selected { background: #eff6ff; }
+
+        .mtn-renewal-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .mtn-renewal-badge.overdue { background: #fef2f2; color: #dc2626; }
+        .mtn-renewal-badge.upcoming { background: #fffbeb; color: #d97706; }
+        .mtn-renewal-badge.active { background: #f0fdf4; color: #16a34a; }
+        .mtn-renewal-badge.completed { background: #f0fdf4; color: #059669; }
+        .mtn-renewal-badge.excluded { background: #f3f4f6; color: #9ca3af; }
+        .mtn-renewal-badge.dealer { background: #eff6ff; color: #2563eb; }
+        .mtn-renewal-badge.corporate { background: #faf5ff; color: #7c3aed; }
+        .mtn-renewal-badge.clinic { background: #f0fdf4; color: #16a34a; }
+        .mtn-renewal-badge.pharmacy { background: #fff7ed; color: #ea580c; }
+        .mtn-renewal-badge.internal { background: #f1f5f9; color: #475569; }
+
+        .mtn-renewal-days { font-weight: 600; }
+        .mtn-renewal-days.negative { color: #dc2626; }
+        .mtn-renewal-days.warning { color: #d97706; }
+        .mtn-renewal-days.positive { color: #16a34a; }
+
+        .mtn-renewal-date-cell { cursor: pointer; position: relative; padding: 2px 4px; border-radius: 4px; transition: background 0.15s; }
+        .mtn-renewal-date-cell:hover { background: #eff6ff; }
+        .mtn-renewal-date-cell .edit-icon { display: none; margin-left: 4px; font-size: 10px; color: #3b82f6; }
+        .mtn-renewal-date-cell:hover .edit-icon { display: inline; }
+        .mtn-renewal-date-edit { display: flex; align-items: center; gap: 4px; }
+        .mtn-renewal-date-edit input { padding: 4px 6px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 12px; }
+        .mtn-renewal-date-edit button { padding: 4px 8px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .mtn-renewal-date-edit .save-btn { background: #10b981; color: #fff; }
+        .mtn-renewal-date-edit .cancel-btn { background: #ef4444; color: #fff; }
+
+        .mtn-renewal-actions { display: flex; gap: 4px; flex-wrap: nowrap; }
+        .mtn-renewal-action-btn {
+            padding: 4px 8px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff;
+            font-size: 11px; cursor: pointer; white-space: nowrap; transition: all 0.15s;
+        }
+        .mtn-renewal-action-btn:hover { background: #f3f4f6; }
+        .mtn-renewal-action-btn.renew { color: #2563eb; border-color: #93c5fd; }
+        .mtn-renewal-action-btn.renew:hover { background: #eff6ff; }
+        .mtn-renewal-action-btn.extend { color: #d97706; border-color: #fcd34d; }
+        .mtn-renewal-action-btn.extend:hover { background: #fffbeb; }
+        .mtn-renewal-action-btn.complete { color: #059669; border-color: #6ee7b7; }
+        .mtn-renewal-action-btn.complete:hover { background: #f0fdf4; }
+        .mtn-renewal-action-btn.history { color: #7c3aed; border-color: #c4b5fd; }
+        .mtn-renewal-action-btn.history:hover { background: #faf5ff; }
+
+        .mtn-renewal-bulk-bar {
+            display: none; position: sticky; bottom: 0; background: #1e293b; color: #fff;
+            padding: 12px 20px; border-radius: 12px; margin-top: 16px;
+            align-items: center; gap: 12px; z-index: 10;
+        }
+        .mtn-renewal-bulk-bar.visible { display: flex; }
+        .mtn-renewal-bulk-bar .bulk-count { font-size: 14px; font-weight: 600; }
+        .mtn-renewal-bulk-bar button {
+            padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1); color: #fff; font-size: 12px; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .mtn-renewal-bulk-bar button:hover { background: rgba(255,255,255,0.2); }
+
+        .mtn-renewal-pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 10px; }
+        .mtn-renewal-page-info { font-size: 12px; color: #6b7280; }
+        .mtn-renewal-page-controls { display: flex; gap: 4px; align-items: center; }
+        .mtn-renewal-page-btn {
+            padding: 6px 12px; border: 1px solid #d1d5db; background: #fff;
+            color: #374151; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s;
+        }
+        .mtn-renewal-page-btn:hover { background: #f3f4f6; }
+        .mtn-renewal-page-btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+        .mtn-renewal-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -3654,6 +3774,9 @@
             <nav class="sidebar-nav">
                 <a class="nav-item" data-section="tasks" onclick="showSection('tasks')">
                     <span class="nav-icon">☑️</span> Tasks
+                </a>
+                <a class="nav-item" data-section="mtnRenewal" onclick="showSection('mtnRenewal')">
+                    <span class="nav-icon">🔄</span> MTN Renewal Tracking
                 </a>
                 <a class="nav-item" data-section="reports" onclick="showSection('reports')">
                     <span class="nav-icon">📋</span> Reports
@@ -4244,6 +4367,18 @@
                 </div>
             </div>
 
+            <!-- MTN Renewal Tracking Section -->
+            <div id="mtnRenewal" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>MTN Renewal Tracking</h2>
+                        <p style="margin:4px 0 0;color:#64748b;font-size:14px;">Track and manage MTN renewals, overdue accounts, and dealer exclusions</p>
+                    </div>
+                </div>
+                <div id="mtnRenewalKpiCards" class="mtn-renewal-kpi-container"></div>
+                <div id="mtnRenewalContent" class="mtn-renewal-content"></div>
+            </div>
+
             <!-- Users Section -->
             <div id="users" class="content-section">
                 <div class="section-card">
@@ -4712,7 +4847,8 @@
             'M1G/ DEALER CASE', 'PRODUCT', 'PRODUCT TYPE',
             'GROUP', 'COMPANY NAME', 'CO. REG & BRN',
             'Customer ID- Certificate No.', 'CMS INSTALL DATE/LIVE DATE',
-            'State', 'Contact Name', 'Contact Tel1'
+            'State', 'Contact Name', 'Contact Tel1',
+            'CUSTOMER TYPE', 'EXCLUDE FROM MTN TRACKING', 'RENEWAL STATUS 2', 'COMPLETED DATE', 'LAST UPDATED BY', 'LAST UPDATED AT'
         ];
 
         // Access Rights and Mandatory Fields Settings
@@ -5763,6 +5899,7 @@
                 'reports': 'Reports',
                 'activityLog': 'Activity Log',
                 'tasks': 'Tasks',
+                'mtnRenewal': 'MTN Renewal Tracking',
                 'settings': 'Settings',
                 'users': 'Users',
                 'userManagement': 'User Management',
@@ -5811,6 +5948,11 @@
             } else if (sectionId === 'settings') {
                 renderAccessRightsPanel();
                 renderMasterFieldPanel();
+            } else if (sectionId === 'mtnRenewal') {
+                if (crmData.length === 0) {
+                    await refreshTableFromSupabase();
+                }
+                renderMTNRenewalModule();
             } else if (sectionId === 'reports') {
                 if (crmData.length === 0) {
                     await refreshTableFromSupabase();
@@ -7483,6 +7625,7 @@
             'Basic Info': ['ACCT NO', 'CLINIC NAME', 'PHONE', 'Contact Name', 'Contact Tel1', 'State', 'COMPANY NAME', 'CO. REG & BRN', 'Customer ID- Certificate No.'],
             'Product Info': ['PRODUCT', 'PRODUCT TYPE', 'GROUP', 'M1G/ DEALER CASE', 'PC TOTAL'],
             'Maintenance Dates': ['CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'CLOUD START DATE', 'CLOUD END DATE', 'CMS INSTALL DATE/LIVE DATE'],
+            'MTN Renewal Tracking': ['CUSTOMER TYPE', 'EXCLUDE FROM MTN TRACKING', 'RENEWAL STATUS 2', 'COMPLETED DATE', 'LAST UPDATED BY', 'LAST UPDATED AT'],
             'E-Invoice': ['E-INV PO RCVD DATE', 'EINV PO RCVD DATE', 'E-INV START', 'E-INV END', 'E-INV LIVE DATE', 'E-INV TRACKING STATUS']
         };
 
@@ -7619,13 +7762,23 @@
             const hasOptions = columnOptions[colIdx] && columnOptions[colIdx].length > 0;
             const inputId = `viewDetail_${colIdx}`;
             const disabledAttr = hasEdit ? '' : 'disabled';
-            const isDropdownField = ['PRODUCT', 'PRODUCT TYPE', 'M1G/ DEALER CASE', 'RENEWAL STATUS 2'].includes(headerName);
+            const isDropdownField = ['PRODUCT', 'PRODUCT TYPE', 'M1G/ DEALER CASE', 'RENEWAL STATUS 2', 'CUSTOMER TYPE'].includes(headerName);
+            const isCheckboxField = headerName === 'EXCLUDE FROM MTN TRACKING';
             
             let inputHTML = '';
             
             if (isDropdownField) {
                 // Dropdown for PRODUCT, PRODUCT TYPE, M1G/ DEALER CASE populated from crmData
-                const uniqueValues = [...new Set(crmData.map(r => r[headerName]).filter(Boolean))].sort();
+                let uniqueValues = [...new Set(crmData.map(r => r[headerName]).filter(Boolean))].sort();
+                // Predefined options for CUSTOMER TYPE if no existing values
+                if (headerName === 'CUSTOMER TYPE' && uniqueValues.length === 0) {
+                    uniqueValues = ['Dealer', 'Corporate', 'Clinic', 'Pharmacy', 'Internal'];
+                } else if (headerName === 'CUSTOMER TYPE') {
+                    // Merge predefined with existing
+                    const predefined = ['Dealer', 'Corporate', 'Clinic', 'Pharmacy', 'Internal'];
+                    predefined.forEach(v => { if (!uniqueValues.includes(v)) uniqueValues.push(v); });
+                    uniqueValues.sort();
+                }
                 inputHTML = `<select id="${inputId}" ${disabledAttr} style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; background: ${hasEdit ? 'white' : '#f3f4f6'};">`;
                 inputHTML += `<option value="">-- Select --</option>`;
                 uniqueValues.forEach(opt => {
@@ -7642,6 +7795,10 @@
                     inputHTML += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
                 });
                 inputHTML += `</select>`;
+            } else if (isCheckboxField) {
+                // Checkbox for EXCLUDE FROM MTN TRACKING
+                const checked = value === true || value === 'true' ? 'checked' : '';
+                inputHTML = `<label style="display:flex;align-items:center;gap:8px;padding:10px 0;"><input type="checkbox" id="${inputId}" ${checked} ${disabledAttr} style="width:18px;height:18px;cursor:pointer;"> Exclude from MTN Renewal Tracking</label>`;
             } else if (isDate) {
                 // Date picker for date fields
                 const dateValue = toInputDate(value);
@@ -12258,6 +12415,772 @@ async function exportActivityLog() {
             }
 
             exportReportPDF(data, columns, displayColumns, title);
+        }
+
+        // ============================================
+        // MTN RENEWAL TRACKING MODULE
+        // ============================================
+
+        // State variables
+        let mtnRenewalCurrentPage = 1;
+        let mtnRenewalRowsPerPage = 10;
+        let mtnRenewalFilteredData = [];
+        let mtnRenewalDebounceTimer = null;
+        let mtnRenewalSortKey = '';
+        let mtnRenewalSortDir = 'asc';
+        let mtnRenewalStatusFilter = '';
+        let mtnRenewalDealerFilter = '';
+        let mtnRenewalCustTypeFilter = '';
+        let mtnRenewalDateFrom = null;
+        let mtnRenewalDateTo = null;
+        let mtnRenewalShowExcluded = false;
+        let mtnRenewalSelectedIds = new Set();
+
+        // Compute renewal data from crmData
+        function computeRenewalData() {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const thirtyDays = new Date(today); thirtyDays.setDate(today.getDate() + 30);
+            const nowMonth = today.getMonth(); const nowYear = today.getFullYear();
+
+            let total = 0, overdue = 0, upcoming = 0, completed = 0, excluded = 0;
+            const enriched = [];
+
+            crmData.forEach(row => {
+                const mtnEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']);
+                if (!mtnEnd && !row['EXCLUDE FROM MTN TRACKING']) return; // skip if no MTN date and not excluded
+                total++;
+
+                const isExcluded = row['EXCLUDE FROM MTN TRACKING'] === true || row['EXCLUDE FROM MTN TRACKING'] === 'true';
+                const completedDate = parseDateToJs(row['COMPLETED DATE']);
+                let status = 'Active';
+                let daysLeft = null;
+
+                if (isExcluded) {
+                    status = 'Excluded';
+                    excluded++;
+                } else if (mtnEnd && mtnEnd < today) {
+                    status = 'Overdue';
+                    daysLeft = Math.ceil((mtnEnd - today) / 86400000);
+                    overdue++;
+                } else if (mtnEnd && mtnEnd <= thirtyDays) {
+                    status = 'Upcoming Renewal';
+                    daysLeft = Math.ceil((mtnEnd - today) / 86400000);
+                    upcoming++;
+                } else if (completedDate) {
+                    status = 'Completed';
+                    completed++;
+                }
+
+                // Infer customer type if not set
+                let custType = row['CUSTOMER TYPE'] || '';
+                if (!custType) {
+                    const dealer = String(row['M1G/ DEALER CASE'] || '').trim().toUpperCase();
+                    const knownDealers = ['CENTRICORE','DPTA','PUSPA','KS IT','MAC SOFT','MAXWELL','SMARTCOM','TK'];
+                    if (knownDealers.includes(dealer)) custType = 'Dealer';
+                    else if (dealer.includes('M1G')) custType = 'Corporate';
+                }
+
+                enriched.push({
+                    ...row,
+                    _renewalStatus: status,
+                    _daysLeft: daysLeft,
+                    _customerType: custType,
+                    _mtnEndDate: mtnEnd
+                });
+            });
+
+            const completionRate = (overdue + upcoming + completed) > 0
+                ? Math.round((completed / (overdue + upcoming + completed)) * 100) : 0;
+
+            return { enriched, total, overdue, upcoming, completed, excluded, completionRate, nowMonth, nowYear };
+        }
+
+        // Main render function
+        function renderMTNRenewalModule() {
+            const data = computeRenewalData();
+            renderMTNRenewalKPIs(data);
+            filterMTNRenewalData();
+        }
+
+        // Render KPI cards
+        function renderMTNRenewalKPIs(data) {
+            const container = document.getElementById('mtnRenewalKpiCards');
+            if (!container) return;
+            const cards = [
+                { key: 'total', label: 'Total Accounts', value: data.total, icon: '&#128202;', color: 'blue' },
+                { key: 'overdue', label: 'Overdue', value: data.overdue, icon: '&#9888;&#65039;', color: 'red' },
+                { key: 'upcoming', label: 'Upcoming Renewal', value: data.upcoming, icon: '&#128337;', color: 'orange' },
+                { key: 'completed', label: 'Completed This Month', value: data.completed, icon: '&#9989;', color: 'green' },
+                { key: 'excluded', label: 'Excluded Customers', value: data.excluded, icon: '&#128683;', color: 'grey' },
+                { key: 'rate', label: 'Staff Completion Rate', value: data.completionRate + '%', icon: '&#127942;', color: 'purple' }
+            ];
+            container.innerHTML = cards.map(c => {
+                const isActive = (c.key === 'overdue' && mtnRenewalStatusFilter === 'Overdue') ||
+                    (c.key === 'upcoming' && mtnRenewalStatusFilter === 'Upcoming Renewal') ||
+                    (c.key === 'completed' && mtnRenewalStatusFilter === 'Completed') ||
+                    (c.key === 'excluded' && mtnRenewalStatusFilter === 'Excluded') ||
+                    (c.key === 'total' && mtnRenewalStatusFilter === '');
+                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Overdue' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'completed' ? 'Completed' : c.key === 'excluded' ? 'Excluded' : ''}')">
+                    <div class="kpi-bar"></div>
+                    <div class="kpi-icon">${c.icon}</div>
+                    <div class="kpi-value">${c.value}</div>
+                    <div class="kpi-label">${c.label}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function setMTNRenewalStatusFilter(status) {
+            mtnRenewalStatusFilter = status;
+            mtnRenewalCurrentPage = 1;
+            const data = computeRenewalData();
+            renderMTNRenewalKPIs(data);
+            filterMTNRenewalData();
+        }
+
+        // Filter renewal data
+        function filterMTNRenewalData() {
+            const data = computeRenewalData();
+            if (!crmData || crmData.length === 0) {
+                mtnRenewalFilteredData = [];
+                renderMTNRenewalTable();
+                return;
+            }
+            const search = (document.getElementById('mtnRenewalSearch')?.value || '').toLowerCase().trim();
+            mtnRenewalFilteredData = data.enriched.filter(row => {
+                if (mtnRenewalStatusFilter && row._renewalStatus !== mtnRenewalStatusFilter) return false;
+                if (!mtnRenewalShowExcluded && row._renewalStatus === 'Excluded') return false;
+                if (mtnRenewalDealerFilter) {
+                    const dealer = String(row['M1G/ DEALER CASE'] || '').trim().toUpperCase();
+                    if (mtnRenewalDealerFilter === 'M1G' && !dealer.includes('M1G')) return false;
+                    if (mtnRenewalDealerFilter === 'Dealers') {
+                        const dealers = ['CENTRICORE','DPTA','PUSPA','KS IT','MAC SOFT','MAXWELL','SMARTCOM','TK'];
+                        if (!dealers.includes(dealer)) return false;
+                    }
+                }
+                if (mtnRenewalCustTypeFilter && row._customerType !== mtnRenewalCustTypeFilter) return false;
+                if (mtnRenewalDateFrom || mtnRenewalDateTo) {
+                    if (!row._mtnEndDate) return false;
+                    const d = new Date(row._mtnEndDate.getFullYear(), row._mtnEndDate.getMonth(), row._mtnEndDate.getDate());
+                    if (mtnRenewalDateFrom) {
+                        const from = new Date(mtnRenewalDateFrom.getFullYear(), mtnRenewalDateFrom.getMonth(), mtnRenewalDateFrom.getDate());
+                        if (d < from) return false;
+                    }
+                    if (mtnRenewalDateTo) {
+                        const to = new Date(mtnRenewalDateTo.getFullYear(), mtnRenewalDateTo.getMonth(), mtnRenewalDateTo.getDate());
+                        if (d > to) return false;
+                    }
+                }
+                if (search) {
+                    const hay = [row['ACCT NO'], row['CLINIC NAME'], row['Contact Name'], row['M1G/ DEALER CASE']].join(' ').toLowerCase();
+                    if (!hay.includes(search)) return false;
+                }
+                return true;
+            });
+            if (mtnRenewalSortKey) {
+                mtnRenewalFilteredData.sort((a, b) => {
+                    let av = a[mtnRenewalSortKey] ?? a['_' + mtnRenewalSortKey] ?? '';
+                    let bv = b[mtnRenewalSortKey] ?? b['_' + mtnRenewalSortKey] ?? '';
+                    if (typeof av === 'string') av = av.toLowerCase();
+                    if (typeof bv === 'string') bv = bv.toLowerCase();
+                    if (av < bv) return mtnRenewalSortDir === 'asc' ? -1 : 1;
+                    if (av > bv) return mtnRenewalSortDir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+            renderMTNRenewalTable();
+        }
+
+        function debounceMTNRenewalFilter() {
+            if (mtnRenewalDebounceTimer) clearTimeout(mtnRenewalDebounceTimer);
+            mtnRenewalDebounceTimer = setTimeout(filterMTNRenewalData, 300);
+        }
+
+        function sortMTNRenewalTable(key) {
+            if (mtnRenewalSortKey === key) mtnRenewalSortDir = mtnRenewalSortDir === 'asc' ? 'desc' : 'asc';
+            else { mtnRenewalSortKey = key; mtnRenewalSortDir = 'asc'; }
+            mtnRenewalCurrentPage = 1;
+            filterMTNRenewalData();
+        }
+
+        function applyMTNRenewalDatePicker() {
+            const fromVal = document.getElementById('mtnRenewalDateFrom')?.value;
+            const toVal = document.getElementById('mtnRenewalDateTo')?.value;
+            mtnRenewalDateFrom = fromVal ? new Date(fromVal + 'T00:00:00') : null;
+            mtnRenewalDateTo = toVal ? new Date(toVal + 'T00:00:00') : null;
+            mtnRenewalCurrentPage = 1;
+            filterMTNRenewalData();
+        }
+
+        function clearMTNRenewalFilters() {
+            mtnRenewalStatusFilter = '';
+            mtnRenewalDealerFilter = '';
+            mtnRenewalCustTypeFilter = '';
+            mtnRenewalDateFrom = null;
+            mtnRenewalDateTo = null;
+            mtnRenewalShowExcluded = false;
+            mtnRenewalCurrentPage = 1;
+            const data = computeRenewalData();
+            renderMTNRenewalKPIs(data);
+            filterMTNRenewalData();
+        }
+
+        function toggleMTNRenewalExcluded(el) {
+            mtnRenewalShowExcluded = el.checked;
+            mtnRenewalCurrentPage = 1;
+            filterMTNRenewalData();
+        }
+
+        function goToMTNRenewalPage(page) {
+            mtnRenewalCurrentPage = page;
+            renderMTNRenewalTable();
+        }
+
+        function setMTNRenewalPageSize(size) {
+            mtnRenewalRowsPerPage = parseInt(size);
+            mtnRenewalCurrentPage = 1;
+            renderMTNRenewalTable();
+        }
+
+        // Date formatting helper
+        const mtnRenewalFmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '-';
+        const mtnRenewalInputFmt = d => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : '';
+
+        // Render the renewal tracking table
+        function renderMTNRenewalTable() {
+            const container = document.getElementById('mtnRenewalContent');
+            if (!container) return;
+            const total = mtnRenewalFilteredData.length;
+            const totalPages = Math.ceil(total / mtnRenewalRowsPerPage);
+            if (mtnRenewalCurrentPage > totalPages) mtnRenewalCurrentPage = totalPages || 1;
+            const start = (mtnRenewalCurrentPage - 1) * mtnRenewalRowsPerPage;
+            const pageData = mtnRenewalFilteredData.slice(start, start + mtnRenewalRowsPerPage);
+
+            const sortArrow = key => {
+                if (mtnRenewalSortKey !== key) return '';
+                return mtnRenewalSortDir === 'asc' ? ' &#9650;' : ' &#9660;';
+            };
+
+            const statusBadge = (status) => {
+                const cls = status.toLowerCase().replace(/\s+/g, '');
+                return `<span class="mtn-renewal-badge ${cls}">${escapeHtml(status)}</span>`;
+            };
+            const custTypeBadge = (type) => {
+                if (!type) return '-';
+                const cls = type.toLowerCase();
+                return `<span class="mtn-renewal-badge ${cls}">${escapeHtml(type)}</span>`;
+            };
+            const daysHtml = (days, status) => {
+                if (status === 'Excluded' || status === 'Completed' || days === null) return '-';
+                const cls = days < 0 ? 'negative' : days <= 30 ? 'warning' : 'positive';
+                return `<span class="mtn-renewal-days ${cls}">${days < 0 ? days + ' days' : days + ' days'}</span>`;
+            };
+
+            let rowsHtml = '';
+            if (pageData.length === 0) {
+                rowsHtml = '<tr><td colspan="12" style="text-align:center;padding:40px;color:#9ca3af">No records found.</td></tr>';
+            } else {
+                rowsHtml = pageData.map((row, idx) => {
+                    const globalIdx = crmData.findIndex(r => r.id === row.id);
+                    const isSelected = mtnRenewalSelectedIds.has(row.id);
+                    const isExcluded = row._renewalStatus === 'Excluded';
+                    const exclCheckVal = row['EXCLUDE FROM MTN TRACKING'] === true || row['EXCLUDE FROM MTN TRACKING'] === 'true';
+                    const mtnStart = parseDateToJs(row['CMS/MHIS MTN START DATE']);
+                    const mtnEnd = row._mtnEndDate;
+                    return `<tr class="${isSelected ? 'selected' : ''}">
+                        <td><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleMTNRenewalSelect(${row.id}, this.checked)"></td>
+                        <td>${escapeHtml(row['ACCT NO'] || '')}</td>
+                        <td>${escapeHtml(row['CLINIC NAME'] || '')}</td>
+                        <td>${custTypeBadge(row._customerType)}</td>
+                        <td><span class="mtn-renewal-date-cell" onclick="startInlineEdit(${row.id}, 'start')">${mtnStart ? mtnRenewalFmt(mtnStart) : '-'}<span class="edit-icon">&#9998;</span></span></td>
+                        <td><span class="mtn-renewal-date-cell" onclick="startInlineEdit(${row.id}, 'end')">${mtnEnd ? mtnRenewalFmt(mtnEnd) : '-'}<span class="edit-icon">&#9998;</span></span></td>
+                        <td>${daysHtml(row._daysLeft, row._renewalStatus)}</td>
+                        <td>${statusBadge(row._renewalStatus)}</td>
+                        <td>${exclCheckVal ? '<span class="mtn-renewal-badge excluded">Excluded</span>' : ''}</td>
+                        <td>${escapeHtml(row['LAST UPDATED BY'] || '-')}</td>
+                        <td>${escapeHtml(row['LAST UPDATED AT'] || '-')}</td>
+                        <td>
+                            <div class="mtn-renewal-actions">
+                                <button class="mtn-renewal-action-btn renew" onclick="renewMTN(${row.id})" title="Renew MTN">Renew</button>
+                                <button class="mtn-renewal-action-btn extend" onclick="extendMTN(${row.id})" title="Extend Date">Extend</button>
+                                <button class="mtn-renewal-action-btn complete" onclick="completeMTN(${row.id})" title="Complete Task" ${row._renewalStatus === 'Completed' ? 'disabled' : ''}>Complete</button>
+                                <button class="mtn-renewal-action-btn history" onclick="viewMTNHistory(${row.id})" title="View History">History</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+
+            let pageButtons = '';
+            const maxVisible = 5;
+            let sp = Math.max(1, mtnRenewalCurrentPage - Math.floor(maxVisible / 2));
+            let ep = Math.min(totalPages, sp + maxVisible - 1);
+            if (ep - sp < maxVisible - 1) sp = Math.max(1, ep - maxVisible + 1);
+            for (let i = sp; i <= ep; i++) {
+                pageButtons += `<button class="mtn-renewal-page-btn ${i === mtnRenewalCurrentPage ? 'active' : ''}" onclick="goToMTNRenewalPage(${i})">${i}</button>`;
+            }
+
+            const selectedCount = mtnRenewalSelectedIds.size;
+
+            container.innerHTML = `
+                <div class="mtn-renewal-toolbar">
+                    <input type="text" id="mtnRenewalSearch" placeholder="Search customers..." value="${escapeHtml(document.getElementById('mtnRenewalSearch')?.value || '')}" oninput="debounceMTNRenewalFilter()">
+                    <select onchange="mtnRenewalDealerFilter=this.value;mtnRenewalCurrentPage=1;filterMTNRenewalData()">
+                        <option value="">All M1G/Dealer</option>
+                        <option value="M1G" ${mtnRenewalDealerFilter === 'M1G' ? 'selected' : ''}>M1G</option>
+                        <option value="Dealers" ${mtnRenewalDealerFilter === 'Dealers' ? 'selected' : ''}>Dealers</option>
+                    </select>
+                    <select onchange="mtnRenewalCustTypeFilter=this.value;mtnRenewalCurrentPage=1;filterMTNRenewalData()">
+                        <option value="">All Types</option>
+                        <option value="Dealer" ${mtnRenewalCustTypeFilter === 'Dealer' ? 'selected' : ''}>Dealer</option>
+                        <option value="Corporate" ${mtnRenewalCustTypeFilter === 'Corporate' ? 'selected' : ''}>Corporate</option>
+                        <option value="Clinic" ${mtnRenewalCustTypeFilter === 'Clinic' ? 'selected' : ''}>Clinic</option>
+                        <option value="Pharmacy" ${mtnRenewalCustTypeFilter === 'Pharmacy' ? 'selected' : ''}>Pharmacy</option>
+                        <option value="Internal" ${mtnRenewalCustTypeFilter === 'Internal' ? 'selected' : ''}>Internal</option>
+                    </select>
+                    <input type="date" id="mtnRenewalDateFrom" value="${mtnRenewalInputFmt(mtnRenewalDateFrom)}" onchange="applyMTNRenewalDatePicker()">
+                    <span style="font-size:12px;color:#6b7280;">to</span>
+                    <input type="date" id="mtnRenewalDateTo" value="${mtnRenewalInputFmt(mtnRenewalDateTo)}" onchange="applyMTNRenewalDatePicker()">
+                    <label><input type="checkbox" ${mtnRenewalShowExcluded ? 'checked' : ''} onchange="toggleMTNRenewalExcluded(this)"> Show Excluded</label>
+                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalCustTypeFilter || mtnRenewalDateFrom || mtnRenewalDateTo || mtnRenewalShowExcluded) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
+                    <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalExcel()" style="font-size:12px;padding:4px 10px;">Export Excel</button>
+                    <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalPDF()" style="font-size:12px;padding:4px 10px;">Export PDF</button>
+                    <span class="mtn-renewal-count">${total.toLocaleString()} records</span>
+                </div>
+                <div class="mtn-renewal-table-wrap" style="max-height:65vh;overflow-y:auto;">
+                    <table class="mtn-renewal-table">
+                        <thead>
+                            <tr>
+                                <th style="width:30px;"><input type="checkbox" onchange="toggleMTNRenewalSelectAll(this.checked)"></th>
+                                <th class="sortable" onclick="sortMTNRenewalTable('ACCT NO')">Customer Code${sortArrow('ACCT NO')}</th>
+                                <th class="sortable" onclick="sortMTNRenewalTable('CLINIC NAME')">Customer Name${sortArrow('CLINIC NAME')}</th>
+                                <th class="sortable" onclick="sortMTNRenewalTable('_customerType')">Type${sortArrow('_customerType')}</th>
+                                <th>MTN Start</th>
+                                <th>MTN End</th>
+                                <th class="sortable" onclick="sortMTNRenewalTable('_daysLeft')">Days Left${sortArrow('_daysLeft')}</th>
+                                <th class="sortable" onclick="sortMTNRenewalTable('_renewalStatus')">Status${sortArrow('_renewalStatus')}</th>
+                                <th>Excluded</th>
+                                <th>Updated By</th>
+                                <th>Updated At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+                <div class="mtn-renewal-pagination">
+                    <div class="mtn-renewal-page-info">Showing ${total > 0 ? start + 1 : 0} to ${Math.min(start + mtnRenewalRowsPerPage, total)} of ${total.toLocaleString()} entries</div>
+                    <div class="mtn-renewal-page-controls">
+                        <button class="mtn-renewal-page-btn" onclick="goToMTNRenewalPage(1)" ${mtnRenewalCurrentPage === 1 ? 'disabled' : ''}>First</button>
+                        <button class="mtn-renewal-page-btn" onclick="goToMTNRenewalPage(${mtnRenewalCurrentPage - 1})" ${mtnRenewalCurrentPage === 1 ? 'disabled' : ''}>Prev</button>
+                        ${pageButtons}
+                        <button class="mtn-renewal-page-btn" onclick="goToMTNRenewalPage(${mtnRenewalCurrentPage + 1})" ${mtnRenewalCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Next</button>
+                        <button class="mtn-renewal-page-btn" onclick="goToMTNRenewalPage(${totalPages})" ${mtnRenewalCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Last</button>
+                        <select class="mtn-cat-page-size" onchange="setMTNRenewalPageSize(this.value)">
+                            <option value="10" ${mtnRenewalRowsPerPage === 10 ? 'selected' : ''}>10</option>
+                            <option value="25" ${mtnRenewalRowsPerPage === 25 ? 'selected' : ''}>25</option>
+                            <option value="50" ${mtnRenewalRowsPerPage === 50 ? 'selected' : ''}>50</option>
+                            <option value="100" ${mtnRenewalRowsPerPage === 100 ? 'selected' : ''}>100</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="mtnRenewalBulkBar" class="mtn-renewal-bulk-bar ${selectedCount > 0 ? 'visible' : ''}">
+                    <span class="bulk-count">${selectedCount} selected</span>
+                    <button onclick="bulkExtendMTN()">Bulk Extend MTN</button>
+                    <button onclick="bulkCompleteMTN()">Bulk Mark Completed</button>
+                    <button onclick="bulkAssignStaff()">Bulk Assign Staff</button>
+                    <button onclick="bulkSendReminder()">Bulk Send Reminder</button>
+                </div>
+            `;
+        }
+
+        // Selection management
+        function toggleMTNRenewalSelect(id, checked) {
+            if (checked) mtnRenewalSelectedIds.add(id); else mtnRenewalSelectedIds.delete(id);
+            renderMTNRenewalTable();
+        }
+        function toggleMTNRenewalSelectAll(checked) {
+            const pageData = mtnRenewalFilteredData.slice(
+                (mtnRenewalCurrentPage - 1) * mtnRenewalRowsPerPage,
+                mtnRenewalCurrentPage * mtnRenewalRowsPerPage
+            );
+            pageData.forEach(r => { if (checked) mtnRenewalSelectedIds.add(r.id); else mtnRenewalSelectedIds.delete(r.id); });
+            renderMTNRenewalTable();
+        }
+
+        // Inline date editing
+        function startInlineEdit(rowId, fieldType) {
+            const row = crmData.find(r => r.id === rowId);
+            if (!row) return;
+            const field = fieldType === 'start' ? 'CMS/MHIS MTN START DATE' : 'CMS/MHIS MTN END DATE';
+            const currentVal = parseDateToJs(row[field]);
+            const inputVal = mtnRenewalInputFmt(currentVal);
+            const td = event.target.closest('td');
+            if (!td) return;
+            td.innerHTML = `<div class="mtn-renewal-date-edit">
+                <input type="date" id="inlineEdit_${rowId}_${fieldType}" value="${inputVal}">
+                <button class="save-btn" onclick="saveInlineEdit(${rowId}, '${fieldType}')">Save</button>
+                <button class="cancel-btn" onclick="renderMTNRenewalTable()">X</button>
+            </div>`;
+            document.getElementById(`inlineEdit_${rowId}_${fieldType}`)?.focus();
+        }
+
+        async function saveInlineEdit(rowId, fieldType) {
+            const inputEl = document.getElementById(`inlineEdit_${rowId}_${fieldType}`);
+            if (!inputEl || !inputEl.value) return;
+            const rowIdx = crmData.findIndex(r => r.id === rowId);
+            if (rowIdx === -1) return;
+            const row = crmData[rowIdx];
+            const field = fieldType === 'start' ? 'CMS/MHIS MTN START DATE' : 'CMS/MHIS MTN END DATE';
+            const oldVal = row[field] || '';
+            const newVal = inputEl.value; // yyyy-mm-dd format
+            const newDate = new Date(newVal + 'T00:00:00');
+            const formattedNew = mtnRenewalFmt(newDate);
+
+            // Audit trail
+            const auditEntry = {
+                contacts_id: rowId,
+                old_start_date: row['CMS/MHIS MTN START DATE'] || '',
+                old_end_date: row['CMS/MHIS MTN END DATE'] || '',
+                new_start_date: fieldType === 'start' ? formattedNew : (row['CMS/MHIS MTN START DATE'] || ''),
+                new_end_date: fieldType === 'end' ? formattedNew : (row['CMS/MHIS MTN END DATE'] || ''),
+                edited_by: currentUser ? currentUser.username : 'Unknown',
+                action: 'INLINE_EDIT',
+                remarks: `${fieldType === 'start' ? 'Start' : 'End'} date changed from ${oldVal || 'empty'} to ${formattedNew}`
+            };
+
+            // Update local data
+            row[field] = formattedNew;
+            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
+            const now = new Date();
+            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            // If end date extended to future, mark completed
+            if (fieldType === 'end') {
+                const today = new Date(); today.setHours(0,0,0,0);
+                if (newDate > today) {
+                    row['COMPLETED DATE'] = mtnRenewalFmt(now);
+                }
+            }
+
+            // Push to Supabase
+            try {
+                const { data: rowData } = row;
+                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
+                logActivity({ module: 'MTN Renewal', action: 'UPDATE', description: `Inline edited ${field} for ${row['ACCT NO']}` });
+            } catch (err) {
+                console.error('Failed to update Supabase:', err);
+                showToast('Failed to save changes', 'error');
+                return;
+            }
+
+            // Insert audit
+            try {
+                await supabaseClient.from('mtn_renewal_audit').insert([auditEntry]);
+            } catch (err) {
+                console.warn('Audit insert failed (table may not exist):', err.message);
+            }
+
+            showToast('Date updated successfully', 'success');
+            renderMTNRenewalModule();
+        }
+
+        // Quick action: Renew MTN
+        function renewMTN(rowId) {
+            const row = crmData.find(r => r.id === rowId);
+            if (!row) return;
+            const startDate = mtnRenewalInputFmt(new Date());
+            const endDateVal = new Date(); endDateVal.setFullYear(endDateVal.getFullYear() + 1);
+            const endDate = mtnRenewalInputFmt(endDateVal);
+            showMTNRenewalModal(rowId, 'Renew MTN', startDate, endDate);
+        }
+
+        // Quick action: Extend MTN
+        function extendMTN(rowId) {
+            const row = crmData.find(r => r.id === rowId);
+            if (!row) return;
+            const currentEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']);
+            const startDate = mtnRenewalInputFmt(currentEnd || new Date());
+            showMTNExtendModal(rowId, currentEnd);
+        }
+
+        // Quick action: Complete
+        async function completeMTN(rowId) {
+            const rowIdx = crmData.findIndex(r => r.id === rowId);
+            if (rowIdx === -1) return;
+            const row = crmData[rowIdx];
+            const oldEnd = row['CMS/MHIS MTN END DATE'] || '';
+            const now = new Date();
+            row['COMPLETED DATE'] = mtnRenewalFmt(now);
+            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
+            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            try {
+                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
+                logActivity({ module: 'MTN Renewal', action: 'COMPLETE', description: `Marked completed: ${row['ACCT NO']}` });
+            } catch (err) { console.error(err); showToast('Failed to update', 'error'); return; }
+
+            try {
+                await supabaseClient.from('mtn_renewal_audit').insert([{
+                    contacts_id: rowId, old_end_date: oldEnd, new_end_date: oldEnd,
+                    edited_by: currentUser?.username || 'Unknown', action: 'COMPLETE', remarks: 'Marked as completed'
+                }]);
+            } catch (err) { console.warn('Audit insert failed:', err.message); }
+
+            showToast('Marked as completed', 'success');
+            renderMTNRenewalModule();
+        }
+
+        // Renew MTN modal
+        function showMTNRenewalModal(rowId, title, defaultStart, defaultEnd) {
+            const row = crmData.find(r => r.id === rowId);
+            if (!row) return;
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'mtnRenewalModal';
+            modal.innerHTML = `<div class="modal-content" style="max-width:450px;">
+                <div class="modal-header"><h3>${escapeHtml(title)}</h3><button class="close-btn" onclick="document.getElementById('mtnRenewalModal').remove()">&times;</button></div>
+                <div style="padding:20px;">
+                    <p><strong>${escapeHtml(row['CLINIC NAME'] || '')}</strong> (${escapeHtml(row['ACCT NO'] || '')})</p>
+                    <div style="margin:16px 0;"><label style="display:block;margin-bottom:4px;font-size:13px;">New MTN Start Date</label><input type="date" id="renewStartDate" value="${defaultStart}" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;"></div>
+                    <div style="margin:16px 0;"><label style="display:block;margin-bottom:4px;font-size:13px;">New MTN End Date</label><input type="date" id="renewEndDate" value="${defaultEnd}" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;"></div>
+                    <button class="btn btn-primary" style="width:100%;" onclick="saveMTNRenew(${rowId})">Save Renewal</button>
+                </div>
+            </div>`;
+            document.body.appendChild(modal);
+        }
+
+        async function saveMTNRenew(rowId) {
+            const startVal = document.getElementById('renewStartDate')?.value;
+            const endVal = document.getElementById('renewEndDate')?.value;
+            if (!startVal || !endVal) { alert('Please select both dates'); return; }
+            const rowIdx = crmData.findIndex(r => r.id === rowId);
+            if (rowIdx === -1) return;
+            const row = crmData[rowIdx];
+            const oldStart = row['CMS/MHIS MTN START DATE'] || '';
+            const oldEnd = row['CMS/MHIS MTN END DATE'] || '';
+            const newStart = mtnRenewalFmt(new Date(startVal + 'T00:00:00'));
+            const newEnd = mtnRenewalFmt(new Date(endVal + 'T00:00:00'));
+
+            row['CMS/MHIS MTN START DATE'] = newStart;
+            row['CMS/MHIS MTN END DATE'] = newEnd;
+            const now = new Date();
+            row['COMPLETED DATE'] = mtnRenewalFmt(now);
+            row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
+            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            try {
+                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
+                logActivity({ module: 'MTN Renewal', action: 'RENEW', description: `Renewed MTN for ${row['ACCT NO']}: ${newStart} to ${newEnd}` });
+            } catch (err) { console.error(err); showToast('Failed to save', 'error'); return; }
+
+            try {
+                await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: rowId, old_start_date: oldStart, old_end_date: oldEnd, new_start_date: newStart, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'RENEW', remarks: 'MTN Renewed' }]);
+            } catch (err) { console.warn('Audit insert failed:', err.message); }
+
+            document.getElementById('mtnRenewalModal')?.remove();
+            showToast('MTN renewed successfully', 'success');
+            renderMTNRenewalModule();
+        }
+
+        // Extend MTN modal
+        function showMTNExtendModal(rowId, currentEnd) {
+            const row = crmData.find(r => r.id === rowId);
+            if (!row) return;
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'mtnExtendModal';
+            modal.innerHTML = `<div class="modal-content" style="max-width:400px;">
+                <div class="modal-header"><h3>Extend MTN End Date</h3><button class="close-btn" onclick="document.getElementById('mtnExtendModal').remove()">&times;</button></div>
+                <div style="padding:20px;">
+                    <p><strong>${escapeHtml(row['CLINIC NAME'] || '')}</strong></p>
+                    <p style="font-size:13px;color:#6b7280;">Current End: ${currentEnd ? mtnRenewalFmt(currentEnd) : 'N/A'}</p>
+                    <div style="margin:16px 0;"><label style="display:block;margin-bottom:4px;font-size:13px;">Extend by (months)</label><input type="number" id="extendMonths" value="12" min="1" max="60" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;"></div>
+                    <button class="btn btn-primary" style="width:100%;" onclick="saveMTNExtend(${rowId})">Extend</button>
+                </div>
+            </div>`;
+            document.body.appendChild(modal);
+        }
+
+        async function saveMTNExtend(rowId) {
+            const months = parseInt(document.getElementById('extendMonths')?.value || 12);
+            const rowIdx = crmData.findIndex(r => r.id === rowId);
+            if (rowIdx === -1) return;
+            const row = crmData[rowIdx];
+            const oldEnd = row['CMS/MHIS MTN END DATE'] || '';
+            const currentEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']) || new Date();
+            const newEndDate = new Date(currentEnd);
+            newEndDate.setMonth(newEndDate.getMonth() + months);
+            const newEnd = mtnRenewalFmt(newEndDate);
+
+            row['CMS/MHIS MTN END DATE'] = newEnd;
+            const now = new Date();
+            row['COMPLETED DATE'] = mtnRenewalFmt(now);
+            row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
+            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            try {
+                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
+                logActivity({ module: 'MTN Renewal', action: 'EXTEND', description: `Extended MTN for ${row['ACCT NO']} by ${months} months` });
+            } catch (err) { console.error(err); showToast('Failed to save', 'error'); return; }
+
+            try {
+                await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: rowId, old_end_date: oldEnd, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'EXTEND', remarks: `Extended by ${months} months` }]);
+            } catch (err) { console.warn('Audit insert failed:', err.message); }
+
+            document.getElementById('mtnExtendModal')?.remove();
+            showToast(`MTN extended by ${months} months`, 'success');
+            renderMTNRenewalModule();
+        }
+
+        // View History modal
+        async function viewMTNHistory(rowId) {
+            const row = crmData.find(r => r.id === rowId);
+            if (!row) return;
+            let auditRows = [];
+            try {
+                const { data, error } = await supabaseClient.from('mtn_renewal_audit').select('*').eq('contacts_id', rowId).order('edited_at', { ascending: false }).limit(50);
+                if (!error && data) auditRows = data;
+            } catch (err) { console.warn('Audit fetch failed:', err.message); }
+
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'mtnHistoryModal';
+            const rowsHtml = auditRows.length === 0
+                ? '<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af;">No history records found.</td></tr>'
+                : auditRows.map(a => `<tr>
+                    <td>${a.edited_at ? new Date(a.edited_at).toLocaleString() : '-'}</td>
+                    <td>${escapeHtml(a.edited_by || '-')}</td>
+                    <td>${escapeHtml(a.action || '-')}</td>
+                    <td>${escapeHtml(a.old_start_date || '-')} / ${escapeHtml(a.old_end_date || '-')}</td>
+                    <td>${escapeHtml(a.new_start_date || '-')} / ${escapeHtml(a.new_end_date || '-')}</td>
+                    <td>${escapeHtml(a.remarks || '-')}</td>
+                </tr>`).join('');
+            modal.innerHTML = `<div class="modal-content" style="max-width:800px;max-height:80vh;display:flex;flex-direction:column;">
+                <div class="modal-header"><h3>MTN Renewal History - ${escapeHtml(row['CLINIC NAME'] || '')} (${escapeHtml(row['ACCT NO'] || '')})</h3><button class="close-btn" onclick="document.getElementById('mtnHistoryModal').remove()">&times;</button></div>
+                <div style="padding:20px;overflow-y:auto;"><table class="mtn-renewal-table" style="width:100%;"><thead><tr><th>Date/Time</th><th>By</th><th>Action</th><th>Old Start / End</th><th>New Start / End</th><th>Remarks</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+            </div>`;
+            document.body.appendChild(modal);
+        }
+
+        // Bulk actions
+        async function bulkExtendMTN() {
+            const months = prompt('Extend MTN end date by how many months?', '12');
+            if (!months) return;
+            const m = parseInt(months);
+            if (isNaN(m) || m < 1) { alert('Invalid number'); return; }
+            let count = 0;
+            for (const id of mtnRenewalSelectedIds) {
+                const rowIdx = crmData.findIndex(r => r.id === id);
+                if (rowIdx === -1) continue;
+                const row = crmData[rowIdx];
+                const oldEnd = row['CMS/MHIS MTN END DATE'] || '';
+                const currentEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']) || new Date();
+                const newEndDate = new Date(currentEnd); newEndDate.setMonth(newEndDate.getMonth() + m);
+                const newEnd = mtnRenewalFmt(newEndDate);
+                row['CMS/MHIS MTN END DATE'] = newEnd;
+                const now = new Date();
+                row['COMPLETED DATE'] = mtnRenewalFmt(now);
+                row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
+                row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                try {
+                    await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
+                    await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, old_end_date: oldEnd, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'BULK_EXTEND', remarks: `Bulk extended by ${m} months` }]).catch(() => {});
+                    count++;
+                } catch (err) { console.error('Bulk extend error:', err); }
+            }
+            mtnRenewalSelectedIds.clear();
+            logActivity({ module: 'MTN Renewal', action: 'BULK_EXTEND', description: `Bulk extended ${count} customers by ${m} months` });
+            showToast(`${count} customers extended by ${m} months`, 'success');
+            renderMTNRenewalModule();
+        }
+
+        async function bulkCompleteMTN() {
+            if (!confirm('Mark all selected as completed?')) return;
+            let count = 0;
+            for (const id of mtnRenewalSelectedIds) {
+                const rowIdx = crmData.findIndex(r => r.id === id);
+                if (rowIdx === -1) continue;
+                const row = crmData[rowIdx];
+                const now = new Date();
+                row['COMPLETED DATE'] = mtnRenewalFmt(now);
+                row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
+                row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                try {
+                    await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
+                    await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, edited_by: currentUser?.username || 'Unknown', action: 'BULK_COMPLETE', remarks: 'Bulk marked as completed' }]).catch(() => {});
+                    count++;
+                } catch (err) { console.error('Bulk complete error:', err); }
+            }
+            mtnRenewalSelectedIds.clear();
+            logActivity({ module: 'MTN Renewal', action: 'BULK_COMPLETE', description: `Bulk completed ${count} customers` });
+            showToast(`${count} customers marked as completed`, 'success');
+            renderMTNRenewalModule();
+        }
+
+        async function bulkAssignStaff() {
+            const staffName = prompt('Enter staff name to assign:', currentUser?.username || '');
+            if (!staffName) return;
+            let count = 0;
+            for (const id of mtnRenewalSelectedIds) {
+                const rowIdx = crmData.findIndex(r => r.id === id);
+                if (rowIdx === -1) continue;
+                const row = crmData[rowIdx];
+                const now = new Date();
+                row['LAST UPDATED BY'] = staffName;
+                row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                try {
+                    await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
+                    count++;
+                } catch (err) { console.error('Bulk assign error:', err); }
+            }
+            mtnRenewalSelectedIds.clear();
+            logActivity({ module: 'MTN Renewal', action: 'BULK_ASSIGN', description: `Bulk assigned ${staffName} to ${count} customers` });
+            showToast(`${count} customers assigned to ${staffName}`, 'success');
+            renderMTNRenewalModule();
+        }
+
+        async function bulkSendReminder() {
+            const count = mtnRenewalSelectedIds.size;
+            if (!confirm(`Send reminder to ${count} customers?`)) return;
+            logActivity({ module: 'MTN Renewal', action: 'BULK_REMINDER', description: `Reminder sent to ${count} customers` });
+            showToast(`Reminder sent to ${count} customers`, 'success');
+            mtnRenewalSelectedIds.clear();
+            renderMTNRenewalTable();
+        }
+
+        // Export Excel
+        function exportMTNRenewalExcel() {
+            if (mtnRenewalFilteredData.length === 0) { alert('No data to export.'); return; }
+            const rows = mtnRenewalFilteredData.map(r => ({
+                'Customer Code': r['ACCT NO'] || '', 'Customer Name': r['CLINIC NAME'] || '',
+                'Customer Type': r._customerType || '', 'MTN Start': r['CMS/MHIS MTN START DATE'] || '',
+                'MTN End': r['CMS/MHIS MTN END DATE'] || '', 'Days Left': r._daysLeft ?? '-',
+                'Status': r._renewalStatus, 'Excluded': r['EXCLUDE FROM MTN TRACKING'] ? 'Yes' : 'No',
+                'Updated By': r['LAST UPDATED BY'] || '', 'Updated At': r['LAST UPDATED AT'] || ''
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'MTN Renewal Tracking');
+            XLSX.writeFile(wb, `MTN_Renewal_Tracking_${new Date().toISOString().split('T')[0]}.xlsx`);
+            logActivity({ module: 'MTN Renewal', action: 'EXPORT', description: 'Exported MTN Renewal to Excel' });
+        }
+
+        // Export PDF
+        function exportMTNRenewalPDF() {
+            logActivity({ module: 'MTN Renewal', action: 'EXPORT', description: 'Exported MTN Renewal to PDF' });
+            if (mtnRenewalFilteredData.length === 0) { alert('No data to export.'); return; }
+            const data = mtnRenewalFilteredData.map(r => ({
+                'ACCT NO': r['ACCT NO'] || '', 'CLINIC NAME': r['CLINIC NAME'] || '',
+                'CUSTOMER TYPE': r._customerType || '-', 'MTN START': r['CMS/MHIS MTN START DATE'] || '-',
+                'MTN END': r['CMS/MHIS MTN END DATE'] || '-', 'DAYS LEFT': r._daysLeft ?? '-',
+                'STATUS': r._renewalStatus, 'EXCLUDED': r['EXCLUDE FROM MTN TRACKING'] ? 'Yes' : 'No',
+                'UPDATED BY': r['LAST UPDATED BY'] || '-', 'UPDATED AT': r['LAST UPDATED AT'] || '-'
+            }));
+            const columns = ['ACCT NO', 'CLINIC NAME', 'CUSTOMER TYPE', 'MTN START', 'MTN END', 'DAYS LEFT', 'STATUS', 'EXCLUDED', 'UPDATED BY', 'UPDATED AT'];
+            let title = 'MTN Renewal Tracking';
+            if (mtnRenewalStatusFilter) title += ' - ' + mtnRenewalStatusFilter;
+            if (mtnRenewalDealerFilter) title += ' - ' + mtnRenewalDealerFilter;
+            exportReportPDF(data, columns, columns, title);
         }
 
     </script>
