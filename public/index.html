@@ -5770,11 +5770,40 @@
             };
             document.getElementById('pageTitle').textContent = pageTitles[sectionId] || 'CRM System';
 
+            // Clear any pending search debounce timers when switching sections
+            if (searchTimer) {
+                clearTimeout(searchTimer);
+                searchTimer = null;
+            }
+
             if (sectionId === 'dashboard') {
                 renderDashboard();
             } else if (sectionId === 'crmData') {
                 populateProductFilter();
                 populateGroupFilter();
+
+                // Check if UI filters are all empty but currentFilteredData is stale - reset it
+                const searchEl = document.getElementById('customerSearchInput');
+                const statusEl = document.getElementById('customerStatusFilter');
+                const productEl = document.getElementById('customerProductFilter');
+                const groupEl = document.getElementById('customerGroupFilter');
+                const pipelineEl = document.getElementById('customerPipelineFilter');
+                const globalSearchEl = document.getElementById('searchInput') || document.getElementById('globalSearch');
+
+                const hasActiveFilters = (searchEl && searchEl.value.trim()) ||
+                                         (statusEl && statusEl.value) ||
+                                         (productEl && productEl.value) ||
+                                         (groupEl && groupEl.value.trim()) ||
+                                         (pipelineEl && pipelineEl.value) ||
+                                         (globalSearchEl && globalSearchEl.value.trim()) ||
+                                         Object.keys(columnFilters).length > 0;
+
+                if (!hasActiveFilters && currentFilteredData) {
+                    console.log('[CRM] Resetting stale filtered data on section show');
+                    currentFilteredData = null;
+                    currentPage = 1;
+                }
+                renderTable();
             } else if (sectionId === 'userManagement') {
                 renderUserList();
             } else if (sectionId === 'licenseKey') {
