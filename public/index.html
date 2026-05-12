@@ -12432,8 +12432,10 @@ async function exportActivityLog() {
         let mtnRenewalStatusFilter = '';
         let mtnRenewalDealerFilter = '';
         let mtnRenewalCustTypeFilter = ''; // REMOVED - no longer used
-        let mtnRenewalDateFrom = null;
-        let mtnRenewalDateTo = null;
+        let mtnRenewalMonthFrom = new Date().getMonth() + 1; // 1-12, default current month
+        let mtnRenewalYearFrom = new Date().getFullYear();
+        let mtnRenewalMonthTo = new Date().getMonth() + 1;
+        let mtnRenewalYearTo = new Date().getFullYear();
         let mtnRenewalShowExcluded = false;
         let mtnRenewalSelectedIds = new Set();
 
@@ -12558,17 +12560,15 @@ async function exportActivityLog() {
                         if (!dealers.includes(dealer)) return false;
                     }
                 }
-                if (mtnRenewalDateFrom || mtnRenewalDateTo) {
+                // Month/Year range filter on MTN End Date
+                if (mtnRenewalMonthFrom && mtnRenewalYearFrom) {
                     if (!row._mtnEndDate) return false;
-                    const d = new Date(row._mtnEndDate.getFullYear(), row._mtnEndDate.getMonth(), row._mtnEndDate.getDate());
-                    if (mtnRenewalDateFrom) {
-                        const from = new Date(mtnRenewalDateFrom.getFullYear(), mtnRenewalDateFrom.getMonth(), mtnRenewalDateFrom.getDate());
-                        if (d < from) return false;
-                    }
-                    if (mtnRenewalDateTo) {
-                        const to = new Date(mtnRenewalDateTo.getFullYear(), mtnRenewalDateTo.getMonth(), mtnRenewalDateTo.getDate());
-                        if (d > to) return false;
-                    }
+                    const fromMonthStart = new Date(mtnRenewalYearFrom, mtnRenewalMonthFrom - 1, 1);
+                    const toMonthEnd = mtnRenewalMonthTo && mtnRenewalYearTo
+                        ? new Date(mtnRenewalYearTo, mtnRenewalMonthTo, 0, 23, 59, 59)
+                        : new Date(mtnRenewalYearFrom, mtnRenewalMonthFrom, 0, 23, 59, 59);
+                    const d = row._mtnEndDate;
+                    if (d < fromMonthStart || d > toMonthEnd) return false;
                 }
                 if (search) {
                     const hay = [row['ACCT NO'], row['CLINIC NAME'], row['Contact Name'], row['M1G/ DEALER CASE']].join(' ').toLowerCase();
@@ -12602,11 +12602,11 @@ async function exportActivityLog() {
             filterMTNRenewalData();
         }
 
-        function applyMTNRenewalDatePicker() {
-            const fromVal = document.getElementById('mtnRenewalDateFrom')?.value;
-            const toVal = document.getElementById('mtnRenewalDateTo')?.value;
-            mtnRenewalDateFrom = fromVal ? new Date(fromVal + 'T00:00:00') : null;
-            mtnRenewalDateTo = toVal ? new Date(toVal + 'T00:00:00') : null;
+        function applyMTNRenewalMonthPicker() {
+            mtnRenewalMonthFrom = parseInt(document.getElementById('mtnRenewalMonthFrom')?.value) || 1;
+            mtnRenewalYearFrom = parseInt(document.getElementById('mtnRenewalYearFrom')?.value) || new Date().getFullYear();
+            mtnRenewalMonthTo = parseInt(document.getElementById('mtnRenewalMonthTo')?.value) || mtnRenewalMonthFrom;
+            mtnRenewalYearTo = parseInt(document.getElementById('mtnRenewalYearTo')?.value) || mtnRenewalYearFrom;
             mtnRenewalCurrentPage = 1;
             filterMTNRenewalData();
         }
@@ -12614,8 +12614,11 @@ async function exportActivityLog() {
         function clearMTNRenewalFilters() {
             mtnRenewalStatusFilter = '';
             mtnRenewalDealerFilter = '';
-            mtnRenewalDateFrom = null;
-            mtnRenewalDateTo = null;
+            const now = new Date();
+            mtnRenewalMonthFrom = now.getMonth() + 1;
+            mtnRenewalYearFrom = now.getFullYear();
+            mtnRenewalMonthTo = now.getMonth() + 1;
+            mtnRenewalYearTo = now.getFullYear();
             mtnRenewalShowExcluded = false;
             mtnRenewalCurrentPage = 1;
             const data = computeRenewalData();
@@ -12728,11 +12731,39 @@ async function exportActivityLog() {
                         <option value="M1G" ${mtnRenewalDealerFilter === 'M1G' ? 'selected' : ''}>M1G</option>
                         <option value="Dealers" ${mtnRenewalDealerFilter === 'Dealers' ? 'selected' : ''}>Dealers</option>
                     </select>
-                    <input type="date" id="mtnRenewalDateFrom" value="${mtnRenewalInputFmt(mtnRenewalDateFrom)}" onchange="applyMTNRenewalDatePicker()">
+                    <select id="mtnRenewalMonthFrom" onchange="applyMTNRenewalMonthPicker()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;color:#374151;">
+                        <option value="1" ${mtnRenewalMonthFrom === 1 ? 'selected' : ''}>January</option>
+                        <option value="2" ${mtnRenewalMonthFrom === 2 ? 'selected' : ''}>February</option>
+                        <option value="3" ${mtnRenewalMonthFrom === 3 ? 'selected' : ''}>March</option>
+                        <option value="4" ${mtnRenewalMonthFrom === 4 ? 'selected' : ''}>April</option>
+                        <option value="5" ${mtnRenewalMonthFrom === 5 ? 'selected' : ''}>May</option>
+                        <option value="6" ${mtnRenewalMonthFrom === 6 ? 'selected' : ''}>June</option>
+                        <option value="7" ${mtnRenewalMonthFrom === 7 ? 'selected' : ''}>July</option>
+                        <option value="8" ${mtnRenewalMonthFrom === 8 ? 'selected' : ''}>August</option>
+                        <option value="9" ${mtnRenewalMonthFrom === 9 ? 'selected' : ''}>September</option>
+                        <option value="10" ${mtnRenewalMonthFrom === 10 ? 'selected' : ''}>October</option>
+                        <option value="11" ${mtnRenewalMonthFrom === 11 ? 'selected' : ''}>November</option>
+                        <option value="12" ${mtnRenewalMonthFrom === 12 ? 'selected' : ''}>December</option>
+                    </select>
+                    <input type="number" id="mtnRenewalYearFrom" value="${mtnRenewalYearFrom}" min="2020" max="2040" onchange="applyMTNRenewalMonthPicker()" style="width:75px;padding:7px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;">
                     <span style="font-size:12px;color:#6b7280;">to</span>
-                    <input type="date" id="mtnRenewalDateTo" value="${mtnRenewalInputFmt(mtnRenewalDateTo)}" onchange="applyMTNRenewalDatePicker()">
+                    <select id="mtnRenewalMonthTo" onchange="applyMTNRenewalMonthPicker()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;color:#374151;">
+                        <option value="1" ${mtnRenewalMonthTo === 1 ? 'selected' : ''}>January</option>
+                        <option value="2" ${mtnRenewalMonthTo === 2 ? 'selected' : ''}>February</option>
+                        <option value="3" ${mtnRenewalMonthTo === 3 ? 'selected' : ''}>March</option>
+                        <option value="4" ${mtnRenewalMonthTo === 4 ? 'selected' : ''}>April</option>
+                        <option value="5" ${mtnRenewalMonthTo === 5 ? 'selected' : ''}>May</option>
+                        <option value="6" ${mtnRenewalMonthTo === 6 ? 'selected' : ''}>June</option>
+                        <option value="7" ${mtnRenewalMonthTo === 7 ? 'selected' : ''}>July</option>
+                        <option value="8" ${mtnRenewalMonthTo === 8 ? 'selected' : ''}>August</option>
+                        <option value="9" ${mtnRenewalMonthTo === 9 ? 'selected' : ''}>September</option>
+                        <option value="10" ${mtnRenewalMonthTo === 10 ? 'selected' : ''}>October</option>
+                        <option value="11" ${mtnRenewalMonthTo === 11 ? 'selected' : ''}>November</option>
+                        <option value="12" ${mtnRenewalMonthTo === 12 ? 'selected' : ''}>December</option>
+                    </select>
+                    <input type="number" id="mtnRenewalYearTo" value="${mtnRenewalYearTo}" min="2020" max="2040" onchange="applyMTNRenewalMonthPicker()" style="width:75px;padding:7px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;">
                     <label><input type="checkbox" ${mtnRenewalShowExcluded ? 'checked' : ''} onchange="toggleMTNRenewalExcluded(this)"> Show Excluded</label>
-                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalDateFrom || mtnRenewalDateTo || mtnRenewalShowExcluded) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
+                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalShowExcluded) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalExcel()" style="font-size:12px;padding:4px 10px;">Export Excel</button>
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalPDF()" style="font-size:12px;padding:4px 10px;">Export PDF</button>
                     <span class="mtn-renewal-count">${total.toLocaleString()} records</span>
