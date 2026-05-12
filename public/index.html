@@ -11835,6 +11835,8 @@ async function exportActivityLog() {
         let mtnCatDebounceTimer = null;
         let mtnCatSortKey = '';
         let mtnCatSortDir = 'asc';
+        let mtnCatDateFrom = null; // Date object or null
+        let mtnCatDateTo = null;   // Date object or null
 
         function isUsingCMSMHIS(row) {
             const product = String(row['PRODUCT'] || '').toUpperCase();
@@ -11961,6 +11963,20 @@ async function exportActivityLog() {
                         row['REMARKS - FOLLOW UP']].join(' ').toLowerCase();
                     if (!haystack.includes(search)) return false;
                 }
+                // Date range filter on MTN End Date
+                if (mtnCatDateFrom || mtnCatDateTo) {
+                    const endDate = row._mtnEndDate;
+                    if (!endDate) return false;
+                    const d = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+                    if (mtnCatDateFrom) {
+                        const from = new Date(mtnCatDateFrom.getFullYear(), mtnCatDateFrom.getMonth(), mtnCatDateFrom.getDate());
+                        if (d < from) return false;
+                    }
+                    if (mtnCatDateTo) {
+                        const to = new Date(mtnCatDateTo.getFullYear(), mtnCatDateTo.getMonth(), mtnCatDateTo.getDate());
+                        if (d > to) return false;
+                    }
+                }
                 return true;
             });
             if (mtnCatSortKey) {
@@ -11980,6 +11996,39 @@ async function exportActivityLog() {
         function debounceFilterMTNCat() {
             if (mtnCatDebounceTimer) clearTimeout(mtnCatDebounceTimer);
             mtnCatDebounceTimer = setTimeout(filterMTNCatData, 300);
+        }
+
+        function setMTNCatDateQuickFilter(type) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (type === 'currentMonth') {
+                mtnCatDateFrom = new Date(today.getFullYear(), today.getMonth(), 1);
+                mtnCatDateTo = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            } else if (type === 'currentYear') {
+                mtnCatDateFrom = new Date(today.getFullYear(), 0, 1);
+                mtnCatDateTo = new Date(today.getFullYear(), 11, 31);
+            } else if (type === 'clear') {
+                mtnCatDateFrom = null;
+                mtnCatDateTo = null;
+            }
+            mtnCatCurrentPage = 1;
+            filterMTNCatData();
+        }
+
+        function applyMTNCatDatePickerFilter() {
+            const fromVal = document.getElementById('mtnCatDateFrom')?.value;
+            const toVal = document.getElementById('mtnCatDateTo')?.value;
+            mtnCatDateFrom = fromVal ? new Date(fromVal + 'T00:00:00') : null;
+            mtnCatDateTo = toVal ? new Date(toVal + 'T00:00:00') : null;
+            mtnCatCurrentPage = 1;
+            filterMTNCatData();
+        }
+
+        function clearMTNCatDateFilter() {
+            mtnCatDateFrom = null;
+            mtnCatDateTo = null;
+            mtnCatCurrentPage = 1;
+            filterMTNCatData();
         }
 
         function sortMTNCatTable(key) {
@@ -12061,6 +12110,14 @@ async function exportActivityLog() {
                 </div>
                 <div class="mtn-cat-toolbar">
                     <input type="text" class="mtn-cat-search" id="mtnCatSearch" placeholder="Search customers..." value="${escapeHtml(document.getElementById('mtnCatSearch')?.value || '')}" oninput="debounceFilterMTNCat()">
+                    <div class="mtn-cat-date-filters" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <button class="btn btn-outline btn-sm ${mtnCatDateFrom && mtnCatDateTo && mtnCatDateFrom.getDate() === 1 && mtnCatDateTo.getDate() === new Date(mtnCatDateTo.getFullYear(), mtnCatDateTo.getMonth() + 1, 0).getDate() && mtnCatDateFrom.getMonth() === new Date().getMonth() ? 'active' : ''}" onclick="setMTNCatDateQuickFilter('currentMonth')" style="font-size:12px;padding:4px 10px;">Current Month</button>
+                        <button class="btn btn-outline btn-sm ${mtnCatDateFrom && mtnCatDateTo && mtnCatDateFrom.getMonth() === 0 && mtnCatDateFrom.getDate() === 1 && mtnCatDateTo.getMonth() === 11 && mtnCatDateTo.getDate() === 31 && mtnCatDateFrom.getFullYear() === new Date().getFullYear() ? 'active' : ''}" onclick="setMTNCatDateQuickFilter('currentYear')" style="font-size:12px;padding:4px 10px;">Current Year</button>
+                        <input type="date" id="mtnCatDateFrom" value="${mtnCatDateFrom ? mtnCatDateFrom.toISOString().split('T')[0] : ''}" onchange="applyMTNCatDatePickerFilter()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;">
+                        <span style="font-size:12px;color:#6b7280;">to</span>
+                        <input type="date" id="mtnCatDateTo" value="${mtnCatDateTo ? mtnCatDateTo.toISOString().split('T')[0] : ''}" onchange="applyMTNCatDatePickerFilter()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;">
+                        ${(mtnCatDateFrom || mtnCatDateTo) ? `<button class="btn btn-outline btn-sm" onclick="clearMTNCatDateFilter()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Date</button>` : ''}
+                    </div>
                     <span class="mtn-cat-total">${total.toLocaleString()} records</span>
                 </div>
                 <div class="mtn-cat-table-wrap">
