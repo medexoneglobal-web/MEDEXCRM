@@ -12193,7 +12193,34 @@ async function exportActivityLog() {
         }
 
         function exportMTNCatPDF() {
-            window.print();
+            logActivity({ module: 'Reports', action: 'EXPORT', description: 'Exported MTN Categorized Report to PDF' });
+            if (mtnCatFilteredData.length === 0) { alert('No data to export.'); return; }
+
+            const fmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '-';
+            const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', E: 'Switched / Closed' };
+
+            const data = mtnCatFilteredData.map(r => ({
+                'ACCT NO': r['ACCT NO'] || '',
+                'CLINIC NAME': r['CLINIC NAME'] || '',
+                'PRODUCT TYPE': r['PRODUCT TYPE'] || '',
+                'MTN Status': r._mtnStatus?.label || '-',
+                'Expiry Date': fmt(r._mtnEndDate),
+                'Renewal Status': r['RENEWAL STATUS 2'] || '-',
+                'Category': labels[r._category] || '-',
+                'PIC': r['M1G/ DEALER CASE'] || r['Contact Name'] || '',
+                'Remarks': r['REMARKS - FOLLOW UP'] || r['REMARKS'] || ''
+            }));
+
+            const columns = ['ACCT NO', 'CLINIC NAME', 'PRODUCT TYPE', 'MTN Status', 'Expiry Date', 'Renewal Status', 'Category', 'PIC', 'Remarks'];
+            const displayColumns = columns;
+
+            let title = getMTNCatFilterLabel(mtnCatCurrentFilter);
+            if (mtnCatDateFrom || mtnCatDateTo) {
+                const dateRange = (mtnCatDateFrom ? fmt(mtnCatDateFrom) : 'Start') + ' to ' + (mtnCatDateTo ? fmt(mtnCatDateTo) : 'End');
+                title += ' — Date: ' + dateRange;
+            }
+
+            exportReportPDF(data, columns, displayColumns, title);
         }
 
     </script>
