@@ -5202,12 +5202,22 @@
 
         async function loadCRMDataFromAPI() {
             try {
+                console.log('[CRM v2026-05-12b] Loading data from Supabase...');
                 const records = await fetchAllContacts();
                 if (!records) { console.error('Failed to load CRM data'); return false; }
                 if (records && records.length > 0) {
-                    // Extract headers from the first record's data JSONB field
-                    const allKeys = Object.keys(records[0].data).filter(k => !k.includes('_EMPTY_') && !k.startsWith('__'));
+                    // Extract headers from ALL records (union of keys) to ensure completeness
+                    const keySet = new Set();
+                    records.forEach(r => {
+                        if (r.data && typeof r.data === 'object') {
+                            Object.keys(r.data).forEach(k => {
+                                if (!k.includes('_EMPTY_') && !k.startsWith('__')) keySet.add(k);
+                            });
+                        }
+                    });
+                    const allKeys = Array.from(keySet);
                     headers = allKeys;
+                    console.log(`[CRM v2026-05-12b] Headers extracted: ${allKeys.length} keys, including ACCT NO: ${allKeys.includes('ACCT NO')}`);
                     
                     // Convert records to the format crmData expects
                     crmData = records.map((record, idx) => {
@@ -5221,6 +5231,11 @@
                         });
                         return row;
                     });
+                    
+                    // Verify M_1805 and M_3071 are loaded
+                    const m1805 = crmData.find(r => r['ACCT NO'] === 'M_1805');
+                    const m3071 = crmData.find(r => r['ACCT NO'] === 'M_3071');
+                    console.log(`[CRM v2026-05-12b] Verification - M_1805: ${m1805 ? 'FOUND' : 'MISSING'}, M_3071: ${m3071 ? 'FOUND' : 'MISSING'}`);
                     
                     // Initialize visible columns from VISIBLE_COLUMN_NAMES
                     visibleColumns = [];
