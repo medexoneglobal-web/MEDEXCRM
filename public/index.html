@@ -7498,6 +7498,11 @@
         function viewRowDetails(rowIndex) {
             currentViewRowIndex = rowIndex;
             const row = crmData[rowIndex];
+            if (!row) {
+                console.error('viewRowDetails: Record not found at index', rowIndex, 'crmData length:', crmData.length);
+                alert('Record not found. Please refresh the page or clear filters and try again.');
+                return;
+            }
             const hasEdit = hasPermission('crm', 'edit');
             currentViewContactId = row.id;
 
@@ -7842,6 +7847,7 @@
                 
                 // Remove from local data
                 crmData.splice(rowIndex, 1);
+                recalcRowIndices();
                 saveCRMData();
                 renderTable();
                 showToast('Customer deleted successfully', 'success');
@@ -7897,6 +7903,7 @@
 
                 // Remove from local data
                 crmData.splice(rowIndex, 1);
+                recalcRowIndices();
                 saveCRMData();
                 renderTable();
                 showToast('Customer deleted successfully', 'success');
@@ -7941,6 +7948,7 @@
             const row = {...crmData[rowIndex]};
             row._rowIndex = crmData.length;
             crmData.splice(rowIndex + 1, 0, row);
+            recalcRowIndices();
             saveCRMData();
             renderTable();
         }
@@ -9318,6 +9326,12 @@
             }, 300);
         }
 
+        function recalcRowIndices() {
+            crmData.forEach((row, idx) => {
+                row._rowIndex = idx;
+            });
+        }
+
         function renderFilteredTable(filteredData) {
             const tbody = document.getElementById('tableBody');
             const start = (currentPage - 1) * rowsPerPage;
@@ -9329,7 +9343,11 @@
             const hasDeletePermission = hasPermission('crm', 'delete');
 
             pageData.forEach((row, idx) => {
-                const globalIdx = row._rowIndex;
+                // Find actual index in crmData by ID (robust against stale _rowIndex)
+                const globalIdx = crmData.findIndex(r => r.id === row.id);
+                if (globalIdx === -1) {
+                    console.warn('renderFilteredTable: row not found in crmData, id=', row.id);
+                }
                 const canEdit = hasEditPermission;
                 const canDelete = hasDeletePermission;
 
@@ -9539,6 +9557,7 @@
                 for (const index of indicesToDelete) {
                     crmData.splice(index, 1);
                 }
+                recalcRowIndices();
                 
                 // Clear selection
                 selectedRows.clear();
