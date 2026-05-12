@@ -11837,6 +11837,7 @@ async function exportActivityLog() {
         let mtnCatSortDir = 'asc';
         let mtnCatDateFrom = null; // Date object or null
         let mtnCatDateTo = null;   // Date object or null
+        let mtnCatDealerFilter = ''; // M1G/Dealer filter
 
         function isUsingCMSMHIS(row) {
             const product = String(row['PRODUCT'] || '').toUpperCase();
@@ -11955,6 +11956,7 @@ async function exportActivityLog() {
                 return;
             }
             const search = (document.getElementById('mtnCatSearch')?.value || '').toLowerCase().trim();
+            const dealerFilterVal = mtnCatDealerFilter || (document.getElementById('mtnCatDealerFilter')?.value || '');
             mtnCatFilteredData = computeMTNCatData().all.filter(row => {
                 if (mtnCatCurrentFilter && row._category !== mtnCatCurrentFilter) return false;
                 if (search) {
@@ -11962,6 +11964,15 @@ async function exportActivityLog() {
                         row['RENEWAL STATUS 2'], row['M1G/ DEALER CASE'], row['Contact Name'],
                         row['REMARKS - FOLLOW UP']].join(' ').toLowerCase();
                     if (!haystack.includes(search)) return false;
+                }
+                // Dealer/M1G filter
+                if (dealerFilterVal) {
+                    const dealer = String(row['M1G/ DEALER CASE'] || '').trim();
+                    if (dealerFilterVal === 'M1G') {
+                        if (dealer !== '') return false;
+                    } else if (dealer !== dealerFilterVal) {
+                        return false;
+                    }
                 }
                 // Date range filter on MTN End Date
                 if (mtnCatDateFrom || mtnCatDateTo) {
@@ -12024,9 +12035,23 @@ async function exportActivityLog() {
             filterMTNCatData();
         }
 
+        function setMTNCatDealerFilter(value) {
+            mtnCatDealerFilter = value;
+            mtnCatCurrentPage = 1;
+            filterMTNCatData();
+        }
+
         function clearMTNCatDateFilter() {
             mtnCatDateFrom = null;
             mtnCatDateTo = null;
+            mtnCatCurrentPage = 1;
+            filterMTNCatData();
+        }
+
+        function clearMTNCatAllFilters() {
+            mtnCatDateFrom = null;
+            mtnCatDateTo = null;
+            mtnCatDealerFilter = '';
             mtnCatCurrentPage = 1;
             filterMTNCatData();
         }
@@ -12111,12 +12136,24 @@ async function exportActivityLog() {
                 <div class="mtn-cat-toolbar">
                     <input type="text" class="mtn-cat-search" id="mtnCatSearch" placeholder="Search customers..." value="${escapeHtml(document.getElementById('mtnCatSearch')?.value || '')}" oninput="debounceFilterMTNCat()">
                     <div class="mtn-cat-date-filters" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <select id="mtnCatDealerFilter" class="col-filter" style="width:auto;min-width:140px;font-size:12px;padding:4px 8px;" onchange="setMTNCatDealerFilter(this.value)">
+                            <option value="" ${!mtnCatDealerFilter ? 'selected' : ''}>All M1G/Dealer</option>
+                            <option value="M1G" ${mtnCatDealerFilter === 'M1G' ? 'selected' : ''}>M1G</option>
+                            <option value="CENTRICORE" ${mtnCatDealerFilter === 'CENTRICORE' ? 'selected' : ''}>CENTRICORE</option>
+                            <option value="DPTA" ${mtnCatDealerFilter === 'DPTA' ? 'selected' : ''}>DPTA</option>
+                            <option value="PUSPA" ${mtnCatDealerFilter === 'PUSPA' ? 'selected' : ''}>PUSPA</option>
+                            <option value="KS IT" ${mtnCatDealerFilter === 'KS IT' ? 'selected' : ''}>KS IT</option>
+                            <option value="MAC SOFT" ${mtnCatDealerFilter === 'MAC SOFT' ? 'selected' : ''}>MAC SOFT</option>
+                            <option value="MAXWELL" ${mtnCatDealerFilter === 'MAXWELL' ? 'selected' : ''}>MAXWELL</option>
+                            <option value="SMARTCOM" ${mtnCatDealerFilter === 'SMARTCOM' ? 'selected' : ''}>SMARTCOM</option>
+                            <option value="TK" ${mtnCatDealerFilter === 'TK' ? 'selected' : ''}>TK</option>
+                        </select>
                         <button class="btn btn-outline btn-sm ${mtnCatDateFrom && mtnCatDateTo && mtnCatDateFrom.getDate() === 1 && mtnCatDateTo.getDate() === new Date(mtnCatDateTo.getFullYear(), mtnCatDateTo.getMonth() + 1, 0).getDate() && mtnCatDateFrom.getMonth() === new Date().getMonth() ? 'active' : ''}" onclick="setMTNCatDateQuickFilter('currentMonth')" style="font-size:12px;padding:4px 10px;">Current Month</button>
                         <button class="btn btn-outline btn-sm ${mtnCatDateFrom && mtnCatDateTo && mtnCatDateFrom.getMonth() === 0 && mtnCatDateFrom.getDate() === 1 && mtnCatDateTo.getMonth() === 11 && mtnCatDateTo.getDate() === 31 && mtnCatDateFrom.getFullYear() === new Date().getFullYear() ? 'active' : ''}" onclick="setMTNCatDateQuickFilter('currentYear')" style="font-size:12px;padding:4px 10px;">Current Year</button>
                         <input type="date" id="mtnCatDateFrom" value="${mtnCatDateFrom ? `${mtnCatDateFrom.getFullYear()}-${String(mtnCatDateFrom.getMonth()+1).padStart(2,'0')}-${String(mtnCatDateFrom.getDate()).padStart(2,'0')}` : ''}" onchange="applyMTNCatDatePickerFilter()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;">
                         <span style="font-size:12px;color:#6b7280;">to</span>
                         <input type="date" id="mtnCatDateTo" value="${mtnCatDateTo ? `${mtnCatDateTo.getFullYear()}-${String(mtnCatDateTo.getMonth()+1).padStart(2,'0')}-${String(mtnCatDateTo.getDate()).padStart(2,'0')}` : ''}" onchange="applyMTNCatDatePickerFilter()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;">
-                        ${(mtnCatDateFrom || mtnCatDateTo) ? `<button class="btn btn-outline btn-sm" onclick="clearMTNCatDateFilter()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Date</button>` : ''}
+                        ${(mtnCatDateFrom || mtnCatDateTo || mtnCatDealerFilter) ? `<button class="btn btn-outline btn-sm" onclick="clearMTNCatAllFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>` : ''}
                     </div>
                     <span class="mtn-cat-total">${total.toLocaleString()} records</span>
                 </div>
@@ -12189,7 +12226,8 @@ async function exportActivityLog() {
             const ws = XLSX.utils.json_to_sheet(rows);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'MTN Categorized Report');
-            XLSX.writeFile(wb, `MTN_Categorized_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+            const dealerSuffix = mtnCatDealerFilter ? `_${mtnCatDealerFilter}` : '';
+            XLSX.writeFile(wb, `MTN_Categorized_Report${dealerSuffix}_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
         function exportMTNCatPDF() {
@@ -12215,6 +12253,9 @@ async function exportActivityLog() {
             const displayColumns = columns;
 
             let title = getMTNCatFilterLabel(mtnCatCurrentFilter);
+            if (mtnCatDealerFilter) {
+                title += ' — Dealer: ' + (mtnCatDealerFilter === 'M1G' ? 'M1G' : mtnCatDealerFilter);
+            }
             if (mtnCatDateFrom || mtnCatDateTo) {
                 const dateRange = (mtnCatDateFrom ? fmt(mtnCatDateFrom) : 'Start') + ' to ' + (mtnCatDateTo ? fmt(mtnCatDateTo) : 'End');
                 title += ' — Date: ' + dateRange;
