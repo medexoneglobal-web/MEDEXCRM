@@ -12439,7 +12439,8 @@ async function exportActivityLog() {
         let mtnRenewalShowExcluded = false;
         let mtnRenewalSelectedIds = new Set();
 
-        // Compute renewal data from crmData
+        // Compute renewal data from crmData - only include customers with relevant product types
+        // (same logic as MTN Categorized Report)
         function computeRenewalData() {
             const today = new Date(); today.setHours(0,0,0,0);
             const thirtyDays = new Date(today); thirtyDays.setDate(today.getDate() + 30);
@@ -12449,6 +12450,17 @@ async function exportActivityLog() {
             const enriched = [];
 
             crmData.forEach(row => {
+                // Only include customers with relevant product types (same as MTN Categorized)
+                const productType = String(row['PRODUCT TYPE'] || '').toUpperCase();
+                const product = String(row['PRODUCT'] || '').toUpperCase();
+                const usingCMSMHIS = product.includes('CMS') || product.includes('MHIS') ||
+                                     productType.includes('CMS') || productType.includes('MHIS');
+                const hasClaimEX = productType.includes('CLAIMEX') || productType.includes('GFLEX') ||
+                                   productType.includes('EM2') || productType.includes('GEN');
+                const isGP_EM2 = productType.includes('GP+EM2');
+                const hasRelevantProduct = usingCMSMHIS || hasClaimEX || isGP_EM2;
+                if (!hasRelevantProduct) return; // skip customers without CMS/MHIS/ClaimEX products
+
                 const mtnEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                 if (!mtnEnd && !row['EXCLUDE FROM MTN TRACKING']) return; // skip if no MTN date and not excluded
                 total++;
