@@ -12488,9 +12488,27 @@ async function exportActivityLog() {
                 let status = 'Active';
                 let daysLeft = null;
 
+                // Check if completed date falls within the selected month range
+                let isCompletedThisPeriod = false;
+                if (completedDate) {
+                    const cMonth = completedDate.getMonth() + 1;
+                    const cYear = completedDate.getFullYear();
+                    // Check if completed date falls within the from-to month range
+                    const fromCompare = mtnRenewalYearFrom * 100 + mtnRenewalMonthFrom;
+                    const toCompare = mtnRenewalYearTo * 100 + mtnRenewalMonthTo;
+                    const completedCompare = cYear * 100 + cMonth;
+                    if (completedCompare >= fromCompare && completedCompare <= toCompare) {
+                        isCompletedThisPeriod = true;
+                    }
+                }
+
                 if (isExcluded) {
                     status = 'Excluded';
                     excluded++;
+                } else if (isCompletedThisPeriod) {
+                    // Completed takes priority - customer was renewed this period
+                    status = 'Completed';
+                    completed++;
                 } else if (cat === 'B') {
                     status = 'Expired but Still Using';
                     daysLeft = mtnEnd ? Math.ceil((mtnEnd - today) / 86400000) : null;
@@ -12505,9 +12523,6 @@ async function exportActivityLog() {
                     status = 'Upcoming Renewal';
                     daysLeft = Math.ceil((mtnEnd - today) / 86400000);
                     upcoming++;
-                } else if (completedDate) {
-                    status = 'Completed';
-                    completed++;
                 }
 
                 // Infer customer type if not set
@@ -12552,7 +12567,7 @@ async function exportActivityLog() {
                 { key: 'total', label: 'Total Customer Base', value: data.total, icon: '&#128202;', color: 'blue' },
                 { key: 'overdue', label: 'Expired but Still Using', value: data.overdue, icon: '&#9888;&#65039;', color: 'red' },
                 { key: 'upcoming', label: 'Upcoming Renewal', value: data.upcoming, icon: '&#128337;', color: 'orange' },
-                { key: 'completed', label: 'Completed This Month', value: data.completed, icon: '&#9989;', color: 'green' },
+                { key: 'completed', label: 'Completed', value: data.completed, icon: '&#9989;', color: 'green' },
                 { key: 'excluded', label: 'Excluded Customers', value: data.excluded, icon: '&#128683;', color: 'grey' },
                 { key: 'rate', label: 'Staff Completion Rate', value: data.completionRate + '%', icon: '&#127942;', color: 'purple' }
             ];
