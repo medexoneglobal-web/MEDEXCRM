@@ -12614,15 +12614,16 @@ async function exportActivityLog() {
                         if (!dealers.includes(dealer)) return false;
                     }
                 }
-                // Month/Year range filter on MTN End Date
+                // Month/Year range filter on MTN End Date (only apply if row has an MTN end date)
                 if (mtnRenewalMonthFrom && mtnRenewalYearFrom) {
-                    if (!row._mtnEndDate) return false;
-                    const fromMonthStart = new Date(mtnRenewalYearFrom, mtnRenewalMonthFrom - 1, 1);
-                    const toMonthEnd = mtnRenewalMonthTo && mtnRenewalYearTo
-                        ? new Date(mtnRenewalYearTo, mtnRenewalMonthTo, 0, 23, 59, 59)
-                        : new Date(mtnRenewalYearFrom, mtnRenewalMonthFrom, 0, 23, 59, 59);
-                    const d = row._mtnEndDate;
-                    if (d < fromMonthStart || d > toMonthEnd) return false;
+                    if (row._mtnEndDate) {
+                        const fromMonthStart = new Date(mtnRenewalYearFrom, mtnRenewalMonthFrom - 1, 1);
+                        const toMonthEnd = mtnRenewalMonthTo && mtnRenewalYearTo
+                            ? new Date(mtnRenewalYearTo, mtnRenewalMonthTo, 0, 23, 59, 59)
+                            : new Date(mtnRenewalYearFrom, mtnRenewalMonthFrom, 0, 23, 59, 59);
+                        const d = row._mtnEndDate;
+                        if (d < fromMonthStart || d > toMonthEnd) return false;
+                    }
                 }
                 if (search) {
                     const hay = [row['ACCT NO'], row['CLINIC NAME'], row['Contact Name'], row['M1G/ DEALER CASE']].join(' ').toLowerCase();
