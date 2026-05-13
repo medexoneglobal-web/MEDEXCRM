@@ -12786,6 +12786,12 @@ async function exportActivityLog() {
 
             const selectedCount = mtnRenewalSelectedIds.size;
 
+            // Save focus before re-rendering to prevent search input losing focus
+            const activeEl = document.activeElement;
+            const activeId = activeEl ? activeEl.id : null;
+            const selStart = activeEl && 'selectionStart' in activeEl ? activeEl.selectionStart : null;
+            const selEnd = activeEl && 'selectionEnd' in activeEl ? activeEl.selectionEnd : null;
+
             container.innerHTML = `
                 <div class="mtn-renewal-toolbar">
                     <input type="text" id="mtnRenewalSearch" placeholder="Search customers..." value="${escapeHtml(document.getElementById('mtnRenewalSearch')?.value || '')}" oninput="debounceMTNRenewalFilter()">
@@ -12882,6 +12888,17 @@ async function exportActivityLog() {
                     <button onclick="bulkSendReminder()">Bulk Send Reminder</button>
                 </div>
             `;
+
+            // Restore focus and cursor position after re-rendering
+            if (activeId) {
+                const newEl = document.getElementById(activeId);
+                if (newEl) {
+                    newEl.focus();
+                    if (selStart !== null && selEnd !== null && 'setSelectionRange' in newEl) {
+                        newEl.setSelectionRange(selStart, selEnd);
+                    }
+                }
+            }
         }
 
         // Selection management
