@@ -5149,7 +5149,7 @@
         const TABLE_COLUMNS = [
             { key: 'ACCT NO', label: 'ACCT NO' },
             { key: 'CLINIC NAME', label: 'CLINIC NAME' },
-            { key: 'PRODUCT', label: 'PRODUCT TYPE' },
+            { key: 'PRODUCT TYPE', label: 'PRODUCT TYPE' },
             { key: 'CMS/MHIS MTN START DATE', label: 'MTN START DATE' },
             { key: 'CMS/MHIS MTN END DATE', label: 'MTN END DATE' },
             { key: '_status', label: 'STATUS' },
@@ -5164,7 +5164,7 @@
             switch(key) {
                 case 'ACCT NO': return 'col-acctno';
                 case 'CLINIC NAME': return 'col-clinicname';
-                case 'PRODUCT': return 'col-product';
+                case 'PRODUCT TYPE': return 'col-product';
                 case 'CMS/MHIS MTN START DATE': return 'col-mtnstart';
                 case 'CMS/MHIS MTN END DATE': return 'col-mtnend';
                 case '_status': return 'col-status';
@@ -5180,7 +5180,7 @@
             const icons = {
                 'ACCT NO': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2M15 12h2M15 16h2"/></svg>',
                 'CLINIC NAME': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-4h6v4"/></svg>',
-                'PRODUCT': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+                'PRODUCT TYPE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
                 'CMS/MHIS MTN START DATE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
                 'CMS/MHIS MTN END DATE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
                 '_status': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 12 15 16 10"/></svg>',
@@ -5693,7 +5693,7 @@
                     expiringSoon++;
                     if (mtnEnd <= sevenDays) expiring7++;
                     const daysLeft = Math.ceil((mtnEnd - today) / 86400000);
-                    expiringList.push({ name: row['CLINIC NAME'] || row['ACCOUNT NAME'] || '-', product: row['PRODUCT'] || '-', date: mtnEnd, daysLeft });
+                    expiringList.push({ name: row['CLINIC NAME'] || row['ACCOUNT NAME'] || '-', product: row['PRODUCT TYPE'] || '-', date: mtnEnd, daysLeft });
                 } else {
                     active++;
                 }
@@ -5840,11 +5840,11 @@
             if (!productSelect) return;
 
             const currentVal = productSelect.value;
-            productSelect.innerHTML = '<option value="">All Products</option>';
+            productSelect.innerHTML = '<option value="">All Product Types</option>';
 
             const products = new Set();
             crmData.forEach(row => {
-                const product = row['PRODUCT'];
+                const product = row['PRODUCT TYPE'];
                 if (product && String(product).trim()) {
                     products.add(String(product).trim());
                 }
@@ -6275,7 +6275,7 @@
             
             // Get unique products and dealer cases for filters
             const dealerCases = [...new Set(data.map(row => row['M1G/ DEALER CASE']).filter(Boolean))].sort();
-            const products = [...new Set(data.map(row => row['PRODUCT']).filter(Boolean))].sort();
+            const products = [...new Set(data.map(row => row['PRODUCT TYPE']).filter(Boolean))].sort();
             
             // Generate HTML
             let html = `
@@ -6395,7 +6395,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
                     });
                     title = `Maintenance Active - ${data.length} Clinics`;
@@ -6407,7 +6407,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate >= today && mtnEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
@@ -6422,7 +6422,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate < today && matchesDealer && matchesProduct;
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
@@ -6438,7 +6438,7 @@
                         const renewalStatus2 = row['RENEWAL STATUS 2'] || '';
                         const hasChangeStatus = renewalStatus2 && String(renewalStatus2).toLowerCase().includes('change');
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return hasChangeStatus && matchesDealer && matchesProduct;
                     });
                     title = `Clinic Change Provider - ${data.length} Clinics`;
@@ -6553,7 +6553,7 @@
             
             // Get unique products and dealer cases for filters
             const dealerCases = [...new Set(data.map(row => row['M1G/ DEALER CASE']).filter(Boolean))].sort();
-            const products = [...new Set(data.map(row => row['PRODUCT']).filter(Boolean))].sort();
+            const products = [...new Set(data.map(row => row['PRODUCT TYPE']).filter(Boolean))].sort();
             
             // Generate HTML
             let html = `
@@ -6674,7 +6674,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
                     });
                     title = `Cloud Backup Active - ${data.length} Clinics`;
@@ -6686,7 +6686,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate >= today && cloudEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -6701,7 +6701,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate < today && cloudEndDate >= terminateDate && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -6716,7 +6716,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate < today && cloudEndDate < terminateDate && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -6782,7 +6782,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -6794,7 +6794,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate >= today && cloudEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -6809,7 +6809,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate < today && cloudEndDate >= terminateDate && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -6824,7 +6824,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate < today && cloudEndDate < terminateDate && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -6863,7 +6863,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -6875,7 +6875,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate >= today && cloudEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -6890,7 +6890,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate < today && cloudEndDate >= terminateDate && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -6905,7 +6905,7 @@
                     data = crmData.filter(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return cloudEndDate && cloudEndDate < today && cloudEndDate < terminateDate && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
@@ -7016,7 +7016,7 @@
             const displayColumns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
             
             // Get unique products for filter
-            const products = [...new Set(data.map(row => row['PRODUCT']).filter(Boolean))].sort();
+            const products = [...new Set(data.map(row => row['PRODUCT TYPE']).filter(Boolean))].sort();
             
             let html = `
                 <div class="maintenance-detail-header">
@@ -7122,7 +7122,7 @@
             
             // Apply product filter
             if (productFilter) {
-                data = data.filter(row => row['PRODUCT'] === productFilter);
+                data = data.filter(row => row['PRODUCT TYPE'] === productFilter);
             }
             
             const columns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
@@ -7177,7 +7177,7 @@
                 'ACCT NO': row['ACCT NO'] || '',
                 'CLINIC NAME': row['CLINIC NAME'] || '',
                 'E-INV PO RCVD DATE': formatExcelDate((row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE']) || ''),
-                'PRODUCT': row['PRODUCT'] || '',
+                'PRODUCT': row['PRODUCT TYPE'] || '',
                 'PRODUCT TYPE': row['PRODUCT TYPE'] || '',
                 'Contact Name': row['Contact Name'] || '',
                 'Contact Tel1': row['Contact Tel1'] || '',
@@ -7215,7 +7215,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -7227,7 +7227,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate >= today && mtnEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
@@ -7242,7 +7242,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate < today && matchesDealer && matchesProduct;
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
@@ -7258,7 +7258,7 @@
                         const renewalStatus2 = row['RENEWAL STATUS 2'] || '';
                         const hasChangeStatus = renewalStatus2 && String(renewalStatus2).toLowerCase().includes('change');
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return hasChangeStatus && matchesDealer && matchesProduct;
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'RENEWAL STATUS 2', 'PRODUCT', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -7293,7 +7293,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -7305,7 +7305,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate >= today && mtnEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
@@ -7320,7 +7320,7 @@
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return mtnEndDate && mtnEndDate < today && matchesDealer && matchesProduct;
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
@@ -7336,7 +7336,7 @@
                         const renewalStatus2 = row['RENEWAL STATUS 2'] || '';
                         const hasChangeStatus = renewalStatus2 && String(renewalStatus2).toLowerCase().includes('change');
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT'] === productFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
                         return hasChangeStatus && matchesDealer && matchesProduct;
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'RENEWAL STATUS 2', 'PRODUCT', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -9453,7 +9453,7 @@
                     }
 
                     if (productFilter) {
-                        const product = String(row['PRODUCT'] || '').toLowerCase();
+                        const product = String(row['PRODUCT TYPE'] || '').toLowerCase();
                         if (product !== productFilter.toLowerCase()) return false;
                     }
 
@@ -10030,7 +10030,7 @@
             return crmData.filter(row => {
                 const acctNo = String(row['ACCT NO'] || '').toLowerCase();
                 const clinicName = String(row['CLINIC NAME'] || '').toLowerCase();
-                const product = String(row['PRODUCT'] || '').toLowerCase();
+                const product = String(row['PRODUCT TYPE'] || '').toLowerCase();
                 const address1 = String(row['Address1'] || '').toLowerCase();
                 const address2 = String(row['Address2'] || '').toLowerCase();
                 const address3 = String(row['Address3'] || '').toLowerCase();
@@ -10107,7 +10107,7 @@
             const info = [
                 'ACCT NO: ' + (row['ACCT NO'] || ''),
                 'CLINIC NAME: ' + (row['CLINIC NAME'] || ''),
-                'PRODUCT: ' + (row['PRODUCT'] || ''),
+                'PRODUCT: ' + (row['PRODUCT TYPE'] || ''),
                 'Info 1: ' + (row['Address1'] || ''),
                 'Info 2: ' + (row['Address2'] || ''),
                 'Info 3: ' + (row['Address3'] || ''),
@@ -10155,7 +10155,7 @@
             
             // Build form rows according to the screenshot layout
             const formRows = [
-                { num: '1', label: 'Program Type', value: row['PRODUCT'] || '', isBlue: true },
+                { num: '1', label: 'Program Type', value: row['PRODUCT TYPE'] || '', isBlue: true },
                 { num: '2', label: 'MTN Start Date', value: formatExcelDate(row['CMS/MHIS MTN START DATE']) || '', isBlue: true },
                 { num: '3', label: 'MTN End Date', value: formatExcelDate(row['CMS/MHIS MTN END DATE']) || '', isBlue: true },
                 { num: '3', label: 'Clinic Name', value: row['CLINIC NAME'] || '', isBlue: true },
@@ -10275,7 +10275,7 @@
             // Build readable plain text
             let text = 'Medex License Key Request Form\n';
             text += '================================\n\n';
-            text += '1.  Program Type:                 ' + (row['PRODUCT'] || '') + '\n';
+            text += '1.  Program Type:                 ' + (row['PRODUCT TYPE'] || '') + '\n';
             text += '2.  MTN Start Date:               ' + (formatExcelDate(row['CMS/MHIS MTN START DATE']) || '') + '\n';
             text += '3.  MTN End Date:                 ' + (formatExcelDate(row['CMS/MHIS MTN END DATE']) || '') + '\n';
             text += '3.  Clinic Name:                  ' + (row['CLINIC NAME'] || '') + '\n';
@@ -10342,7 +10342,7 @@
                 html += `<tr style="background:${bgColor};"><td style="padding:5px;border:1px solid #ccc;text-align:center;">${num}</td><td style="padding:5px;border:1px solid #ccc;">${label}</td><td style="padding:5px;border:1px solid #ccc;">${value || ''}</td></tr>`;
             };
             
-            addRow('1', 'Program Type', row['PRODUCT'] || '');
+            addRow('1', 'Program Type', row['PRODUCT TYPE'] || '');
             addRow('2', 'MTN Start Date', formatExcelDate(row['CMS/MHIS MTN START DATE']) || '');
             addRow('3', 'MTN End Date', formatExcelDate(row['CMS/MHIS MTN END DATE']) || '');
             addRow('3', 'Clinic Name', row['CLINIC NAME'] || '');
@@ -10370,7 +10370,7 @@
             // Build plain text as tab-separated fallback
             const rows = [
                 ['#', 'Field Label', 'Value'],
-                ['1', 'Program Type', row['PRODUCT'] || ''],
+                ['1', 'Program Type', row['PRODUCT TYPE'] || ''],
                 ['2', 'MTN Start Date', formatExcelDate(row['CMS/MHIS MTN START DATE']) || ''],
                 ['3', 'MTN End Date', formatExcelDate(row['CMS/MHIS MTN END DATE']) || ''],
                 ['3', 'Clinic Name', row['CLINIC NAME'] || ''],
@@ -12001,10 +12001,8 @@ async function exportActivityLog() {
         let mtnCatDealerFilter = ''; // M1G/Dealer filter
 
         function isUsingCMSMHIS(row) {
-            const product = String(row['PRODUCT'] || '').toUpperCase();
             const productType = String(row['PRODUCT TYPE'] || '').toUpperCase();
-            return product.includes('CMS') || product.includes('MHIS') ||
-                   productType.includes('CMS') || productType.includes('MHIS');
+            return productType.includes('CMS') || productType.includes('MHIS');
         }
 
         function getMTNCategory(row) {
