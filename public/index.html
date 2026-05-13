@@ -12568,16 +12568,14 @@ async function exportActivityLog() {
                 { key: 'overdue', label: 'Expired but Still Using', value: data.overdue, icon: '&#9888;&#65039;', color: 'red' },
                 { key: 'upcoming', label: 'Upcoming Renewal', value: data.upcoming, icon: '&#128337;', color: 'orange' },
                 { key: 'completed', label: 'Completed', value: data.completed, icon: '&#9989;', color: 'green' },
-                { key: 'excluded', label: 'Excluded Customers', value: data.excluded, icon: '&#128683;', color: 'grey' },
                 { key: 'rate', label: 'Staff Completion Rate', value: data.completionRate + '%', icon: '&#127942;', color: 'purple' }
             ];
             container.innerHTML = cards.map(c => {
                 const isActive = (c.key === 'overdue' && mtnRenewalStatusFilter === 'Expired but Still Using') ||
                     (c.key === 'upcoming' && mtnRenewalStatusFilter === 'Upcoming Renewal') ||
                     (c.key === 'completed' && mtnRenewalStatusFilter === 'Completed') ||
-                    (c.key === 'excluded' && mtnRenewalStatusFilter === 'Excluded') ||
                     (c.key === 'total' && mtnRenewalStatusFilter === '');
-                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Expired but Still Using' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'completed' ? 'Completed' : c.key === 'excluded' ? 'Excluded' : ''}')">
+                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Expired but Still Using' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'completed' ? 'Completed' : ''}')">
                     <div class="kpi-bar"></div>
                     <div class="kpi-icon">${c.icon}</div>
                     <div class="kpi-value">${c.value}</div>
@@ -12767,7 +12765,6 @@ async function exportActivityLog() {
                         <td>
                             <div class="mtn-renewal-actions">
                                 <button class="mtn-renewal-action-btn renew" onclick="renewMTN(${row.id})" title="Renew MTN">Renew</button>
-                                <button class="mtn-renewal-action-btn extend" onclick="extendMTN(${row.id})" title="Extend Date">Extend</button>
                                 <button class="mtn-renewal-action-btn complete" onclick="completeMTN(${row.id})" title="Complete Task" ${row._renewalStatus === 'Completed' ? 'disabled' : ''}>Complete</button>
                                 <button class="mtn-renewal-action-btn history" onclick="viewMTNHistory(${row.id})" title="View History">History</button>
                             </div>
@@ -12838,8 +12835,7 @@ async function exportActivityLog() {
                         <option value="12" ${mtnRenewalMonthTo === 12 ? 'selected' : ''}>December</option>
                     </select>
                     <input type="number" id="mtnRenewalYearTo" value="${mtnRenewalYearTo}" min="2020" max="2040" onchange="applyMTNRenewalMonthPicker()" style="width:75px;padding:7px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;">
-                    <label><input type="checkbox" ${mtnRenewalShowExcluded ? 'checked' : ''} onchange="toggleMTNRenewalExcluded(this)"> Show Excluded</label>
-                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalProductTypeFilter || mtnRenewalShowExcluded) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
+                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalProductTypeFilter) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalExcel()" style="font-size:12px;padding:4px 10px;">Export Excel</button>
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalPDF()" style="font-size:12px;padding:4px 10px;">Export PDF</button>
                     <span class="mtn-renewal-count">${total.toLocaleString()} records</span>
@@ -12883,7 +12879,6 @@ async function exportActivityLog() {
                 </div>
                 <div id="mtnRenewalBulkBar" class="mtn-renewal-bulk-bar ${selectedCount > 0 ? 'visible' : ''}">
                     <span class="bulk-count">${selectedCount} selected</span>
-                    <button onclick="bulkExtendMTN()">Bulk Extend MTN</button>
                     <button onclick="bulkCompleteMTN()">Bulk Mark Completed</button>
                     <button onclick="bulkAssignStaff()">Bulk Assign Staff</button>
                     <button onclick="bulkSendReminder()">Bulk Send Reminder</button>
