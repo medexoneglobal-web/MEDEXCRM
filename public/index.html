@@ -12001,8 +12001,10 @@ async function exportActivityLog() {
         let mtnCatDealerFilter = ''; // M1G/Dealer filter
 
         function isUsingCMSMHIS(row) {
+            const product = String(row['PRODUCT'] || '').toUpperCase();
             const productType = String(row['PRODUCT TYPE'] || '').toUpperCase();
-            return productType.includes('CMS') || productType.includes('MHIS');
+            return product.includes('CMS') || product.includes('MHIS') ||
+                   productType.includes('CMS') || productType.includes('MHIS');
         }
 
         function getMTNCategory(row) {
