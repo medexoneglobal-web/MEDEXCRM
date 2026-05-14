@@ -7601,7 +7601,7 @@
          * @param {string} rowId - The row ID (Supabase UUID)
          */
         function showRowHistory(rowId) {
-            const row = crmData.find(r => r.id === rowId);
+            const row = crmData.find(r => String(r.id) === String(rowId));
             if (!row) {
                 alert('Record not found');
                 return;
@@ -7643,12 +7643,14 @@
 
         function viewRowDetails(rowId) {
             currentViewRowId = rowId;
-            const row = crmData.find(r => r.id === rowId);
+            console.log('[DEBUG] viewRowDetails called with rowId:', rowId, 'type:', typeof rowId);
+            const row = crmData.find(r => String(r.id) === String(rowId));
             if (!row) {
-                console.error('viewRowDetails: Record not found for id', rowId);
+                console.error('viewRowDetails: Record not found for id', rowId, 'crmData IDs:', crmData.slice(0,5).map(r => r.id));
                 alert('Record not found. Please refresh the page or clear filters and try again.');
                 return;
             }
+            console.log('[DEBUG] Found row ACCT NO:', row['ACCT NO'], 'CLINIC NAME:', row['CLINIC NAME']);
             const hasEdit = hasPermission('crm', 'edit');
             currentViewContactId = row.id;
 
@@ -7832,7 +7834,7 @@
         async function saveViewDetails() {
             if (!currentViewRowId) return;
             
-            const row = crmData.find(r => r.id === currentViewRowId);
+            const row = crmData.find(r => String(r.id) === String(currentViewRowId));
             if (!row) { console.error('saveViewDetails: row not found for id', currentViewRowId); return; }
             const recordId = row.id;
             
@@ -7974,7 +7976,7 @@
                 return;
             }
             openConfirmModal('Are you sure you want to delete this customer?', async () => {
-                const row = crmData.find(r => r.id === rowId);
+                const row = crmData.find(r => String(r.id) === String(rowId));
                 if (!row) { console.error('deleteRow: row not found for id', rowId); return; }
                 const recordId = row.id;
                 const recordData = { ...row };
@@ -8109,7 +8111,7 @@
         }
 
         function duplicateRow(rowId) {
-            const rowIndex = crmData.findIndex(r => r.id === rowId);
+            const rowIndex = crmData.findIndex(r => String(r.id) === String(rowId));
             if (rowIndex === -1) { console.error('duplicateRow: row not found for id', rowId); return; }
             const row = {...crmData[rowIndex]};
             row._rowIndex = crmData.length;
