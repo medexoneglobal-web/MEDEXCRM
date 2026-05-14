@@ -13305,7 +13305,7 @@ async function exportActivityLog() {
         // ==================== SEND REMINDER / BULK EMAIL ====================
 
         let sendReminderRecipients = []; // Current recipient list
-        let sendReminderFilterType = 'active'; // 'active', 'expired', 'all'
+        let sendReminderFilterType = 'manual'; // 'active', 'expired', 'all', 'manual'
 
         function openSendReminderModal(preselectedRows) {
             // Check permission
@@ -13339,15 +13339,15 @@ async function exportActivityLog() {
                         <div class="send-reminder-filter-row">
                             <label style="font-size:13px;font-weight:600;color:#374151;">Recipients:</label>
                             <select id="sendReminderFilter" onchange="updateSendReminderRecipients()" ${preselectedRows ? 'disabled' : ''}>
+                                <option value="manual">Manual Email Addresses</option>
                                 <option value="active">Active Customers</option>
                                 <option value="expired">Expired Customers (excl. GFLEX/EM2)</option>
                                 <option value="all">All Customers</option>
-                                <option value="manual">Manual Email Addresses</option>
                             </select>
-                            <span id="sendReminderCount" class="send-reminder-count active">0 recipients</span>
+                            <span id="sendReminderCount" class="send-reminder-count manual">0 recipients</span>
                         </div>
 
-                        <div class="send-reminder-field" id="manualEmailField" style="display:none;">
+                        <div class="send-reminder-field" id="manualEmailField" style="display:block;">
                             <label>Manual Email Addresses (one per line or comma-separated)</label>
                             <textarea id="sendReminderManualEmails" placeholder="email1@example.com\nemail2@example.com\nemail3@example.com" rows="4" oninput="updateSendReminderRecipients()"></textarea>
                         </div>
@@ -13381,14 +13381,14 @@ async function exportActivityLog() {
                 opt.selected = true;
                 sel.prepend(opt);
             } else {
-                sendReminderFilterType = 'active';
+                sendReminderFilterType = 'manual';
                 updateSendReminderRecipients();
             }
             renderSendReminderPreview();
         }
 
         function updateSendReminderRecipients() {
-            const filterType = document.getElementById('sendReminderFilter')?.value || 'active';
+            const filterType = document.getElementById('sendReminderFilter')?.value || 'manual';
             sendReminderFilterType = filterType;
 
             // Show/hide manual email field
