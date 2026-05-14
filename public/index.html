@@ -3882,7 +3882,7 @@
                             <div class="quick-actions-grid">
                                 <button class="quick-action-btn" onclick="showNewCustomerModal()"><span class="qa-icon">➕</span> Add Customer</button>
                                 <button class="quick-action-btn" onclick="showSection('licenseKey')"><span class="qa-icon">🔑</span> Add License</button>
-                                <button class="quick-action-btn" onclick="openSendReminderModal()"><span class="qa-icon">📧</span> Send Reminder</button>
+                                <button class="quick-action-btn" onclick="openSendReminderModal()" id="quickActionSendReminder"><span class="qa-icon">📧</span> Send Reminder</button>
                                 <button class="quick-action-btn" onclick="showSection('reports')"><span class="qa-icon">📊</span> View Reports</button>
                             </div>
                         </div>
@@ -4897,7 +4897,8 @@
             crm: {
                 view: { admin: true, user: true, viewer: true },
                 edit: { admin: true, user: true, viewer: false },
-                delete: { admin: true, user: false, viewer: false }
+                delete: { admin: true, user: false, viewer: false },
+                send_reminder: { admin: true, user: false, viewer: false }
             },
             licenseKey: {
                 view: { admin: true, user: true, viewer: true },
@@ -5686,6 +5687,11 @@
         }
 
         function renderDashboard() {
+            // Apply permission-based visibility
+            const sendReminderBtn = document.getElementById('quickActionSendReminder');
+            if (sendReminderBtn) {
+                sendReminderBtn.style.display = hasPermission('crm', 'send_reminder') ? '' : 'none';
+            }
             // Set current date
             const now = new Date();
             const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -8562,11 +8568,12 @@
 
         // Render permission rows for a module
         function renderPermissionRows(module) {
-            const actions = ['view', 'edit', 'delete'];
+            const actions = module === 'crm' ? ['view', 'edit', 'delete', 'send_reminder'] : ['view', 'edit', 'delete'];
+            const actionLabels = { view: 'View', edit: 'Edit', delete: 'Delete', send_reminder: 'Send Reminder' };
             const roles = ['admin', 'user', 'viewer'];
             
             return actions.map(action => {
-                const actionLabel = action.charAt(0).toUpperCase() + action.slice(1);
+                const actionLabel = actionLabels[action] || action.charAt(0).toUpperCase() + action.slice(1);
                 let rowHTML = `<tr style="border-bottom: 1px solid var(--border);">`;
                 rowHTML += `<td style="padding: 12px; font-size: 14px;">${actionLabel}</td>`;
                 
@@ -12921,10 +12928,16 @@ async function exportActivityLog() {
                     <span class="bulk-count">${selectedCount} selected</span>
                     <button onclick="bulkCompleteMTN()">Bulk Mark Completed</button>
                     <button onclick="bulkAssignStaff()">Bulk Assign Staff</button>
-                    <button onclick="bulkSendReminder()">Bulk Send Reminder</button>
+                    <button onclick="bulkSendReminder()" id="mtnBulkSendReminderBtn">Bulk Send Reminder</button>
                 </div>
             `;
-
+            
+            // Apply permission-based visibility for Send Reminder
+            const mtnSendReminderBtn = document.getElementById('mtnBulkSendReminderBtn');
+            if (mtnSendReminderBtn) {
+                mtnSendReminderBtn.style.display = hasPermission('crm', 'send_reminder') ? '' : 'none';
+            }
+            
             // Restore focus and cursor position after re-rendering
             if (activeId) {
                 const newEl = document.getElementById(activeId);
@@ -13295,6 +13308,11 @@ async function exportActivityLog() {
         let sendReminderFilterType = 'active'; // 'active', 'expired', 'all'
 
         function openSendReminderModal(preselectedRows) {
+            // Check permission
+            if (!hasPermission('crm', 'send_reminder')) {
+                showToast('You do not have permission to send reminders.', 'error');
+                return;
+            }
             // Remove existing modal if any
             document.getElementById('sendReminderModal')?.remove();
 
