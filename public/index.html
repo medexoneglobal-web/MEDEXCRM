@@ -7418,18 +7418,17 @@
 
             let bodyHTML = '';
             pageData.forEach((row, idx) => {
-                const globalIdx = start + idx;
                 const canEdit = hasEditPermission;
                 const canDelete = hasDeletePermission;
 
-                bodyHTML += `<tr data-row-index="${globalIdx}">`;
+                bodyHTML += `<tr data-row-id="${row.id}">`;
 
                 TABLE_COLUMNS.forEach(col => {
                     const colClass = getColClass(col.key);
                     if (col.key === '_action') {
                         bodyHTML += `<td class="saas-action-cell ${colClass}">
-                            <button class="saas-action-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">${getActionIcon('view')}</button>
-                            <button class="saas-action-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">${getActionIcon('edit')}</button>
+                            <button class="saas-action-btn" onclick="handleRowOption('${row.id}', 'view')" title="View">${getActionIcon('view')}</button>
+                            <button class="saas-action-btn" onclick="handleRowOption('${row.id}', 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">${getActionIcon('edit')}</button>
                             <button class="saas-action-btn saas-action-delete" onclick="deleteCustomerById('${row.id}')" ${!canDelete ? 'disabled' : ''} title="Delete">${getActionIcon('delete')}</button>
                         </td>`;
                     } else if (col.key === '_status') {
@@ -7572,24 +7571,24 @@
         }
 
         // Row Options
-        function handleRowOption(rowIndex, action) {
+        function handleRowOption(rowId, action) {
             if (!action) return;
             
             switch(action) {
                 case 'view':
-                    viewRowDetails(rowIndex);
+                    viewRowDetails(rowId);
                     break;
                 case 'history':
-                    showRowHistory(rowIndex);
+                    showRowHistory(rowId);
                     break;
                 case 'edit':
-                    viewRowDetails(rowIndex);
+                    viewRowDetails(rowId);
                     break;
                 case 'duplicate':
-                    duplicateRow(rowIndex);
+                    duplicateRow(rowId);
                     break;
                 case 'delete':
-                    deleteRow(rowIndex);
+                    deleteRow(rowId);
                     break;
             }
             
@@ -7599,10 +7598,10 @@
         
         /**
          * Show audit trail/history for a specific row
-         * @param {number} rowIndex - The row index in crmData array
+         * @param {string} rowId - The row ID (Supabase UUID)
          */
-        function showRowHistory(rowIndex) {
-            const row = crmData[rowIndex];
+        function showRowHistory(rowId) {
+            const row = crmData.find(r => r.id === rowId);
             if (!row) {
                 alert('Record not found');
                 return;
@@ -7621,8 +7620,8 @@
             showAuditTrail(recordId, recordName);
         }
 
-        // Store current viewing row index for save functionality
-        let currentViewRowIndex = null;
+        // Store current viewing row ID for save functionality
+        let currentViewRowId = null;
 
         // Field groups for organizing the form
         const FIELD_GROUPS = {
@@ -7642,11 +7641,11 @@
             'Status & Other': '#6b7280'
         };
 
-        function viewRowDetails(rowIndex) {
-            currentViewRowIndex = rowIndex;
-            const row = crmData[rowIndex];
+        function viewRowDetails(rowId) {
+            currentViewRowId = rowId;
+            const row = crmData.find(r => r.id === rowId);
             if (!row) {
-                console.error('viewRowDetails: Record not found at index', rowIndex, 'crmData length:', crmData.length);
+                console.error('viewRowDetails: Record not found for id', rowId);
                 alert('Record not found. Please refresh the page or clear filters and try again.');
                 return;
             }
@@ -7826,14 +7825,15 @@
             if (modal) {
                 modal.remove();
             }
-            currentViewRowIndex = null;
+            currentViewRowId = null;
         }
 
         // Save changes from the view details modal
         async function saveViewDetails() {
-            if (currentViewRowIndex === null) return;
+            if (!currentViewRowId) return;
             
-            const row = crmData[currentViewRowIndex];
+            const row = crmData.find(r => r.id === currentViewRowId);
+            if (!row) { console.error('saveViewDetails: row not found for id', currentViewRowId); return; }
             const recordId = row.id;
             
             // Capture old data before applying changes
@@ -7967,15 +7967,17 @@
             closeConfirmModal();
         }
 
-        async function deleteRow(rowIndex) {
+        async function deleteRow(rowId) {
             // Check delete permission
             if (!hasPermission('crm', 'delete')) {
                 alert("You don't have permission to perform this action");
                 return;
             }
             openConfirmModal('Are you sure you want to delete this customer?', async () => {
-                const recordId = crmData[rowIndex].id;
-                const recordData = { ...crmData[rowIndex] };
+                const row = crmData.find(r => r.id === rowId);
+                if (!row) { console.error('deleteRow: row not found for id', rowId); return; }
+                const recordId = row.id;
+                const recordData = { ...row };
                 const customerName = recordData['CLINIC NAME'] || recordData['ACCOUNT NAME'] || '';
                 delete recordData.id;
                 
@@ -8007,7 +8009,8 @@
                 }
                 
                 // Remove from local data
-                crmData.splice(rowIndex, 1);
+                const delIdx = crmData.findIndex(r => r.id === rowId);
+                if (delIdx !== -1) crmData.splice(delIdx, 1);
                 recalcRowIndices();
                 saveCRMData();
                 renderTable();
@@ -8105,7 +8108,9 @@
             XLSX.writeFile(workbook, 'CRM_Customers_Export.xlsx');
         }
 
-        function duplicateRow(rowIndex) {
+        function duplicateRow(rowId) {
+            const rowIndex = crmData.findIndex(r => r.id === rowId);
+            if (rowIndex === -1) { console.error('duplicateRow: row not found for id', rowId); return; }
             const row = {...crmData[rowIndex]};
             row._rowIndex = crmData.length;
             crmData.splice(rowIndex + 1, 0, row);
@@ -9504,22 +9509,17 @@
             const hasDeletePermission = hasPermission('crm', 'delete');
 
             pageData.forEach((row, idx) => {
-                // Find actual index in crmData by ID (robust against stale _rowIndex)
-                const globalIdx = crmData.findIndex(r => r.id === row.id);
-                if (globalIdx === -1) {
-                    console.warn('renderFilteredTable: row not found in crmData, id=', row.id);
-                }
                 const canEdit = hasEditPermission;
                 const canDelete = hasDeletePermission;
 
-                bodyHTML += `<tr data-row-index="${globalIdx}">`;
+                bodyHTML += `<tr data-row-id="${row.id}">`;
 
                 TABLE_COLUMNS.forEach(col => {
                     const colClass = getColClass(col.key);
                     if (col.key === '_action') {
                         bodyHTML += `<td class="saas-action-cell ${colClass}">
-                            <button class="saas-action-btn" onclick="handleRowOption(${globalIdx}, 'view')" title="View">${getActionIcon('view')}</button>
-                            <button class="saas-action-btn" onclick="handleRowOption(${globalIdx}, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">${getActionIcon('edit')}</button>
+                            <button class="saas-action-btn" onclick="handleRowOption('${row.id}', 'view')" title="View">${getActionIcon('view')}</button>
+                            <button class="saas-action-btn" onclick="handleRowOption('${row.id}', 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">${getActionIcon('edit')}</button>
                             <button class="saas-action-btn saas-action-delete" onclick="deleteCustomerById('${row.id}')" ${!canDelete ? 'disabled' : ''} title="Delete">${getActionIcon('delete')}</button>
                         </td>`;
                     } else if (col.key === '_status') {
@@ -12744,7 +12744,6 @@ async function exportActivityLog() {
                 rowsHtml = '<tr><td colspan="12" style="text-align:center;padding:40px;color:#9ca3af">No records found.</td></tr>';
             } else {
                 rowsHtml = pageData.map((row, idx) => {
-                    const globalIdx = crmData.findIndex(r => r.id === row.id);
                     const isSelected = mtnRenewalSelectedIds.has(row.id);
                     const isExcluded = row._renewalStatus === 'Excluded';
                     const exclCheckVal = row['EXCLUDE FROM MTN TRACKING'] === true || row['EXCLUDE FROM MTN TRACKING'] === 'true';
