@@ -5362,13 +5362,13 @@
                     // Convert records to the format crmData expects
                     crmData = records.map((record, idx) => {
                         const row = {};
-                        // Keep the id
-                        row.id = record.id;
-                        row._rowIndex = idx;
-                        // Flatten data fields
+                        // Flatten data fields FIRST
                         allKeys.forEach(key => {
                             row[key] = record.data[key] || '';
                         });
+                        // Set id and _rowIndex AFTER data fields to prevent overwriting
+                        row.id = record.id;
+                        row._rowIndex = idx;
                         return row;
                     });
                     
@@ -7643,14 +7643,12 @@
 
         function viewRowDetails(rowId) {
             currentViewRowId = rowId;
-            console.log('[DEBUG] viewRowDetails called with rowId:', rowId, 'type:', typeof rowId);
             const row = crmData.find(r => String(r.id) === String(rowId));
             if (!row) {
                 console.error('viewRowDetails: Record not found for id', rowId, 'crmData IDs:', crmData.slice(0,5).map(r => r.id));
                 alert('Record not found. Please refresh the page or clear filters and try again.');
                 return;
             }
-            console.log('[DEBUG] Found row ACCT NO:', row['ACCT NO'], 'CLINIC NAME:', row['CLINIC NAME']);
             const hasEdit = hasPermission('crm', 'edit');
             currentViewContactId = row.id;
 
