@@ -3585,6 +3585,37 @@
         .mtn-renewal-kpi-card.grey .kpi-bar { background: #9ca3af; }
         .mtn-renewal-kpi-card.purple .kpi-bar { background: #8b5cf6; }
 
+        /* ===== SEND REMINDER MODAL ===== */
+        .send-reminder-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .send-reminder-modal { background: #fff; border-radius: 16px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .send-reminder-header { padding: 20px 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .send-reminder-header h3 { margin: 0; font-size: 18px; color: #1f2937; }
+        .send-reminder-body { padding: 24px; }
+        .send-reminder-field { margin-bottom: 16px; }
+        .send-reminder-field label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+        .send-reminder-field input, .send-reminder-field textarea, .send-reminder-field select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; }
+        .send-reminder-field textarea { min-height: 120px; resize: vertical; }
+        .send-reminder-field input:focus, .send-reminder-field textarea:focus, .send-reminder-field select:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 2px rgba(79,70,229,0.15); }
+        .send-reminder-filter-row { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .send-reminder-filter-row select { width: auto; min-width: 200px; }
+        .send-reminder-count { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .send-reminder-count.active { background: #dbeafe; color: #1d4ed8; }
+        .send-reminder-count.expired { background: #fee2e2; color: #dc2626; }
+        .send-reminder-count.all { background: #ede9fe; color: #6d28d9; }
+        .send-reminder-preview { max-height: 250px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px; }
+        .send-reminder-preview table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .send-reminder-preview th { background: #f9fafb; padding: 8px 12px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; }
+        .send-reminder-preview td { padding: 6px 12px; border-bottom: 1px solid #f3f4f6; color: #4b5563; }
+        .send-reminder-preview tr:hover td { background: #f9fafb; }
+        .send-reminder-footer { padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .send-reminder-send-btn { padding: 10px 24px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .send-reminder-send-btn:hover { background: #4338ca; }
+        .send-reminder-send-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+        .send-reminder-cancel-btn { padding: 10px 24px; background: #fff; color: #374151; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; cursor: pointer; }
+        .send-reminder-cancel-btn:hover { background: #f9fafb; }
+        .send-reminder-progress { font-size: 13px; color: #6b7280; margin-top: 8px; }
+        .send-reminder-no-email { color: #ef4444; font-size: 12px; font-style: italic; }
+
         .mtn-renewal-content { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; }
         .mtn-renewal-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
         .mtn-renewal-toolbar input[type="text"] {
@@ -3850,7 +3881,7 @@
                             <div class="quick-actions-grid">
                                 <button class="quick-action-btn" onclick="showNewCustomerModal()"><span class="qa-icon">➕</span> Add Customer</button>
                                 <button class="quick-action-btn" onclick="showSection('licenseKey')"><span class="qa-icon">🔑</span> Add License</button>
-                                <button class="quick-action-btn" onclick="showSection('reports')"><span class="qa-icon">📧</span> Send Reminder</button>
+                                <button class="quick-action-btn" onclick="openSendReminderModal()"><span class="qa-icon">📧</span> Send Reminder</button>
                                 <button class="quick-action-btn" onclick="showSection('reports')"><span class="qa-icon">📊</span> View Reports</button>
                             </div>
                         </div>
@@ -12007,6 +12038,15 @@ async function exportActivityLog() {
                    productType.includes('CMS') || productType.includes('MHIS');
         }
 
+        // Check if customer is GFLEX-only or EM2-only (should be excluded from expired list)
+        // GP+EM2 customers are NOT excluded
+        function isGFlexOrEM2Only(row) {
+            const pt = String(row['PRODUCT TYPE'] || '').toUpperCase();
+            if (pt.includes('GP+EM2')) return false; // Keep GP+EM2
+            if (pt.includes('GFLEX') || pt.includes('EM2')) return true; // Remove GFLEX / EM2 only
+            return false;
+        }
+
         function getMTNCategory(row) {
             const renewalStatus2 = String(row['RENEWAL STATUS 2'] || '').trim().toLowerCase();
             const productType = String(row['PRODUCT TYPE'] || '').toUpperCase();
@@ -13243,12 +13283,214 @@ async function exportActivityLog() {
         }
 
         async function bulkSendReminder() {
-            const count = mtnRenewalSelectedIds.size;
-            if (!confirm(`Send reminder to ${count} customers?`)) return;
-            logActivity({ module: 'MTN Renewal', action: 'BULK_REMINDER', description: `Reminder sent to ${count} customers` });
-            showToast(`Reminder sent to ${count} customers`, 'success');
-            mtnRenewalSelectedIds.clear();
-            renderMTNRenewalTable();
+            // Open Send Reminder modal with MTN Renewal selected customers
+            const preselectedRows = crmData.filter(r => mtnRenewalSelectedIds.has(r.id));
+            openSendReminderModal(preselectedRows);
+        }
+
+        // ==================== SEND REMINDER / BULK EMAIL ====================
+
+        let sendReminderRecipients = []; // Current recipient list
+        let sendReminderFilterType = 'active'; // 'active', 'expired', 'all'
+
+        function openSendReminderModal(preselectedRows) {
+            // Remove existing modal if any
+            document.getElementById('sendReminderModal')?.remove();
+
+            // Build modal HTML
+            const modal = document.createElement('div');
+            modal.id = 'sendReminderModal';
+            modal.className = 'send-reminder-overlay';
+            modal.innerHTML = `
+                <div class="send-reminder-modal">
+                    <div class="send-reminder-header">
+                        <h3>\u{1F4E7} Send Reminder / Announcement</h3>
+                        <button class="close-btn" onclick="document.getElementById('sendReminderModal').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;">&times;</button>
+                    </div>
+                    <div class="send-reminder-body">
+                        <div class="send-reminder-field">
+                            <label>Subject</label>
+                            <input type="text" id="sendReminderSubject" placeholder="Enter email subject...">
+                        </div>
+                        <div class="send-reminder-field">
+                            <label>Message Body</label>
+                            <textarea id="sendReminderBody" placeholder="Type your announcement message here..." rows="6"></textarea>
+                        </div>
+
+                        <div class="send-reminder-filter-row">
+                            <label style="font-size:13px;font-weight:600;color:#374151;">Recipients:</label>
+                            <select id="sendReminderFilter" onchange="updateSendReminderRecipients()" ${preselectedRows ? 'disabled' : ''}>
+                                <option value="active">Active Customers</option>
+                                <option value="expired">Expired Customers (excl. GFLEX/EM2)</option>
+                                <option value="all">All Customers</option>
+                            </select>
+                            <span id="sendReminderCount" class="send-reminder-count active">0 recipients</span>
+                        </div>
+
+                        <div class="send-reminder-preview">
+                            <table>
+                                <thead><tr><th>ACCT NO</th><th>CLINIC NAME</th><th>PRODUCT TYPE</th><th>EMAIL ID MAIN</th></tr></thead>
+                                <tbody id="sendReminderPreviewBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="sendReminderProgress" class="send-reminder-progress"></div>
+                    </div>
+                    <div class="send-reminder-footer">
+                        <button class="send-reminder-cancel-btn" onclick="document.getElementById('sendReminderModal').remove()">Cancel</button>
+                        <button class="send-reminder-send-btn" id="sendReminderSendBtn" onclick="sendBulkReminderEmails()">Send Email</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Initialize recipients
+            if (preselectedRows && preselectedRows.length > 0) {
+                sendReminderRecipients = preselectedRows.filter(r => r['EMAIL ID MAIN'] && String(r['EMAIL ID MAIN']).includes('@'));
+                const noEmail = preselectedRows.length - sendReminderRecipients.length;
+                document.getElementById('sendReminderFilter').value = 'selected';
+                // Add a custom option for preselected
+                const sel = document.getElementById('sendReminderFilter');
+                const opt = document.createElement('option');
+                opt.value = 'selected';
+                opt.textContent = `Selected Customers (${preselectedRows.length})`;
+                opt.selected = true;
+                sel.prepend(opt);
+            } else {
+                sendReminderFilterType = 'active';
+                updateSendReminderRecipients();
+            }
+            renderSendReminderPreview();
+        }
+
+        function updateSendReminderRecipients() {
+            const filterType = document.getElementById('sendReminderFilter')?.value || 'active';
+            sendReminderFilterType = filterType;
+
+            sendReminderRecipients = crmData.filter(row => {
+                const cat = getMTNCategory(row);
+                const hasEmail = row['EMAIL ID MAIN'] && String(row['EMAIL ID MAIN']).includes('@');
+                if (!hasEmail) return false;
+
+                if (filterType === 'active') {
+                    return cat === 'A';
+                } else if (filterType === 'expired') {
+                    // Expired (Category B) but exclude GFLEX/EM2-only, keep GP+EM2
+                    return cat === 'B' && !isGFlexOrEM2Only(row);
+                } else if (filterType === 'all') {
+                    // Active + filtered Expired
+                    if (cat === 'A') return true;
+                    if (cat === 'B' && !isGFlexOrEM2Only(row)) return true;
+                    return false;
+                } else if (filterType === 'selected') {
+                    // Preselected from MTN Renewal
+                    return true;
+                }
+                return false;
+            });
+
+            renderSendReminderPreview();
+        }
+
+        function renderSendReminderPreview() {
+            const tbody = document.getElementById('sendReminderPreviewBody');
+            const countEl = document.getElementById('sendReminderCount');
+            if (!tbody || !countEl) return;
+
+            const filterType = sendReminderFilterType;
+            countEl.className = `send-reminder-count ${filterType === 'active' ? 'active' : filterType === 'expired' ? 'expired' : 'all'}`;
+            countEl.textContent = `${sendReminderRecipients.length} recipients`;
+
+            // Render preview (limit to first 100 rows for performance)
+            const preview = sendReminderRecipients.slice(0, 100);
+            tbody.innerHTML = preview.map(r => `<tr>
+                <td>${escapeHtml(r['ACCT NO'] || '')}</td>
+                <td>${escapeHtml(r['CLINIC NAME'] || '')}</td>
+                <td>${escapeHtml(r['PRODUCT TYPE'] || '-')}</td>
+                <td>${escapeHtml(r['EMAIL ID MAIN'] || '<span class="send-reminder-no-email">No email</span>')}</td>
+            </tr>`).join('');
+
+            if (sendReminderRecipients.length > 100) {
+                tbody.innerHTML += `<tr><td colspan="4" style="text-align:center;color:#9ca3af;">... and ${sendReminderRecipients.length - 100} more</td></tr>`;
+            }
+            if (sendReminderRecipients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:24px;">No recipients found with valid email addresses</td></tr>';
+            }
+        }
+
+        async function sendBulkReminderEmails() {
+            const subject = document.getElementById('sendReminderSubject')?.value?.trim();
+            const body = document.getElementById('sendReminderBody')?.value?.trim();
+
+            if (!subject) { alert('Please enter a subject.'); return; }
+            if (!body) { alert('Please enter a message body.'); return; }
+            if (sendReminderRecipients.length === 0) { alert('No recipients to send to.'); return; }
+
+            const sendBtn = document.getElementById('sendReminderSendBtn');
+            const progressEl = document.getElementById('sendReminderProgress');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            const recipients = sendReminderRecipients.map(r => ({
+                email: String(r['EMAIL ID MAIN'] || '').trim(),
+                name: r['CLINIC NAME'] || r['Contact Name'] || '',
+                acctNo: r['ACCT NO'] || ''
+            })).filter(r => r.email && r.email.includes('@'));
+
+            // Send in batches of 50
+            const BATCH_SIZE = 50;
+            let totalSent = 0;
+            let totalFailed = 0;
+
+            for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+                const batch = recipients.slice(i, i + BATCH_SIZE);
+                progressEl.textContent = `Sending batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(recipients.length / BATCH_SIZE)}... (${totalSent} sent so far)`;
+
+                try {
+                    const apiBase = window.location.origin;
+                    const resp = await fetch(`${apiBase}/api/send-email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            subject,
+                            body: body.replace(/\n/g, '<br>'),
+                            recipients: batch,
+                            fromName: currentUser?.username || 'CRM System'
+                        })
+                    });
+                    const result = await resp.json();
+
+                    if (result.success) {
+                        totalSent += result.sentCount || 0;
+                        totalFailed += (result.failedRecipients || []).length;
+                    } else {
+                        console.error('Batch failed:', result.error);
+                        totalFailed += batch.length;
+                    }
+                } catch (err) {
+                    console.error('Send email API error:', err);
+                    totalFailed += batch.length;
+                }
+            }
+
+            // Done
+            progressEl.textContent = '';
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send Email';
+
+            const msg = totalFailed > 0
+                ? `Emails sent: ${totalSent}, Failed: ${totalFailed}`
+                : `Successfully sent ${totalSent} emails!`;
+            showToast(msg, totalFailed > 0 ? 'warning' : 'success');
+            logActivity({ module: 'CRM', action: 'SEND_REMINDER', description: `Sent reminder to ${totalSent} customers (${totalFailed} failed)` });
+
+            if (totalFailed === 0) {
+                document.getElementById('sendReminderModal')?.remove();
+                // Clear MTN Renewal selection if was from there
+                if (mtnRenewalSelectedIds.size > 0) {
+                    mtnRenewalSelectedIds.clear();
+                    renderMTNRenewalTable();
+                }
+            }
         }
 
         // Export Excel
