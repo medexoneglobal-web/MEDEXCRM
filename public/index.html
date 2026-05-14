@@ -7427,9 +7427,9 @@
                     const colClass = getColClass(col.key);
                     if (col.key === '_action') {
                         bodyHTML += `<td class="saas-action-cell ${colClass}">
-                            <button class="saas-action-btn" onclick="handleRowOption('${row.id}', 'view')" title="View">${getActionIcon('view')}</button>
-                            <button class="saas-action-btn" onclick="handleRowOption('${row.id}', 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">${getActionIcon('edit')}</button>
-                            <button class="saas-action-btn saas-action-delete" onclick="deleteCustomerById('${row.id}')" ${!canDelete ? 'disabled' : ''} title="Delete">${getActionIcon('delete')}</button>
+                            <button class="saas-action-btn" onclick="handleRowOption(this.closest('tr').dataset.rowId, 'view')" title="View">${getActionIcon('view')}</button>
+                            <button class="saas-action-btn" onclick="handleRowOption(this.closest('tr').dataset.rowId, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">${getActionIcon('edit')}</button>
+                            <button class="saas-action-btn saas-action-delete" onclick="deleteCustomerById(this.closest('tr').dataset.rowId)" ${!canDelete ? 'disabled' : ''} title="Delete">${getActionIcon('delete')}</button>
                         </td>`;
                     } else if (col.key === '_status') {
                         const status = getRowStatus(row);
@@ -9520,9 +9520,9 @@
                     const colClass = getColClass(col.key);
                     if (col.key === '_action') {
                         bodyHTML += `<td class="saas-action-cell ${colClass}">
-                            <button class="saas-action-btn" onclick="handleRowOption('${row.id}', 'view')" title="View">${getActionIcon('view')}</button>
-                            <button class="saas-action-btn" onclick="handleRowOption('${row.id}', 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">${getActionIcon('edit')}</button>
-                            <button class="saas-action-btn saas-action-delete" onclick="deleteCustomerById('${row.id}')" ${!canDelete ? 'disabled' : ''} title="Delete">${getActionIcon('delete')}</button>
+                            <button class="saas-action-btn" onclick="handleRowOption(this.closest('tr').dataset.rowId, 'view')" title="View">${getActionIcon('view')}</button>
+                            <button class="saas-action-btn" onclick="handleRowOption(this.closest('tr').dataset.rowId, 'edit')" ${!canEdit ? 'disabled' : ''} title="Edit">${getActionIcon('edit')}</button>
+                            <button class="saas-action-btn saas-action-delete" onclick="deleteCustomerById(this.closest('tr').dataset.rowId)" ${!canDelete ? 'disabled' : ''} title="Delete">${getActionIcon('delete')}</button>
                         </td>`;
                     } else if (col.key === '_status') {
                         const status = getRowStatus(row);
