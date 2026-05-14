@@ -3602,6 +3602,7 @@
         .send-reminder-count.active { background: #dbeafe; color: #1d4ed8; }
         .send-reminder-count.expired { background: #fee2e2; color: #dc2626; }
         .send-reminder-count.all { background: #ede9fe; color: #6d28d9; }
+        .send-reminder-count.manual { background: #fef3c7; color: #92400e; }
         .send-reminder-preview { max-height: 250px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px; }
         .send-reminder-preview table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .send-reminder-preview th { background: #f9fafb; padding: 8px 12px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; }
@@ -13323,8 +13324,14 @@ async function exportActivityLog() {
                                 <option value="active">Active Customers</option>
                                 <option value="expired">Expired Customers (excl. GFLEX/EM2)</option>
                                 <option value="all">All Customers</option>
+                                <option value="manual">Manual Email Addresses</option>
                             </select>
                             <span id="sendReminderCount" class="send-reminder-count active">0 recipients</span>
+                        </div>
+
+                        <div class="send-reminder-field" id="manualEmailField" style="display:none;">
+                            <label>Manual Email Addresses (one per line or comma-separated)</label>
+                            <textarea id="sendReminderManualEmails" placeholder="email1@example.com\nemail2@example.com\nemail3@example.com" rows="4" oninput="updateSendReminderRecipients()"></textarea>
                         </div>
 
                         <div class="send-reminder-preview">
@@ -13366,27 +13373,43 @@ async function exportActivityLog() {
             const filterType = document.getElementById('sendReminderFilter')?.value || 'active';
             sendReminderFilterType = filterType;
 
-            sendReminderRecipients = crmData.filter(row => {
-                const cat = getMTNCategory(row);
-                const hasEmail = row['EMAIL ID MAIN'] && String(row['EMAIL ID MAIN']).includes('@');
-                if (!hasEmail) return false;
+            // Show/hide manual email field
+            const manualField = document.getElementById('manualEmailField');
+            if (manualField) manualField.style.display = filterType === 'manual' ? 'block' : 'none';
 
-                if (filterType === 'active') {
-                    return cat === 'A';
-                } else if (filterType === 'expired') {
-                    // Expired (Category B) but exclude GFLEX/EM2-only, keep GP+EM2
-                    return cat === 'B' && !isGFlexOrEM2Only(row);
-                } else if (filterType === 'all') {
-                    // Active + filtered Expired
-                    if (cat === 'A') return true;
-                    if (cat === 'B' && !isGFlexOrEM2Only(row)) return true;
+            if (filterType === 'manual') {
+                // Parse manual email addresses
+                const raw = document.getElementById('sendReminderManualEmails')?.value || '';
+                const emails = raw.split(/[\n,;]+/).map(e => e.trim()).filter(e => e.includes('@'));
+                sendReminderRecipients = emails.map(email => ({
+                    ['ACCT NO']: '-',
+                    ['CLINIC NAME']: email.split('@')[0],
+                    ['PRODUCT TYPE']: '-',
+                    ['EMAIL ID MAIN']: email
+                }));
+            } else {
+                sendReminderRecipients = crmData.filter(row => {
+                    const cat = getMTNCategory(row);
+                    const hasEmail = row['EMAIL ID MAIN'] && String(row['EMAIL ID MAIN']).includes('@');
+                    if (!hasEmail) return false;
+
+                    if (filterType === 'active') {
+                        return cat === 'A';
+                    } else if (filterType === 'expired') {
+                        // Expired (Category B) but exclude GFLEX/EM2-only, keep GP+EM2
+                        return cat === 'B' && !isGFlexOrEM2Only(row);
+                    } else if (filterType === 'all') {
+                        // Active + filtered Expired
+                        if (cat === 'A') return true;
+                        if (cat === 'B' && !isGFlexOrEM2Only(row)) return true;
+                        return false;
+                    } else if (filterType === 'selected') {
+                        // Preselected from MTN Renewal
+                        return true;
+                    }
                     return false;
-                } else if (filterType === 'selected') {
-                    // Preselected from MTN Renewal
-                    return true;
-                }
-                return false;
-            });
+                });
+            }
 
             renderSendReminderPreview();
         }
@@ -13397,7 +13420,7 @@ async function exportActivityLog() {
             if (!tbody || !countEl) return;
 
             const filterType = sendReminderFilterType;
-            countEl.className = `send-reminder-count ${filterType === 'active' ? 'active' : filterType === 'expired' ? 'expired' : 'all'}`;
+            countEl.className = `send-reminder-count ${filterType === 'active' ? 'active' : filterType === 'expired' ? 'expired' : filterType === 'manual' ? 'manual' : 'all'}`;
             countEl.textContent = `${sendReminderRecipients.length} recipients`;
 
             // Render preview (limit to first 100 rows for performance)
