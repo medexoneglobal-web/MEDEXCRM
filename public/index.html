@@ -13498,6 +13498,16 @@ async function exportActivityLog() {
                             fromName: currentUser?.username || 'CRM System'
                         })
                     });
+
+                    if (!resp.ok) {
+                        let errMsg = `HTTP ${resp.status}`;
+                        try { const errData = await resp.json(); errMsg = errData.error || errMsg; } catch(e) {}
+                        console.error('Batch failed:', errMsg);
+                        progressEl.textContent = `Error: ${errMsg}`;
+                        totalFailed += batch.length;
+                        continue;
+                    }
+
                     const result = await resp.json();
 
                     if (result.success) {
