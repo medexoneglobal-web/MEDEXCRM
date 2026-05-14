@@ -8,6 +8,7 @@ routes/
 uploads/
 node_modules/
 node-v20.11.1-win-x64/
+package-lock.json
 *.db
 *.db-shm
 *.db-wal

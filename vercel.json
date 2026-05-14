@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "installCommand": "npm install --omit=dev",
+  "installCommand": "npm install --production",
   "outputDirectory": "public",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
