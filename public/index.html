@@ -13702,6 +13702,23 @@ async function exportActivityLog() {
         // CLOUD BACKUP TRACKING FUNCTIONS
         // ============================================
 
+        function getCloudBackupDerivedStatus(r) {
+            const manualStatus = String(r['STATUS'] || '').trim().toLowerCase();
+            // TERMINATED and HYB FOC are manual overrides - keep them
+            if (manualStatus === 'terminated' || manualStatus === 'hyb foc') {
+                return manualStatus;
+            }
+            // Compute based on CLOUD END DATE
+            const endDateStr = String(r['CLOUD END DATE'] || '').trim();
+            if (!endDateStr) return manualStatus || 'no-status';
+            const endDate = parseDateToJs(endDateStr);
+            if (!endDate) return manualStatus || 'no-status';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            // If end date is today or in the future → ACTIVE, else EXPIRED
+            return endDate >= today ? 'active' : 'expired';
+        }
+
         function renderCloudBackupModule() {
             try {
                 const data = computeCloudBackupData();
@@ -13734,7 +13751,7 @@ async function exportActivityLog() {
             crmData.forEach(r => {
                 if (!r || !hasCloudBackupData(r)) return;
                 total++;
-                const status = String(r['STATUS'] || '').trim().toLowerCase();
+                const status = getCloudBackupDerivedStatus(r);
                 const isChecked = String(r['CHECKED'] || '').trim().toLowerCase();
                 if (status === 'active') {
                     active++;
@@ -13744,7 +13761,7 @@ async function exportActivityLog() {
                     terminated++;
                 } else if (status === 'hyb foc') {
                     hybFoc++;
-                } else if (status === '') {
+                } else if (status === 'no-status') {
                     noStatus++;
                 } else {
                     active++;
@@ -13801,25 +13818,25 @@ async function exportActivityLog() {
             today.setHours(0,0,0,0);
             let filtered = crmData.filter(r => {
                 if (!r || !hasCloudBackupData(r)) return false;
-                const status = String(r['STATUS'] || '').trim().toLowerCase();
                 const cloudEnd = parseDateToJs(r['CLOUD END DATE']);
                 const isChecked = String(r['CHECKED'] || '').trim().toLowerCase();
                 // Status filter
                 if (cloudBackupStatusFilter) {
+                    const derivedStatus = getCloudBackupDerivedStatus(r);
                     if (cloudBackupStatusFilter === 'active') {
-                        if (status === 'active') return true;
+                        if (derivedStatus === 'active') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'expired') {
-                        if (status === 'expired') return true;
+                        if (derivedStatus === 'expired') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'terminated') {
-                        if (status === 'terminated') return true;
+                        if (derivedStatus === 'terminated') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'hyb-foc') {
-                        if (status === 'hyb foc') return true;
+                        if (derivedStatus === 'hyb foc') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'no-status') {
-                        if (status === '') return true;
+                        if (derivedStatus === 'no-status') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'checked') {
                         if (isChecked === 'yes' || isChecked === 'true' || isChecked === '1') return true;
@@ -14135,7 +14152,12 @@ async function exportActivityLog() {
                     return `<div class="cloud-backup-inline-edit"><input type="text" id="cb-edit-${field}" value="${escapeHtml(val)}"><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
                 }
             }
-            if (field === 'STATUS' || field === 'ACTUAL STATUS') {
+            if (field === 'STATUS') {
+                const derivedStatus = getCloudBackupDerivedStatus(r);
+                const displayStatus = derivedStatus === 'no-status' ? 'NO STATUS' : derivedStatus.toUpperCase();
+                return `<span class="cloud-backup-status ${derivedStatus}">${escapeHtml(displayStatus)}</span>`;
+            }
+            if (field === 'ACTUAL STATUS') {
                 const status = String(r[field] || '').trim();
                 const statusClass = status.toLowerCase().replace(/\s+/g, '-') || 'no-status';
                 return `<span class="cloud-backup-status ${statusClass}">${escapeHtml(status || 'NO STATUS')}</span>`;
