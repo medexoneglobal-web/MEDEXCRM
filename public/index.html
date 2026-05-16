@@ -12512,6 +12512,20 @@ async function exportActivityLog() {
         let cloudBackupSelectedIds = new Set();
         let cloudBackupEditingCell = '';
 
+        // Track last focused text input to preserve cursor position across re-renders
+        document.addEventListener('focusin', function(e) {
+            const target = e.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && target.id) {
+                window._cloudBackupLastTextInput = {
+                    id: target.id,
+                    tagName: target.tagName,
+                    type: target.type,
+                    cursorPos: target.selectionStart,
+                    selectionEnd: target.selectionEnd
+                };
+            }
+        });
+
         // Compute renewal data from crmData - same logic as MTN Categorized Report
         // Total = ALL crmData, Expired but Still Using = Category B only
         function computeRenewalData() {
@@ -14144,12 +14158,25 @@ async function exportActivityLog() {
             updateCloudBackupBulkBar();
             
             // Restore focus and cursor position after re-rendering
+            let restored = false;
             if (activeId) {
                 const el = document.getElementById(activeId);
                 if (el && el.tagName === activeTag) {
                     el.focus();
                     if (cursorPos !== null && el.setSelectionRange) {
                         el.setSelectionRange(cursorPos, selectionEnd !== null ? selectionEnd : cursorPos);
+                    }
+                    restored = true;
+                }
+            }
+            // If active element wasn't restored (e.g. button click), restore last text input
+            if (!restored && window._cloudBackupLastTextInput) {
+                const last = window._cloudBackupLastTextInput;
+                const el = document.getElementById(last.id);
+                if (el && el.tagName === last.tagName) {
+                    el.focus();
+                    if (last.cursorPos !== undefined && el.setSelectionRange) {
+                        el.setSelectionRange(last.cursorPos, last.selectionEnd !== undefined ? last.selectionEnd : last.cursorPos);
                     }
                 }
             }
