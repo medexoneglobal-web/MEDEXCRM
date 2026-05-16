@@ -6046,10 +6046,16 @@
                 }
                 renderMTNRenewalModule();
             } else if (sectionId === 'cloudBackup') {
-                if (crmData.length === 0) {
-                    await refreshTableFromSupabase();
+                try {
+                    if (crmData.length === 0) {
+                        await refreshTableFromSupabase();
+                    }
+                    renderCloudBackupModule();
+                } catch (err) {
+                    console.error('[Cloud Backup] section error:', err);
+                    const content = document.getElementById('cloudBackupContent');
+                    if (content) content.innerHTML = '<div style="color:red;padding:20px;">Failed to load Cloud Backup data. Please check console for details.</div>';
                 }
-                renderCloudBackupModule();
             } else if (sectionId === 'reports') {
                 if (crmData.length === 0) {
                     await refreshTableFromSupabase();
@@ -13689,9 +13695,17 @@ async function exportActivityLog() {
         // ============================================
 
         function renderCloudBackupModule() {
-            const data = computeCloudBackupData();
-            renderCloudBackupKPIs(data);
-            filterCloudBackupData();
+            try {
+                const data = computeCloudBackupData();
+                renderCloudBackupKPIs(data);
+                filterCloudBackupData();
+            } catch (err) {
+                console.error('[Cloud Backup] render error:', err);
+                const kpiContainer = document.getElementById('cloudBackupKpiCards');
+                const contentContainer = document.getElementById('cloudBackupContent');
+                if (kpiContainer) kpiContainer.innerHTML = '<div style="color:red;padding:10px;">Error loading KPIs: ' + escapeHtml(err.message) + '</div>';
+                if (contentContainer) contentContainer.innerHTML = '<div style="color:red;padding:10px;">Error loading table: ' + escapeHtml(err.message) + '</div>';
+            }
         }
 
         function computeCloudBackupData() {
