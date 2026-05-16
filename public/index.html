@@ -13653,8 +13653,79 @@ async function exportActivityLog() {
             return endDate >= today ? 'active' : 'expired';
         }
 
+        function renderCloudBackupCheckButton(r, id) {
+            const checked = String(r['CHECKED'] || '').trim().toLowerCase();
+            const isChecked = checked === 'yes' || checked === 'true' || checked === '1';
+            const bg = isChecked ? '#22c55e' : '#e5e7eb';
+            const color = isChecked ? '#fff' : '#6b7280';
+            const icon = isChecked ? '&#10003;' : '&#10007;';
+            return `<button class="btn btn-sm" onclick="toggleCloudBackupChecked('${id}')" style="background:${bg};color:${color};border:none;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">${icon}</button>`;
+        }
+
+        async function toggleCloudBackupChecked(id) {
+            const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
+            if (!row) return;
+            const current = String(row['CHECKED'] || '').trim().toLowerCase();
+            const newVal = (current === 'yes' || current === 'true' || current === '1') ? 'NO' : 'YES';
+            row['CHECKED'] = newVal;
+            row['DATE CHECKED'] = new Date().toLocaleDateString('en-GB');
+            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+            row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+            try {
+                await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                logActivity({ module: 'Cloud Backup', action: 'CHECK', description: `${id} marked as ${newVal}` });
+                renderCloudBackupModule();
+            } catch (e) {
+                console.error('Check update failed', e);
+                alert('Update failed');
+            }
+        }
+
+        async function resetCloudBackupDailyCheck() {
+            const today = new Date().toDateString();
+            const lastReset = localStorage.getItem('cloudBackupLastReset');
+            if (lastReset === today) return; // Already reset today
+            
+            if (!confirm('Start new daily check? This will reset CHECKED status for all active records.')) return;
+            
+            let resetCount = 0;
+            for (const row of crmData) {
+                if (!hasCloudBackupData(row)) continue;
+                const status = getCloudBackupDerivedStatus(row);
+                if (status === 'active') {
+                    const current = String(row['CHECKED'] || '').trim().toLowerCase();
+                    if (current === 'yes' || current === 'true' || current === '1') {
+                        row['CHECKED'] = 'NO';
+                        row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+                        row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+                        try {
+                            await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                            resetCount++;
+                        } catch (e) {
+                            console.error('Reset failed for', row['ACCT NO'], e);
+                        }
+                    }
+                }
+            }
+            localStorage.setItem('cloudBackupLastReset', today);
+            logActivity({ module: 'Cloud Backup', action: 'DAILY RESET', description: `Reset ${resetCount} active records for daily check` });
+            alert(`Daily check started! ${resetCount} active record(s) reset.`);
+            renderCloudBackupModule();
+        }
+
         function renderCloudBackupModule() {
             try {
+                // Auto-prompt daily check if not done today
+                const today = new Date().toDateString();
+                const lastReset = localStorage.getItem('cloudBackupLastReset');
+                if (lastReset !== today) {
+                    setTimeout(() => {
+                        if (confirm('New day! Start daily check for all active cloud backups?')) {
+                            resetCloudBackupDailyCheck();
+                        }
+                    }, 500);
+                }
+                
                 const data = computeCloudBackupData();
                 renderCloudBackupKPIs(data);
                 filterCloudBackupData();
@@ -13974,6 +14045,7 @@ async function exportActivityLog() {
             }
             html += `</select>
                 <button class="btn btn-outline" onclick="fixCloudBackupDates()">Fix Dates</button>
+                <button class="btn btn-outline" onclick="resetCloudBackupDailyCheck()" style="padding:8px 14px;font-size:13px;background:#fef3c7;color:#92400e;border-color:#fbbf24;">Start Daily Check</button>
                 <button class="btn btn-outline" onclick="resetCloudBackupFilters()" style="padding:8px 14px;font-size:13px;">Reset</button>
             </div>`;
 
@@ -14006,7 +14078,6 @@ async function exportActivityLog() {
             html += `<th class="col-actualdate">MDO_DB LAST BACKUP</th>`;
             html += `<th class="col-actualdate">MDO_SERVER LAST BACKUP</th>`;
             html += `<th class="col-date">DATE CHECKED</th>`;
-            html += `<th class="col-status">ACTUAL STATUS</th>`;
             html += `<th class="col-checked">CHECKED</th>`;
             html += `<th class="col-remark">REMARK</th>`;
             html += `<th class="col-actions">ACTIONS</th>`;
@@ -14015,7 +14086,7 @@ async function exportActivityLog() {
                     <tbody>`;
 
             if (pageData.length === 0) {
-                html += `<tr><td colspan="19" style="text-align:center;padding:40px;color:#64748b;">No cloud backup records found.</td></tr>`;
+                html += `<tr><td colspan="18" style="text-align:center;padding:40px;color:#64748b;">No cloud backup records found.</td></tr>`;
             } else {
                 pageData.forEach((r, idx) => {
                     const id = String(r['ACCT NO'] || r.id || '');
@@ -14034,8 +14105,7 @@ async function exportActivityLog() {
                     html += `<td class="col-actualdate" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'MDO_DB LAST ACTUAL BACKUP DATE')">${renderCloudBackupCell(r, id, 'MDO_DB LAST ACTUAL BACKUP DATE')}</td>`;
                     html += `<td class="col-actualdate" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'MDO_SERVER LAST ACTUAL BACKUP DATE')">${renderCloudBackupCell(r, id, 'MDO_SERVER LAST ACTUAL BACKUP DATE')}</td>`;
                     html += `<td class="col-date" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'DATE CHECKED')">${renderCloudBackupCell(r, id, 'DATE CHECKED')}</td>`;
-                    html += `<td class="col-status" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'ACTUAL STATUS')">${renderCloudBackupCell(r, id, 'ACTUAL STATUS')}</td>`;
-                    html += `<td class="col-checked" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'CHECKED')">${renderCloudBackupCell(r, id, 'CHECKED')}</td>`;
+                    html += `<td class="col-checked">${renderCloudBackupCheckButton(r, id)}</td>`;
                     html += `<td class="col-remark" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')">${renderCloudBackupCell(r, id, 'REMARK')}</td>`;
                     html += `<td class="col-actions"><button class="btn btn-sm btn-outline" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')" style="padding:3px 8px;font-size:12px;">Edit</button></td>`;
                     html += `</tr>`;
@@ -14086,11 +14156,6 @@ async function exportActivityLog() {
                 const derivedStatus = getCloudBackupDerivedStatus(r);
                 const displayStatus = derivedStatus === 'no-status' ? 'NO STATUS' : derivedStatus.toUpperCase();
                 return `<span class="cloud-backup-status ${derivedStatus}">${escapeHtml(displayStatus)}</span>`;
-            }
-            if (field === 'ACTUAL STATUS') {
-                const status = String(r[field] || '').trim();
-                const statusClass = status.toLowerCase().replace(/\s+/g, '-') || 'no-status';
-                return `<span class="cloud-backup-status ${statusClass}">${escapeHtml(status || 'NO STATUS')}</span>`;
             }
             if (field === 'CHECKED') {
                 const checked = String(r[field] || '').toLowerCase();
@@ -14216,7 +14281,6 @@ async function exportActivityLog() {
                 'MDO_DB LAST ACTUAL BACKUP DATE': r['MDO_DB LAST ACTUAL BACKUP DATE'] || '',
                 'MDO_SERVER LAST ACTUAL BACKUP DATE': r['MDO_SERVER LAST ACTUAL BACKUP DATE'] || '',
                 'DATE CHECKED': r['DATE CHECKED'] || '',
-                'ACTUAL STATUS': r['ACTUAL STATUS'] || '',
                 'CHECKED': r['CHECKED'] || '',
                 'REMARK': r['REMARK'] || ''
             }));
@@ -14386,7 +14450,6 @@ async function exportActivityLog() {
                     setField('MDO_DB LAST ACTUAL BACKUP DATE', colMap.mdoDb);
                     setField('MDO_SERVER LAST ACTUAL BACKUP DATE', colMap.mdoServer);
                     setField('DATE CHECKED', colMap.dateChecked);
-                    setField('ACTUAL STATUS', colMap.actualStatus);
                     setField('CHECKED', colMap.checked);
                     setField('REMARK', colMap.remark);
         
