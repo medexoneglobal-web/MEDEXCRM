@@ -6240,39 +6240,14 @@
                 return;
             }
             
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const thirtyDaysFromNow = new Date(today);
-            thirtyDaysFromNow.setDate(today.getDate() + 30);
-            const terminateDate = new Date(2024, 0, 1); // January 1, 2024
+            // Use same logic as Cloud Backup Tracking module
+            const data = computeCloudBackupData();
+            const activeCount = data.active;
+            const expiredCount = data.expired;
+            const terminatedCount = data.terminated;
+            const hybFocCount = data.hybFoc;
             
-            // Calculate counts for each category
-            let activeCount = 0;
-            let expiringCount = 0;
-            let expiredCount = 0;
-            let terminatedCount = 0;
-            
-            crmData.forEach(row => {
-                const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                
-                if (cloudEndDate) {
-                    if (cloudEndDate < today) {
-                        if (cloudEndDate < terminateDate) {
-                            // Terminate Cloud Backup (expired before 2024)
-                            terminatedCount++;
-                        } else {
-                            // Regular expired (after 2024)
-                            expiredCount++;
-                        }
-                    } else if (cloudEndDate <= thirtyDaysFromNow) {
-                        expiringCount++;
-                    } else {
-                        activeCount++;
-                    }
-                }
-            });
-            
-            // Render 4 cards
+            // Render 4 cards matching Tracking categories
             container.innerHTML = `
                 <div class="maintenance-card card-active ${currentCloudDetailType === 'active' ? 'active' : ''}" onclick="showCloudBackupDetail('active')">
                     <div class="card-icon">&#9729;</div>
@@ -6280,14 +6255,6 @@
                         <div class="card-number">${activeCount}</div>
                         <div class="card-label">Cloud Backup Active</div>
                         <div class="card-desc">All active cloud backups</div>
-                    </div>
-                </div>
-                <div class="maintenance-card card-expiring ${currentCloudDetailType === 'expiring' ? 'active' : ''}" onclick="showCloudBackupDetail('expiring')">
-                    <div class="card-icon">&#9200;</div>
-                    <div class="card-content">
-                        <div class="card-number">${expiringCount}</div>
-                        <div class="card-label">Expiring Soon (30 Days)</div>
-                        <div class="card-desc">Cloud backup expiring soon</div>
                     </div>
                 </div>
                 <div class="maintenance-card card-expired ${currentCloudDetailType === 'expired' ? 'active' : ''}" onclick="showCloudBackupDetail('expired')">
@@ -6304,6 +6271,14 @@
                         <div class="card-number">${terminatedCount}</div>
                         <div class="card-label">Terminated</div>
                         <div class="card-desc">Cloud backup terminated</div>
+                    </div>
+                </div>
+                <div class="maintenance-card card-blue ${currentCloudDetailType === 'hyb-foc' ? 'active' : ''}" onclick="showCloudBackupDetail('hyb-foc')">
+                    <div class="card-icon">&#128736;</div>
+                    <div class="card-content">
+                        <div class="card-number">${hybFocCount}</div>
+                        <div class="card-label">HYB FOC</div>
+                        <div class="card-desc">FOC cloud backup</div>
                     </div>
                 </div>
             `;
@@ -6595,12 +6570,6 @@
             // Re-render cards to update active state
             renderCloudBackupReport();
             
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const thirtyDaysFromNow = new Date(today);
-            thirtyDaysFromNow.setDate(today.getDate() + 30);
-            const terminateDate = new Date(2024, 0, 1); // January 1, 2024
-            
             let data = [];
             let title = '';
             let columns = [];
@@ -6609,34 +6578,21 @@
             switch (type) {
                 case 'active':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return cloudEndDate && cloudEndDate > thirtyDaysFromNow;
+                        if (!hasCloudBackupData(row)) return false;
+                        return getCloudBackupDerivedStatus(row) === 'active';
                     });
                     title = `Cloud Backup Active - ${data.length} Clinics`;
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = columns;
                     break;
                     
-                case 'expiring':
-                    data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return cloudEndDate && cloudEndDate >= today && cloudEndDate <= thirtyDaysFromNow;
-                    }).map(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysUntilExpiry: daysBetween(today, cloudEndDate) };
-                    }).sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
-                    title = `Cloud Backup Expiring (30 days) - ${data.length} Clinics`;
-                    columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysUntilExpiry', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Days Until Expiry', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    break;
-                    
                 case 'expired':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return cloudEndDate && cloudEndDate < today && cloudEndDate >= terminateDate;
+                        if (!hasCloudBackupData(row)) return false;
+                        return getCloudBackupDerivedStatus(row) === 'expired';
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysExpired: daysBetween(cloudEndDate, today) };
+                        return { ...row, daysExpired: cloudEndDate ? daysBetween(cloudEndDate, new Date()) : 0 };
                     }).sort((a, b) => b.daysExpired - a.daysExpired);
                     title = `Cloud Backup Expired - ${data.length} Clinics`;
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysExpired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -6645,15 +6601,25 @@
                     
                 case 'terminated':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return cloudEndDate && cloudEndDate < today && cloudEndDate < terminateDate;
+                        if (!hasCloudBackupData(row)) return false;
+                        return getCloudBackupDerivedStatus(row) === 'terminated';
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysExpired: daysBetween(cloudEndDate, today) };
+                        return { ...row, daysExpired: cloudEndDate ? daysBetween(cloudEndDate, new Date()) : 0 };
                     }).sort((a, b) => b.daysExpired - a.daysExpired);
-                    title = `Terminate Cloud Backup - ${data.length} Clinics`;
+                    title = `Terminated Cloud Backup - ${data.length} Clinics`;
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysExpired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Total Days Expired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
+                    break;
+                    
+                case 'hyb-foc':
+                    data = crmData.filter(row => {
+                        if (!hasCloudBackupData(row)) return false;
+                        return getCloudBackupDerivedStatus(row) === 'hyb foc';
+                    });
+                    title = `HYB FOC Cloud Backup - ${data.length} Clinics`;
+                    columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
+                    displayColumns = columns;
                     break;
             }
             
@@ -6721,12 +6687,7 @@
                 let rowClass = '';
                 
                 // Apply color coding based on type
-                if (type === 'expiring' && row.daysUntilExpiry !== undefined) {
-                    const days = row.daysUntilExpiry;
-                    if (days < 7) rowClass = 'row-expiry-red';
-                    else if (days <= 14) rowClass = 'row-expiry-orange';
-                    else if (days <= 30) rowClass = 'row-expiry-yellow';
-                } else if (type === 'expired' && row.daysExpired !== undefined) {
+                if (type === 'expired' && row.daysExpired !== undefined) {
                     const days = row.daysExpired;
                     if (days > 365) rowClass = 'row-expired-red';
                     else if (days >= 90) rowClass = 'row-expired-orange';
@@ -6740,7 +6701,7 @@
                         val = formatExcelDate(val);
                     }
                     // Bold the days column
-                    if (col === 'daysUntilExpiry' || col === 'daysExpired') {
+                    if (col === 'daysExpired') {
                         return `<td><strong>${val}</strong></td>`;
                     }
                     return `<td>${escapeHtml(String(val))}</td>`;
@@ -6764,12 +6725,6 @@
             const container = document.getElementById('cloudBackupDetailContainer');
             if (!container) return;
             
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const thirtyDaysFromNow = new Date(today);
-            thirtyDaysFromNow.setDate(today.getDate() + 30);
-            const terminateDate = new Date(2024, 0, 1); // January 1, 2024
-            
             let data = [];
             let title = '';
             let columns = [];
@@ -6778,40 +6733,25 @@
             switch (type) {
                 case 'active':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'active' && matchesDealer && matchesProduct;
                     });
                     title = `Cloud Backup Active - ${data.length} Clinics`;
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = columns;
                     break;
                     
-                case 'expiring':
-                    data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate >= today && cloudEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
-                    }).map(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysUntilExpiry: daysBetween(today, cloudEndDate) };
-                    }).sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
-                    title = `Cloud Backup Expiring (30 days) - ${data.length} Clinics`;
-                    columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysUntilExpiry', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Days Until Expiry', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    break;
-                    
                 case 'expired':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate < today && cloudEndDate >= terminateDate && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'expired' && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysExpired: daysBetween(cloudEndDate, today) };
+                        return { ...row, daysExpired: cloudEndDate ? daysBetween(cloudEndDate, new Date()) : 0 };
                     }).sort((a, b) => b.daysExpired - a.daysExpired);
                     title = `Cloud Backup Expired - ${data.length} Clinics`;
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysExpired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -6820,17 +6760,29 @@
                     
                 case 'terminated':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate < today && cloudEndDate < terminateDate && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'terminated' && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysExpired: daysBetween(cloudEndDate, today) };
+                        return { ...row, daysExpired: cloudEndDate ? daysBetween(cloudEndDate, new Date()) : 0 };
                     }).sort((a, b) => b.daysExpired - a.daysExpired);
-                    title = `Terminate Cloud Backup - ${data.length} Clinics`;
+                    title = `Terminated Cloud Backup - ${data.length} Clinics`;
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysExpired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Total Days Expired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
+                    break;
+                    
+                case 'hyb-foc':
+                    data = crmData.filter(row => {
+                        if (!hasCloudBackupData(row)) return false;
+                        const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
+                        return getCloudBackupDerivedStatus(row) === 'hyb foc' && matchesDealer && matchesProduct;
+                    });
+                    title = `HYB FOC Cloud Backup - ${data.length} Clinics`;
+                    columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
+                    displayColumns = columns;
                     break;
             }
             
@@ -6872,12 +6824,6 @@
             const dealerFilter = document.getElementById('cloudDetailDealerFilter')?.value || '';
             const productFilter = document.getElementById('cloudDetailProductFilter')?.value || '';
             
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const thirtyDaysFromNow = new Date(today);
-            thirtyDaysFromNow.setDate(today.getDate() + 30);
-            const terminateDate = new Date(2024, 0, 1); // January 1, 2024
-            
             let data = [];
             let columns = [];
             let displayColumns = [];
@@ -6886,40 +6832,25 @@
             switch (type) {
                 case 'active':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'active' && matchesDealer && matchesProduct;
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = columns;
                     filename = 'cloud_backup_active' + (dealerFilter ? `_${dealerFilter}` : '') + (productFilter ? `_${productFilter}` : '');
                     break;
                     
-                case 'expiring':
-                    data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate >= today && cloudEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
-                    }).map(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysUntilExpiry: daysBetween(today, cloudEndDate) };
-                    });
-                    columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysUntilExpiry', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Days Until Expiry', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    filename = 'cloud_backup_expiring' + (dealerFilter ? `_${dealerFilter}` : '') + (productFilter ? `_${productFilter}` : '');
-                    break;
-                    
                 case 'expired':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate < today && cloudEndDate >= terminateDate && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'expired' && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysExpired: daysBetween(cloudEndDate, today) };
+                        return { ...row, daysExpired: cloudEndDate ? daysBetween(cloudEndDate, new Date()) : 0 };
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysExpired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Total Days Expired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -6928,17 +6859,29 @@
                     
                 case 'terminated':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate < today && cloudEndDate < terminateDate && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'terminated' && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysExpired: daysBetween(cloudEndDate, today) };
+                        return { ...row, daysExpired: cloudEndDate ? daysBetween(cloudEndDate, new Date()) : 0 };
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysExpired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Total Days Expired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     filename = 'cloud_backup_terminated' + (dealerFilter ? `_${dealerFilter}` : '') + (productFilter ? `_${productFilter}` : '');
+                    break;
+                    
+                case 'hyb-foc':
+                    data = crmData.filter(row => {
+                        if (!hasCloudBackupData(row)) return false;
+                        const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
+                        return getCloudBackupDerivedStatus(row) === 'hyb foc' && matchesDealer && matchesProduct;
+                    });
+                    columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
+                    displayColumns = columns;
+                    filename = 'cloud_backup_hyb_foc' + (dealerFilter ? `_${dealerFilter}` : '') + (productFilter ? `_${productFilter}` : '');
                     break;
             }
             
@@ -6953,12 +6896,6 @@
             const dealerFilter = document.getElementById('cloudDetailDealerFilter')?.value || '';
             const productFilter = document.getElementById('cloudDetailProductFilter')?.value || '';
             
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const thirtyDaysFromNow = new Date(today);
-            thirtyDaysFromNow.setDate(today.getDate() + 30);
-            const terminateDate = new Date(2024, 0, 1); // January 1, 2024
-            
             let data = [];
             let columns = [];
             let displayColumns = [];
@@ -6967,40 +6904,25 @@
             switch (type) {
                 case 'active':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'active' && matchesDealer && matchesProduct;
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = columns;
                     title = 'Cloud Backup Active' + (dealerFilter ? ` - ${dealerFilter}` : '') + (productFilter ? ` - ${productFilter}` : '');
                     break;
                     
-                case 'expiring':
-                    data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
-                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate >= today && cloudEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
-                    }).map(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysUntilExpiry: daysBetween(today, cloudEndDate) };
-                    });
-                    columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysUntilExpiry', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Days Until Expiry', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    title = 'Cloud Backup Expiring (30 days)' + (dealerFilter ? ` - ${dealerFilter}` : '') + (productFilter ? ` - ${productFilter}` : '');
-                    break;
-                    
                 case 'expired':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate < today && cloudEndDate >= terminateDate && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'expired' && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysExpired: daysBetween(cloudEndDate, today) };
+                        return { ...row, daysExpired: cloudEndDate ? daysBetween(cloudEndDate, new Date()) : 0 };
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysExpired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Total Days Expired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -7009,17 +6931,29 @@
                     
                 case 'terminated':
                     data = crmData.filter(row => {
-                        const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
+                        if (!hasCloudBackupData(row)) return false;
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return cloudEndDate && cloudEndDate < today && cloudEndDate < terminateDate && matchesDealer && matchesProduct;
+                        return getCloudBackupDerivedStatus(row) === 'terminated' && matchesDealer && matchesProduct;
                     }).map(row => {
                         const cloudEndDate = parseDateToJs(row['CLOUD END DATE']);
-                        return { ...row, daysExpired: daysBetween(cloudEndDate, today) };
+                        return { ...row, daysExpired: cloudEndDate ? daysBetween(cloudEndDate, new Date()) : 0 };
                     });
                     columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'daysExpired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
                     displayColumns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'Total Days Expired', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
-                    title = 'Terminate Cloud Backup' + (dealerFilter ? ` - ${dealerFilter}` : '') + (productFilter ? ` - ${productFilter}` : '');
+                    title = 'Terminated Cloud Backup' + (dealerFilter ? ` - ${dealerFilter}` : '') + (productFilter ? ` - ${productFilter}` : '');
+                    break;
+                    
+                case 'hyb-foc':
+                    data = crmData.filter(row => {
+                        if (!hasCloudBackupData(row)) return false;
+                        const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
+                        const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
+                        return getCloudBackupDerivedStatus(row) === 'hyb foc' && matchesDealer && matchesProduct;
+                    });
+                    columns = ['ACCT NO', 'CLINIC NAME', 'CLOUD START DATE', 'CLOUD END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
+                    displayColumns = columns;
+                    title = 'HYB FOC Cloud Backup' + (dealerFilter ? ` - ${dealerFilter}` : '') + (productFilter ? ` - ${productFilter}` : '');
                     break;
             }
             
