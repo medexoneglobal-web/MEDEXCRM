@@ -14243,8 +14243,28 @@ async function exportActivityLog() {
             try {
                 const data = await file.arrayBuffer();
                 const workbook = XLSX.read(data, { type: 'array' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                
+                // Find the sheet with ACCT and STATUS columns
+                let targetSheet = null;
+                for (const sheetName of workbook.SheetNames) {
+                    const sheet = workbook.Sheets[sheetName];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                    if (rows.length > 0) {
+                        const headers = rows[0].map(h => String(h).trim().toUpperCase());
+                        if (headers.some(h => h.includes('ACCT')) && headers.some(h => h.includes('STATUS'))) {
+                            targetSheet = sheet;
+                            console.log('[Import] Using sheet:', sheetName, 'with headers:', headers);
+                            break;
+                        }
+                    }
+                }
+                
+                if (!targetSheet) {
+                    alert('Could not find a sheet with ACCT and STATUS columns. Sheets found: ' + workbook.SheetNames.join(', '));
+                    return;
+                }
+                
+                const rows = XLSX.utils.sheet_to_json(targetSheet, { header: 1, defval: '' });
                 if (rows.length < 2) { alert('Excel file is empty.'); return; }
                 
                 // Find column indices - first row is header
