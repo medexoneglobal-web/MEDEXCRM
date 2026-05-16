@@ -14259,10 +14259,38 @@ async function exportActivityLog() {
         async function importCloudBackupData(input) {
             const file = input.files[0];
             if (!file) return;
+        
+            // Helper to format Excel date values (serial numbers or Date objects) to DD/MM/YYYY
+            function formatExcelDate(val) {
+                if (val === null || val === undefined || val === '') return '';
+                // If it's already a string that looks like a date, return as-is
+                const str = String(val).trim();
+                if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return str;
+                // If it's a Date object
+                if (val instanceof Date) {
+                    const d = val.getDate().toString().padStart(2, '0');
+                    const m = (val.getMonth() + 1).toString().padStart(2, '0');
+                    const y = val.getFullYear();
+                    return `${d}/${m}/${y}`;
+                }
+                // If it's a number (Excel serial date), convert it
+                const num = parseFloat(str);
+                if (!isNaN(num) && num > 30000 && num < 60000) {
+                    // Excel serial date to JS Date (Windows epoch: 1900-01-01)
+                    const epoch = new Date(1899, 11, 30);
+                    const date = new Date(epoch.getTime() + num * 24 * 60 * 60 * 1000);
+                    const d = date.getDate().toString().padStart(2, '0');
+                    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const y = date.getFullYear();
+                    return `${d}/${m}/${y}`;
+                }
+                return str;
+            }
+        
             try {
                 const data = await file.arrayBuffer();
-                const workbook = XLSX.read(data, { type: 'array' });
-
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        
                 // Find the sheet with ACCT and STATUS columns
                 let targetSheet = null;
                 let sheetNameUsed = '';
@@ -14281,7 +14309,7 @@ async function exportActivityLog() {
                         }
                     }
                 }
-
+        
                 // Fallback: find sheet with just ACCT column
                 if (!targetSheet) {
                     for (const sheetName of workbook.SheetNames) {
@@ -14298,15 +14326,15 @@ async function exportActivityLog() {
                         }
                     }
                 }
-
+        
                 if (!targetSheet) {
                     alert('Could not find a sheet with ACCT/ACCOUNT column. Sheets found: ' + workbook.SheetNames.join(', '));
                     return;
                 }
-
+        
                 const rows = XLSX.utils.sheet_to_json(targetSheet, { header: 1, defval: '' });
                 if (rows.length < 2) { alert('Excel file is empty.'); return; }
-
+        
                 // Header mapping: find column indices by partial match
                 const headers = rows[0].map(h => String(h).trim().toUpperCase());
                 const findCol = (keywords) => {
@@ -14316,7 +14344,7 @@ async function exportActivityLog() {
                     }
                     return -1;
                 };
-
+        
                 const colMap = {
                     acct: findCol(['ACCT']),
                     clinic: findCol(['CLINIC NAME', 'CLINIC']),
@@ -14335,46 +14363,53 @@ async function exportActivityLog() {
                     checked: findCol(['CHECKED']),
                     remark: findCol(['REMARK'])
                 };
-
+        
                 console.log('[Import] Column mapping:', colMap);
-
+        
                 // Build CRM lookup map
                 const crmAcctMap = new Map();
                 crmData.forEach(r => {
                     const acct = String(r['ACCT NO'] || '').trim().toUpperCase();
                     if (acct) crmAcctMap.set(acct, r);
                 });
-
+        
+                const dateFields = ['CLOUD START DATE', 'CLOUD END DATE', 'MDO_DB LAST ACTUAL BACKUP DATE', 'MDO_SERVER LAST ACTUAL BACKUP DATE', 'DATE CHECKED'];
+        
                 let matched = 0, updated = 0, notFound = [];
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     if (!row || row.length === 0) continue;
-
+        
                     let excelAcct = String(row[colMap.acct] || '').trim().toUpperCase();
                     if (!excelAcct) continue;
                     if (!excelAcct.startsWith('M_') && !excelAcct.startsWith('M-')) {
                         excelAcct = 'M_' + excelAcct;
                     }
-
+        
                     const crmRow = crmAcctMap.get(excelAcct);
                     if (!crmRow) {
                         notFound.push(excelAcct);
                         continue;
                     }
                     matched++;
-
+        
                     let changed = false;
                     const setField = (field, colIdx) => {
                         if (colIdx === -1) return;
-                        const val = String(row[colIdx] || '').trim();
-                        const current = String(crmRow[field] || '').trim();
-                        if (!val) return;
-                        if (val !== current) {
-                            crmRow[field] = val;
-                            changed = true;
+                        let val = row[colIdx];
+                        if (val === null || val === undefined || val === '') return;
+                        // Format dates properly
+                        if (dateFields.includes(field)) {
+                            val = formatExcelDate(val);
+                        } else {
+                            val = String(val).trim();
                         }
+                        const current = String(crmRow[field] || '').trim();
+                        if (!val || val === current) return;
+                        crmRow[field] = val;
+                        changed = true;
                     };
-
+        
                     setField('CLINIC NAME', colMap.clinic);
                     setField('CLOUD START DATE', colMap.cloudStart);
                     setField('CLOUD END DATE', colMap.cloudEnd);
@@ -14390,7 +14425,7 @@ async function exportActivityLog() {
                     setField('ACTUAL STATUS', colMap.actualStatus);
                     setField('CHECKED', colMap.checked);
                     setField('REMARK', colMap.remark);
-
+        
                     if (changed) {
                         crmRow['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
                         crmRow['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
@@ -14402,7 +14437,7 @@ async function exportActivityLog() {
                         }
                     }
                 }
-
+        
                 logActivity({ module: 'Cloud Backup', action: 'IMPORT', description: `Imported ${updated} records from Excel (${matched} matched, ${notFound.length} not found)` });
                 alert(`Import complete!\nMatched: ${matched}\nUpdated: ${updated}\nNot found: ${notFound.length}${notFound.length > 0 ? '\n\nFirst 10 not found:\n' + notFound.slice(0, 10).join(', ') : ''}`);
                 renderCloudBackupModule();
