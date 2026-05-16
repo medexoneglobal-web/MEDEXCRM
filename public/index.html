@@ -12570,6 +12570,7 @@ async function exportActivityLog() {
         let cloudBackupSortDir = 'asc';
         let cloudBackupStatusFilter = '';
         let cloudBackupSearchText = '';
+        let cloudBackup365AcctFilter = '';
         let cloudBackupMonthFrom = '';
         let cloudBackupYearFrom = '';
         let cloudBackupMonthTo = '';
@@ -13833,6 +13834,12 @@ async function exportActivityLog() {
                     const product = String(r['PRODUCT TYPE'] || '').toLowerCase();
                     if (!clinic.includes(search) && !acct.includes(search) && !product.includes(search)) return false;
                 }
+                // 365 Account No filter
+                if (cloudBackup365AcctFilter) {
+                    const filter365 = cloudBackup365AcctFilter.toLowerCase();
+                    const acct365 = String(r['365 ACCOUNT NO'] || '').toLowerCase();
+                    if (!acct365.includes(filter365)) return false;
+                }
                 // Month filter
                 if (cloudBackupMonthFrom && cloudBackupYearFrom) {
                     if (cloudEnd) {
@@ -13882,6 +13889,15 @@ async function exportActivityLog() {
             cloudBackupDebounceTimer = setTimeout(filterCloudBackupData, 300);
         }
 
+        function onCloudBackup365Filter() {
+            const el = document.getElementById('cloudBackup365Acct');
+            cloudBackup365AcctFilter = el ? el.value.trim() : '';
+            cloudBackupCurrentPage = 1;
+            cloudBackupSelectedIds.clear();
+            if (cloudBackupDebounceTimer) clearTimeout(cloudBackupDebounceTimer);
+            cloudBackupDebounceTimer = setTimeout(filterCloudBackupData, 300);
+        }
+
         function onCloudBackupMonthFilter() {
             const mf = document.getElementById('cloudBackupMonthFrom');
             const yf = document.getElementById('cloudBackupYearFrom');
@@ -13898,6 +13914,7 @@ async function exportActivityLog() {
 
         function resetCloudBackupFilters() {
             cloudBackupSearchText = '';
+            cloudBackup365AcctFilter = '';
             cloudBackupMonthFrom = '';
             cloudBackupYearFrom = '';
             cloudBackupMonthTo = '';
@@ -13907,6 +13924,8 @@ async function exportActivityLog() {
             cloudBackupSelectedIds.clear();
             const searchEl = document.getElementById('cloudBackupSearch');
             if (searchEl) searchEl.value = '';
+            const acct365El = document.getElementById('cloudBackup365Acct');
+            if (acct365El) acct365El.value = '';
             const mf = document.getElementById('cloudBackupMonthFrom');
             const yf = document.getElementById('cloudBackupYearFrom');
             const mt = document.getElementById('cloudBackupMonthTo');
@@ -13977,6 +13996,7 @@ async function exportActivityLog() {
             let html = `
             <div class="mtn-renewal-toolbar" style="margin-bottom:16px;">
                 <input type="text" id="cloudBackupSearch" placeholder="Search clinic, account, product..." value="${escapeHtml(cloudBackupSearchText)}" oninput="onCloudBackupSearch()" style="flex:1;min-width:200px;max-width:320px;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                <input type="text" id="cloudBackup365Acct" placeholder="365 Account No" value="${escapeHtml(cloudBackup365AcctFilter)}" oninput="onCloudBackup365Filter()" style="min-width:140px;max-width:180px;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
                 <select id="cloudBackupMonthFrom" onchange="onCloudBackupMonthFilter()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
                     <option value="">Month From</option>`;
             for (let m = 1; m <= 12; m++) {
