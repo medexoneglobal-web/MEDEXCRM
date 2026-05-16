@@ -12562,6 +12562,7 @@ async function exportActivityLog() {
         let cloudBackupMonthTo = '';
         let cloudBackupYearTo = '';
         let cloudBackupSelectedIds = new Set();
+        let cloudBackupEditingCell = '';
 
         // Compute renewal data from crmData - same logic as MTN Categorized Report
         // Total = ALL crmData, Expired but Still Using = Category B only
@@ -13704,7 +13705,7 @@ async function exportActivityLog() {
                 if (!r) return;
                 total++;
                 const status = String(r['STATUS'] || '').trim().toLowerCase();
-                const cloudEnd = parseDate(r['CLOUD END DATE']);
+                const cloudEnd = parseDateToJs(r['CLOUD END DATE']);
                 const isChecked = String(r['CHECKED'] || '').trim().toLowerCase();
                 if (status === 'terminated') {
                     terminated++;
@@ -13769,7 +13770,7 @@ async function exportActivityLog() {
             let filtered = crmData.filter(r => {
                 if (!r) return false;
                 const status = String(r['STATUS'] || '').trim().toLowerCase();
-                const cloudEnd = parseDate(r['CLOUD END DATE']);
+                const cloudEnd = parseDateToJs(r['CLOUD END DATE']);
                 const isChecked = String(r['CHECKED'] || '').trim().toLowerCase();
                 // Status filter
                 if (cloudBackupStatusFilter) {
@@ -13828,8 +13829,8 @@ async function exportActivityLog() {
                     let av = a[cloudBackupSortKey] || '';
                     let bv = b[cloudBackupSortKey] || '';
                     if (cloudBackupSortKey === 'CLOUD END DATE') {
-                        av = parseDate(av) || new Date(0);
-                        bv = parseDate(bv) || new Date(0);
+                        av = parseDateToJs(av) || new Date(0);
+                        bv = parseDateToJs(bv) || new Date(0);
                         return cloudBackupSortDir === 'asc' ? av - bv : bv - av;
                     }
                     if (typeof av === 'string') av = av.toLowerCase();
@@ -14085,8 +14086,6 @@ async function exportActivityLog() {
             return escapeHtml(r[field] || '');
         }
 
-        let cloudBackupEditingCell = '';
-
         function startCloudBackupInlineEdit(id, field) {
             cloudBackupEditingCell = id + '-' + field;
             renderCloudBackupTable();
@@ -14102,7 +14101,7 @@ async function exportActivityLog() {
             if (!el) return;
             let value = el.value.trim();
             if (DATE_COLUMNS.includes(field)) {
-                value = formatDateDDMMYYYY(value);
+                value = fromInputDate(value);
             }
             const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
             if (!row) return;
