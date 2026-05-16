@@ -14271,7 +14271,9 @@ async function exportActivityLog() {
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
                     if (rows.length > 0) {
                         const headers = rows[0].map(h => String(h).trim().toUpperCase());
-                        if (headers.some(h => h.includes('ACCT')) && headers.some(h => h.includes('STATUS'))) {
+                        const hasAcct = headers.some(h => h.includes('ACCT') || h.includes('ACCOUNT'));
+                        const hasStatus = headers.some(h => h.includes('STATUS'));
+                        if (hasAcct && hasStatus) {
                             targetSheet = sheet;
                             sheetNameUsed = sheetName;
                             console.log('[Import] Using sheet:', sheetName, 'with headers:', headers);
@@ -14280,8 +14282,25 @@ async function exportActivityLog() {
                     }
                 }
 
+                // Fallback: find sheet with just ACCT column
                 if (!targetSheet) {
-                    alert('Could not find a sheet with ACCT and STATUS columns. Sheets found: ' + workbook.SheetNames.join(', '));
+                    for (const sheetName of workbook.SheetNames) {
+                        const sheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                        if (rows.length > 0) {
+                            const headers = rows[0].map(h => String(h).trim().toUpperCase());
+                            if (headers.some(h => h.includes('ACCT') || h.includes('ACCOUNT'))) {
+                                targetSheet = sheet;
+                                sheetNameUsed = sheetName;
+                                console.log('[Import] Fallback sheet:', sheetName, 'with headers:', headers);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!targetSheet) {
+                    alert('Could not find a sheet with ACCT/ACCOUNT column. Sheets found: ' + workbook.SheetNames.join(', '));
                     return;
                 }
 
