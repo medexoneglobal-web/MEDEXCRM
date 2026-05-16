@@ -13708,6 +13708,14 @@ async function exportActivityLog() {
             }
         }
 
+        function hasCloudBackupData(r) {
+            if (!r) return false;
+            const start = String(r['CLOUD START DATE'] || '').trim();
+            const end = String(r['CLOUD END DATE'] || '').trim();
+            const status = String(r['STATUS'] || '').trim();
+            return start !== '' || end !== '' || status !== '';
+        }
+
         function computeCloudBackupData() {
             const today = new Date();
             today.setHours(0,0,0,0);
@@ -13716,7 +13724,7 @@ async function exportActivityLog() {
                 return { total: 0, active: 0, expired: 0, terminated: 0, others: 0, checked: 0 };
             }
             crmData.forEach(r => {
-                if (!r) return;
+                if (!r || !hasCloudBackupData(r)) return;
                 total++;
                 const status = String(r['STATUS'] || '').trim().toLowerCase();
                 const cloudEnd = parseDateToJs(r['CLOUD END DATE']);
@@ -13782,7 +13790,7 @@ async function exportActivityLog() {
             const today = new Date();
             today.setHours(0,0,0,0);
             let filtered = crmData.filter(r => {
-                if (!r) return false;
+                if (!r || !hasCloudBackupData(r)) return false;
                 const status = String(r['STATUS'] || '').trim().toLowerCase();
                 const cloudEnd = parseDateToJs(r['CLOUD END DATE']);
                 const isChecked = String(r['CHECKED'] || '').trim().toLowerCase();
