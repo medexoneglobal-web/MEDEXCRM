@@ -14364,29 +14364,31 @@ async function exportActivityLog() {
                     matched++;
 
                     let changed = false;
-                    const setField = (field, colIdx) => {
+                    const setField = (field, colIdx, onlyIfEmpty = false) => {
                         if (colIdx === -1) return;
                         const val = String(row[colIdx] || '').trim();
                         const current = String(crmRow[field] || '').trim();
-                        if (val && val !== current) {
+                        if (!val) return;
+                        if (onlyIfEmpty && current) return;
+                        if (val !== current) {
                             crmRow[field] = val;
                             changed = true;
                         }
                     };
 
                     setField('CLINIC NAME', colMap.clinic);
-                    setField('CLOUD START DATE', colMap.cloudStart);
-                    setField('CLOUD END DATE', colMap.cloudEnd);
+                    setField('CLOUD START DATE', colMap.cloudStart, true);
+                    setField('CLOUD END DATE', colMap.cloudEnd, true);
                     setField('365 ACCOUNT NO', colMap.acct365);
                     setField('PASSWORD/PASSPHRASE', colMap.password);
                     setField('MONTH EXPIRED', colMap.monthExpired);
                     setField('Days of Expired', colMap.daysExpired);
-                    setField('STATUS', colMap.status);
+                    setField('STATUS', colMap.status, true);
                     setField('RENEWAL', colMap.renewal);
                     setField('MDO_DB LAST ACTUAL BACKUP DATE', colMap.mdoDb);
                     setField('MDO_SERVER LAST ACTUAL BACKUP DATE', colMap.mdoServer);
                     setField('DATE CHECKED', colMap.dateChecked);
-                    setField('ACTUAL STATUS', colMap.actualStatus);
+                    setField('ACTUAL STATUS', colMap.actualStatus, true);
                     setField('CHECKED', colMap.checked);
                     setField('REMARK', colMap.remark);
 
