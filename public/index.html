@@ -14011,6 +14011,14 @@ async function exportActivityLog() {
         function renderCloudBackupTable() {
             const container = document.getElementById('cloudBackupContent');
             if (!container) return;
+            
+            // Preserve focus and cursor position before re-rendering
+            const activeEl = document.activeElement;
+            const activeId = activeEl ? activeEl.id : null;
+            const activeTag = activeEl ? activeEl.tagName : null;
+            const cursorPos = activeEl && activeEl.selectionStart !== undefined ? activeEl.selectionStart : null;
+            const selectionEnd = activeEl && activeEl.selectionEnd !== undefined ? activeEl.selectionEnd : null;
+            
             const pageData = getCloudBackupPageData();
             const totalPages = Math.ceil(cloudBackupFilteredData.length / cloudBackupRowsPerPage) || 1;
 
@@ -14134,6 +14142,17 @@ async function exportActivityLog() {
 
             container.innerHTML = html;
             updateCloudBackupBulkBar();
+            
+            // Restore focus and cursor position after re-rendering
+            if (activeId) {
+                const el = document.getElementById(activeId);
+                if (el && el.tagName === activeTag) {
+                    el.focus();
+                    if (cursorPos !== null && el.setSelectionRange) {
+                        el.setSelectionRange(cursorPos, selectionEnd !== null ? selectionEnd : cursorPos);
+                    }
+                }
+            }
         }
 
         function renderCloudBackupCell(r, id, field) {
