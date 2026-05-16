@@ -14067,8 +14067,6 @@ async function exportActivityLog() {
             html += `<th class="col-date" style="cursor:pointer;" onclick="sortCloudBackupTable('CLOUD END DATE')">CLOUD END${sortIcon('CLOUD END DATE')}</th>`;
             html += `<th class="col-365acct">365 ACCT NO</th>`;
             html += `<th class="col-password">PASSWORD</th>`;
-            html += `<th class="col-month">MONTH EXPIRED</th>`;
-            html += `<th class="col-days">Days Expired</th>`;
             html += `<th class="col-status">STATUS</th>`;
             html += `<th class="col-renewal">RENEWAL</th>`;
             html += `<th class="col-actualdate">MDO_DB LAST BACKUP</th>`;
@@ -14097,8 +14095,6 @@ async function exportActivityLog() {
                     html += `<td class="col-date" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'CLOUD END DATE')">${renderCloudBackupCell(r, id, 'CLOUD END DATE')}</td>`;
                     html += `<td class="col-365acct" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', '365 ACCOUNT NO')">${renderCloudBackupCell(r, id, '365 ACCOUNT NO')}</td>`;
                     html += `<td class="col-password" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'PASSWORD/PASSPHRASE')">${renderCloudBackupCell(r, id, 'PASSWORD/PASSPHRASE')}</td>`;
-                    html += `<td class="col-month" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'MONTH EXPIRED')">${renderCloudBackupCell(r, id, 'MONTH EXPIRED')}</td>`;
-                    html += `<td class="col-days" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'Days of Expired')">${renderCloudBackupCell(r, id, 'Days of Expired')}</td>`;
                     html += `<td class="col-status" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'STATUS')">${renderCloudBackupCell(r, id, 'STATUS')}</td>`;
                     html += `<td class="col-renewal" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'RENEWAL')">${renderCloudBackupCell(r, id, 'RENEWAL')}</td>`;
                     html += `<td class="col-actualdate" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'MDO_DB LAST ACTUAL BACKUP DATE')">${renderCloudBackupCell(r, id, 'MDO_DB LAST ACTUAL BACKUP DATE')}</td>`;
@@ -14281,8 +14277,6 @@ async function exportActivityLog() {
                 'CLOUD END DATE': r['CLOUD END DATE'] || '',
                 '365 ACCOUNT NO': r['365 ACCOUNT NO'] || '',
                 'PASSWORD/PASSPHRASE': r['PASSWORD/PASSPHRASE'] || '',
-                'MONTH EXPIRED': r['MONTH EXPIRED'] || '',
-                'Days of Expired': r['Days of Expired'] || '',
                 'STATUS': r['STATUS'] || '',
                 'RENEWAL': r['RENEWAL'] || '',
                 'MDO_DB LAST ACTUAL BACKUP DATE': r['MDO_DB LAST ACTUAL BACKUP DATE'] || '',
@@ -14394,8 +14388,6 @@ async function exportActivityLog() {
                     clinic: findCol(['CLINIC NAME', 'CLINIC']),
                     acct365: findCol(['365', 'ACCOUNT NO']),
                     password: findCol(['PASSWORD', 'PASSPHRASE']),
-                    monthExpired: findCol(['MONTH EXPIRED']),
-                    daysExpired: findCol(['DAYS OF EXPIRED', 'DAYS EXPIRED']),
                     status: findCol(['STATUS']),
                     renewal: findCol(['RENEWAL']),
                     mdoDb: findCol(['MDO_DB', 'DB LAST']),
@@ -14455,8 +14447,6 @@ async function exportActivityLog() {
                     setField('CLINIC NAME', colMap.clinic);
                     setField('365 ACCOUNT NO', colMap.acct365);
                     setField('PASSWORD/PASSPHRASE', colMap.password);
-                    setField('MONTH EXPIRED', colMap.monthExpired);
-                    setField('Days of Expired', colMap.daysExpired);
                     setField('STATUS', colMap.status);
                     setField('RENEWAL', colMap.renewal);
                     setField('MDO_DB LAST ACTUAL BACKUP DATE', colMap.mdoDb);
