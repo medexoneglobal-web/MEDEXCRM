@@ -3635,6 +3635,10 @@
         .cloud-backup-table .col-date { width: 110px; min-width: 110px; }
         .cloud-backup-table .col-status { width: 100px; min-width: 100px; }
         .cloud-backup-table .col-365acct { width: 120px; min-width: 120px; }
+        .cloud-backup-table .col-password { width: 130px; min-width: 130px; }
+        .cloud-backup-table .col-month { width: 100px; min-width: 100px; }
+        .cloud-backup-table .col-days { width: 100px; min-width: 100px; }
+        .cloud-backup-table .col-renewal { width: 100px; min-width: 100px; }
         .cloud-backup-table .col-actualdate { width: 130px; min-width: 130px; }
         .cloud-backup-table .col-checked { width: 80px; min-width: 80px; }
         .cloud-backup-table .col-remark { width: 150px; min-width: 150px; max-width: 200px; }
@@ -4455,8 +4459,6 @@
                         <p style="margin:4px 0 0;color:#64748b;font-size:14px;">Track and manage cloud backup status, expiry dates, and verification records</p>
                     </div>
                     <div style="display:flex;gap:10px;">
-                        <button class="btn btn-outline" onclick="document.getElementById('cloudBackupImportInput').click()">Import Status from Excel</button>
-                        <input type="file" id="cloudBackupImportInput" accept=".xlsx,.xls" style="display:none;" onchange="importCloudBackupStatus(this)">
                         <button class="btn btn-outline" onclick="exportCloudBackupExcel()">Export to Excel</button>
                     </div>
                 </div>
@@ -14013,7 +14015,7 @@ async function exportActivityLog() {
             // Table
             html += `
             <div class="table-container" style="overflow-x:auto;">
-                <table class="saas-table cloud-backup-table" style="min-width:1400px;">
+                <table class="saas-table cloud-backup-table" style="min-width:2000px;">
                     <thead>
                         <tr>`;
             const sortIcon = (key) => cloudBackupSortKey === key ? (cloudBackupSortDir === 'asc' ? ' &#9650;' : ' &#9660;') : '';
@@ -14023,8 +14025,12 @@ async function exportActivityLog() {
             html += `<th class="col-product" style="cursor:pointer;" onclick="sortCloudBackupTable('PRODUCT TYPE')">PRODUCT TYPE${sortIcon('PRODUCT TYPE')}</th>`;
             html += `<th class="col-date" style="cursor:pointer;" onclick="sortCloudBackupTable('CLOUD START DATE')">CLOUD START${sortIcon('CLOUD START DATE')}</th>`;
             html += `<th class="col-date" style="cursor:pointer;" onclick="sortCloudBackupTable('CLOUD END DATE')">CLOUD END${sortIcon('CLOUD END DATE')}</th>`;
-            html += `<th class="col-status">STATUS</th>`;
             html += `<th class="col-365acct">365 ACCT NO</th>`;
+            html += `<th class="col-password">PASSWORD</th>`;
+            html += `<th class="col-month">MONTH EXPIRED</th>`;
+            html += `<th class="col-days">Days Expired</th>`;
+            html += `<th class="col-status">STATUS</th>`;
+            html += `<th class="col-renewal">RENEWAL</th>`;
             html += `<th class="col-actualdate">MDO_DB LAST BACKUP</th>`;
             html += `<th class="col-actualdate">MDO_SERVER LAST BACKUP</th>`;
             html += `<th class="col-date">DATE CHECKED</th>`;
@@ -14037,30 +14043,30 @@ async function exportActivityLog() {
                     <tbody>`;
 
             if (pageData.length === 0) {
-                html += `<tr><td colspan="15" style="text-align:center;padding:40px;color:#64748b;">No cloud backup records found.</td></tr>`;
+                html += `<tr><td colspan="19" style="text-align:center;padding:40px;color:#64748b;">No cloud backup records found.</td></tr>`;
             } else {
                 pageData.forEach((r, idx) => {
                     const id = String(r['ACCT NO'] || r.id || '');
                     const isSelected = cloudBackupSelectedIds.has(id);
-                    const status = String(r['STATUS'] || '').trim();
-                    const statusClass = status.toLowerCase().replace(/\s+/g, '-') || 'no-status';
-                    const checkedVal = String(r['CHECKED'] || '').trim();
-                    const isChecked = checkedVal.toLowerCase() === 'yes' || checkedVal.toLowerCase() === 'true' || checkedVal === '1';
                     html += `<tr data-row-id="${id}">`;
                     html += `<td class="col-checkbox"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleCloudBackupRow('${id}')"></td>`;
                     html += `<td class="col-acct">${escapeHtml(r['ACCT NO'] || '')}</td>`;
                     html += `<td class="col-clinic">${escapeHtml(r['CLINIC NAME'] || '')}</td>`;
-                    html += `<td class="col-product">${escapeHtml(r['PRODUCT TYPE'] || '')}</td>`;
-                    html += `<td class="col-date">${renderCloudBackupCell(r, id, 'CLOUD START DATE')}</td>`;
-                    html += `<td class="col-date">${renderCloudBackupCell(r, id, 'CLOUD END DATE')}</td>`;
-                    html += `<td class="col-status"><span class="cloud-backup-status ${statusClass}">${escapeHtml(status || 'NO STATUS')}</span></td>`;
-                    html += `<td class="col-365acct">${escapeHtml(r['365 ACCOUNT NO'] || '')}</td>`;
-                    html += `<td class="col-actualdate">${renderCloudBackupCell(r, id, 'MDO_DB LAST ACTUAL BACKUP DATE')}</td>`;
-                    html += `<td class="col-actualdate">${renderCloudBackupCell(r, id, 'MDO_SERVER LAST ACTUAL BACKUP DATE')}</td>`;
-                    html += `<td class="col-date">${renderCloudBackupCell(r, id, 'DATE CHECKED')}</td>`;
-                    html += `<td class="col-status">${renderCloudBackupCell(r, id, 'ACTUAL STATUS')}</td>`;
-                    html += `<td class="col-checked">${renderCloudBackupCell(r, id, 'CHECKED')}</td>`;
-                    html += `<td class="col-remark">${renderCloudBackupCell(r, id, 'REMARK')}</td>`;
+                    html += `<td class="col-product" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'PRODUCT TYPE')">${renderCloudBackupCell(r, id, 'PRODUCT TYPE')}</td>`;
+                    html += `<td class="col-date" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'CLOUD START DATE')">${renderCloudBackupCell(r, id, 'CLOUD START DATE')}</td>`;
+                    html += `<td class="col-date" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'CLOUD END DATE')">${renderCloudBackupCell(r, id, 'CLOUD END DATE')}</td>`;
+                    html += `<td class="col-365acct" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', '365 ACCOUNT NO')">${renderCloudBackupCell(r, id, '365 ACCOUNT NO')}</td>`;
+                    html += `<td class="col-password" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'PASSWORD/PASSPHRASE')">${renderCloudBackupCell(r, id, 'PASSWORD/PASSPHRASE')}</td>`;
+                    html += `<td class="col-month" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'MONTH EXPIRED')">${renderCloudBackupCell(r, id, 'MONTH EXPIRED')}</td>`;
+                    html += `<td class="col-days" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'Days of Expired')">${renderCloudBackupCell(r, id, 'Days of Expired')}</td>`;
+                    html += `<td class="col-status" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'STATUS')">${renderCloudBackupCell(r, id, 'STATUS')}</td>`;
+                    html += `<td class="col-renewal" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'RENEWAL')">${renderCloudBackupCell(r, id, 'RENEWAL')}</td>`;
+                    html += `<td class="col-actualdate" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'MDO_DB LAST ACTUAL BACKUP DATE')">${renderCloudBackupCell(r, id, 'MDO_DB LAST ACTUAL BACKUP DATE')}</td>`;
+                    html += `<td class="col-actualdate" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'MDO_SERVER LAST ACTUAL BACKUP DATE')">${renderCloudBackupCell(r, id, 'MDO_SERVER LAST ACTUAL BACKUP DATE')}</td>`;
+                    html += `<td class="col-date" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'DATE CHECKED')">${renderCloudBackupCell(r, id, 'DATE CHECKED')}</td>`;
+                    html += `<td class="col-status" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'ACTUAL STATUS')">${renderCloudBackupCell(r, id, 'ACTUAL STATUS')}</td>`;
+                    html += `<td class="col-checked" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'CHECKED')">${renderCloudBackupCell(r, id, 'CHECKED')}</td>`;
+                    html += `<td class="col-remark" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')">${renderCloudBackupCell(r, id, 'REMARK')}</td>`;
                     html += `<td class="col-actions"><button class="btn btn-sm btn-outline" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')" style="padding:3px 8px;font-size:12px;">Edit</button></td>`;
                     html += `</tr>`;
                 });
@@ -14100,9 +14106,16 @@ async function exportActivityLog() {
                     return `<div class="cloud-backup-inline-edit"><select id="cb-edit-${field}"><option value="">-</option><option value="ACTIVE" ${String(val).toLowerCase() === 'active' ? 'selected' : ''}>ACTIVE</option><option value="EXPIRED" ${String(val).toLowerCase() === 'expired' ? 'selected' : ''}>EXPIRED</option><option value="HYB FOC" ${String(val).toLowerCase() === 'hyb foc' ? 'selected' : ''}>HYB FOC</option><option value="TERMINATED" ${String(val).toLowerCase() === 'terminated' ? 'selected' : ''}>TERMINATED</option></select><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
                 } else if (field === 'CHECKED') {
                     return `<div class="cloud-backup-inline-edit"><select id="cb-edit-${field}"><option value="" ${!val ? 'selected' : ''}>-</option><option value="Yes" ${String(val).toLowerCase() === 'yes' || String(val).toLowerCase() === 'true' || String(val) === '1' ? 'selected' : ''}>Yes</option><option value="No" ${String(val).toLowerCase() === 'no' || String(val).toLowerCase() === 'false' || String(val) === '0' ? 'selected' : ''}>No</option></select><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
+                } else if (field === 'RENEWAL') {
+                    return `<div class="cloud-backup-inline-edit"><select id="cb-edit-${field}"><option value="" ${!val ? 'selected' : ''}>-</option><option value="YES" ${String(val).toLowerCase() === 'yes' ? 'selected' : ''}>YES</option><option value="NO" ${String(val).toLowerCase() === 'no' ? 'selected' : ''}>NO</option><option value="PENDING" ${String(val).toLowerCase() === 'pending' ? 'selected' : ''}>PENDING</option><option value="RENEWED" ${String(val).toLowerCase() === 'renewed' ? 'selected' : ''}>RENEWED</option></select><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
                 } else {
                     return `<div class="cloud-backup-inline-edit"><input type="text" id="cb-edit-${field}" value="${escapeHtml(val)}"><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
                 }
+            }
+            if (field === 'STATUS' || field === 'ACTUAL STATUS') {
+                const status = String(r[field] || '').trim();
+                const statusClass = status.toLowerCase().replace(/\s+/g, '-') || 'no-status';
+                return `<span class="cloud-backup-status ${statusClass}">${escapeHtml(status || 'NO STATUS')}</span>`;
             }
             if (field === 'CHECKED') {
                 const checked = String(r[field] || '').toLowerCase();
@@ -14221,8 +14234,12 @@ async function exportActivityLog() {
                 'PRODUCT TYPE': r['PRODUCT TYPE'] || '',
                 'CLOUD START DATE': r['CLOUD START DATE'] || '',
                 'CLOUD END DATE': r['CLOUD END DATE'] || '',
-                'STATUS': r['STATUS'] || '',
                 '365 ACCOUNT NO': r['365 ACCOUNT NO'] || '',
+                'PASSWORD/PASSPHRASE': r['PASSWORD/PASSPHRASE'] || '',
+                'MONTH EXPIRED': r['MONTH EXPIRED'] || '',
+                'Days of Expired': r['Days of Expired'] || '',
+                'STATUS': r['STATUS'] || '',
+                'RENEWAL': r['RENEWAL'] || '',
                 'MDO_DB LAST ACTUAL BACKUP DATE': r['MDO_DB LAST ACTUAL BACKUP DATE'] || '',
                 'MDO_SERVER LAST ACTUAL BACKUP DATE': r['MDO_SERVER LAST ACTUAL BACKUP DATE'] || '',
                 'DATE CHECKED': r['DATE CHECKED'] || '',
@@ -14235,98 +14252,6 @@ async function exportActivityLog() {
             XLSX.utils.book_append_sheet(wb, ws, 'Cloud Backup Tracking');
             XLSX.writeFile(wb, `Cloud_Backup_Tracking_${new Date().toISOString().split('T')[0]}.xlsx`);
             logActivity({ module: 'Cloud Backup', action: 'EXPORT', description: 'Exported Cloud Backup to Excel' });
-        }
-
-        async function importCloudBackupStatus(input) {
-            const file = input.files[0];
-            if (!file) return;
-            try {
-                const data = await file.arrayBuffer();
-                const workbook = XLSX.read(data, { type: 'array' });
-                
-                // Find the sheet with ACCT and STATUS columns
-                let targetSheet = null;
-                for (const sheetName of workbook.SheetNames) {
-                    const sheet = workbook.Sheets[sheetName];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                    if (rows.length > 0) {
-                        const headers = rows[0].map(h => String(h).trim().toUpperCase());
-                        if (headers.some(h => h.includes('ACCT')) && headers.some(h => h.includes('STATUS'))) {
-                            targetSheet = sheet;
-                            console.log('[Import] Using sheet:', sheetName, 'with headers:', headers);
-                            break;
-                        }
-                    }
-                }
-                
-                if (!targetSheet) {
-                    alert('Could not find a sheet with ACCT and STATUS columns. Sheets found: ' + workbook.SheetNames.join(', '));
-                    return;
-                }
-                
-                const rows = XLSX.utils.sheet_to_json(targetSheet, { header: 1, defval: '' });
-                if (rows.length < 2) { alert('Excel file is empty.'); return; }
-                
-                // Find column indices - first row is header
-                const headers = rows[0].map(h => String(h).trim().toUpperCase());
-                console.log('[Import] Excel headers:', headers);
-                const acctIdx = headers.findIndex(h => h.includes('ACCT'));
-                const statusIdx = headers.findIndex(h => h.includes('STATUS'));
-                
-                if (acctIdx === -1 || statusIdx === -1) {
-                    alert('Could not find ACCT or STATUS column. Headers found: ' + headers.join(', '));
-                    return;
-                }
-                
-                // Build lookup map from CRM data for faster matching
-                const crmAcctMap = new Map();
-                crmData.forEach(r => {
-                    const acct = String(r['ACCT NO'] || '').trim().toUpperCase();
-                    if (acct) crmAcctMap.set(acct, r);
-                });
-                console.log('[Import] CRM records with ACCT NO:', crmAcctMap.size);
-                
-                let matched = 0, updated = 0, skipped = 0, notFound = [];
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (!row || row.length === 0) continue;
-                    let excelAcct = String(row[acctIdx] || '').trim().toUpperCase();
-                    const status = String(row[statusIdx] || '').trim();
-                    if (!excelAcct || !status) { skipped++; continue; }
-                    
-                    // Normalize: handle numeric values and add M_ prefix if missing
-                    if (!excelAcct.startsWith('M_') && !excelAcct.startsWith('M-')) {
-                        excelAcct = 'M_' + excelAcct;
-                    }
-                    
-                    const crmRow = crmAcctMap.get(excelAcct);
-                    
-                    if (crmRow) {
-                        matched++;
-                        if (String(crmRow['STATUS'] || '').trim().toUpperCase() !== status.toUpperCase()) {
-                            crmRow['STATUS'] = status;
-                            crmRow['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-                            crmRow['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-                            try {
-                                await supabaseClient.from('contacts').update({ data: crmRow }).eq('id', crmRow.id);
-                                updated++;
-                            } catch (e) {
-                                console.error('Update failed for', excelAcct, e);
-                            }
-                        }
-                    } else {
-                        notFound.push(excelAcct);
-                    }
-                }
-                
-                logActivity({ module: 'Cloud Backup', action: 'IMPORT', description: `Imported ${updated} statuses from Excel (${matched} matched, ${notFound.length} not found, ${skipped} skipped)` });
-                alert(`Import complete!\nMatched: ${matched}\nUpdated: ${updated}\nNot found: ${notFound.length}\nSkipped (empty): ${skipped}${notFound.length > 0 ? '\n\nFirst 10 not found:\n' + notFound.slice(0, 10).join(', ') : ''}`);
-                renderCloudBackupModule();
-            } catch (err) {
-                console.error('Import error:', err);
-                alert('Import failed: ' + err.message);
-            }
-            input.value = '';
         }
 
         // ============================================
