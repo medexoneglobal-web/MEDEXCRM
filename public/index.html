@@ -14022,6 +14022,7 @@ async function exportActivityLog() {
                 html += `<option value="${y}" ${cloudBackupYearTo == y ? 'selected' : ''}>${y}</option>`;
             }
             html += `</select>
+                <button class="btn btn-outline" onclick="fixCloudBackupDates()">Fix Dates</button>
                 <button class="btn btn-outline" onclick="resetCloudBackupFilters()" style="padding:8px 14px;font-size:13px;">Reset</button>
             </div>`;
 
@@ -14288,20 +14289,21 @@ async function exportActivityLog() {
                 if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) return str;
                 // If it's a Date object
                 if (val instanceof Date) {
-                    const d = val.getDate().toString().padStart(2, '0');
-                    const m = (val.getMonth() + 1).toString().padStart(2, '0');
-                    const y = val.getFullYear();
+                    const d = val.getUTCDate().toString().padStart(2, '0');
+                    const m = (val.getUTCMonth() + 1).toString().padStart(2, '0');
+                    const y = val.getUTCFullYear();
                     return `${d}/${m}/${y}`;
                 }
                 // If it's a number (Excel serial date), convert it
                 const num = parseFloat(str);
                 if (!isNaN(num) && num > 30000 && num < 60000) {
-                    // Excel serial date to JS Date (Windows epoch: 1900-01-01)
-                    const epoch = new Date(1899, 11, 30);
-                    const date = new Date(epoch.getTime() + num * 24 * 60 * 60 * 1000);
-                    const d = date.getDate().toString().padStart(2, '0');
-                    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const y = date.getFullYear();
+                    // Excel serial date to JS Date (Windows epoch: 1900-01-01 with 1899-12-30 base)
+                    const epoch = new Date(Date.UTC(1899, 11, 30));
+                    const days = num > 60 ? num - 1 : num; // Adjust for Excel 1900 leap year bug
+                    const date = new Date(epoch.getTime() + days * 86400 * 1000);
+                    const d = date.getUTCDate().toString().padStart(2, '0');
+                    const m = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+                    const y = date.getUTCFullYear();
                     return `${d}/${m}/${y}`;
                 }
                 return str;
@@ -14466,6 +14468,46 @@ async function exportActivityLog() {
                 alert('Import failed: ' + err.message);
             }
             input.value = '';
+        }
+
+        async function fixCloudBackupDates() {
+            if (!confirm('This will convert any Excel serial numbers in date fields to proper DD/MM/YYYY format. Continue?')) return;
+            const dateFields = ['CLOUD START DATE', 'CLOUD END DATE', 'MDO_DB LAST ACTUAL BACKUP DATE', 'MDO_SERVER LAST ACTUAL BACKUP DATE', 'DATE CHECKED'];
+            let fixed = 0;
+            for (const row of crmData) {
+                if (!hasCloudBackupData(row)) continue;
+                let changed = false;
+                for (const field of dateFields) {
+                    const val = String(row[field] || '').trim();
+                    if (!val) continue;
+                    // Check if it looks like an Excel serial number
+                    const num = parseFloat(val);
+                    if (!isNaN(num) && num > 30000 && num < 60000 && !val.includes('/')) {
+                        // Convert serial to DD/MM/YYYY
+                        const epoch = new Date(Date.UTC(1899, 11, 30));
+                        const days = num > 60 ? num - 1 : num; // Adjust for Excel 1900 leap year bug
+                        const date = new Date(epoch.getTime() + days * 86400 * 1000);
+                        const d = date.getUTCDate().toString().padStart(2, '0');
+                        const m = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+                        const y = date.getUTCFullYear();
+                        row[field] = `${d}/${m}/${y}`;
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+                    row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+                    try {
+                        await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                        fixed++;
+                    } catch (e) {
+                        console.error('Fix failed for', row['ACCT NO'], e);
+                    }
+                }
+            }
+            logActivity({ module: 'Cloud Backup', action: 'FIX', description: `Fixed ${fixed} records with serial date values` });
+            alert(`Date fix complete! ${fixed} record(s) updated.`);
+            renderCloudBackupModule();
         }
 
         // ============================================
