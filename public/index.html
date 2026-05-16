@@ -3618,6 +3618,34 @@
         .send-reminder-no-email { color: #ef4444; font-size: 12px; font-style: italic; }
 
         .mtn-renewal-content { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; }
+
+        /* ===== CLOUD BACKUP TRACKING ===== */
+        .cloud-backup-status { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .cloud-backup-status.active { background: #d1fae5; color: #065f46; }
+        .cloud-backup-status.expired { background: #fee2e2; color: #991b1b; }
+        .cloud-backup-status.terminated { background: #f3f4f6; color: #4b5563; }
+        .cloud-backup-status.others { background: #ffedd5; color: #9a3412; }
+        .cloud-backup-status.checked { background: #dbeafe; color: #1e40af; }
+        .cloud-backup-table th, .cloud-backup-table td { white-space: nowrap; }
+        .cloud-backup-table .col-checkbox { width: 40px; min-width: 40px; }
+        .cloud-backup-table .col-acct { width: 100px; min-width: 100px; }
+        .cloud-backup-table .col-clinic { width: 180px; min-width: 180px; }
+        .cloud-backup-table .col-product { width: 120px; min-width: 120px; }
+        .cloud-backup-table .col-date { width: 110px; min-width: 110px; }
+        .cloud-backup-table .col-status { width: 100px; min-width: 100px; }
+        .cloud-backup-table .col-365acct { width: 120px; min-width: 120px; }
+        .cloud-backup-table .col-actualdate { width: 130px; min-width: 130px; }
+        .cloud-backup-table .col-checked { width: 80px; min-width: 80px; }
+        .cloud-backup-table .col-remark { width: 150px; min-width: 150px; max-width: 200px; }
+        .cloud-backup-table .col-actions { width: 100px; min-width: 100px; }
+        .cloud-backup-inline-edit { display: flex; gap: 4px; align-items: center; }
+        .cloud-backup-inline-edit input, .cloud-backup-inline-edit select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; }
+        .cloud-backup-inline-edit button { padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }
+        .cloud-backup-inline-edit .save-btn { background: #10b981; color: #fff; border: none; }
+        .cloud-backup-inline-edit .cancel-btn { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .cloud-backup-bulk-bar { display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px; }
+        .cloud-backup-bulk-bar button { padding: 6px 14px; font-size: 13px; border-radius: 6px; cursor: pointer; border: 1px solid #d1d5db; background: #fff; }
+        .cloud-backup-bulk-bar button:hover { background: #f3f4f6; }
         .mtn-renewal-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
         .mtn-renewal-toolbar input[type="text"] {
             flex: 1; min-width: 200px; max-width: 320px;
@@ -3813,6 +3841,9 @@
                 </a>
                 <a class="nav-item" data-section="mtnRenewal" onclick="showSection('mtnRenewal')">
                     <span class="nav-icon">🔄</span> MTN Renewal Tracking
+                </a>
+                <a class="nav-item" data-section="cloudBackup" onclick="showSection('cloudBackup')">
+                    <span class="nav-icon">☁️</span> Cloud Backup
                 </a>
                 <a class="nav-item" data-section="reports" onclick="showSection('reports')">
                     <span class="nav-icon">📋</span> Reports
@@ -4415,6 +4446,21 @@
                 <div id="mtnRenewalContent" class="mtn-renewal-content"></div>
             </div>
 
+            <!-- Cloud Backup Tracking Section -->
+            <div id="cloudBackup" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Cloud Backup Tracking</h2>
+                        <p style="margin:4px 0 0;color:#64748b;font-size:14px;">Track and manage cloud backup status, expiry dates, and verification records</p>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-outline" onclick="exportCloudBackupExcel()">Export to Excel</button>
+                    </div>
+                </div>
+                <div id="cloudBackupKpiCards" class="mtn-renewal-kpi-container"></div>
+                <div id="cloudBackupContent" class="mtn-renewal-content"></div>
+            </div>
+
             <!-- Users Section -->
             <div id="users" class="content-section">
                 <div class="section-card">
@@ -4971,6 +5017,9 @@
             'CMS/MHIS MTN END DATE',
             'CLOUD START DATE',
             'CLOUD END DATE',
+            'MDO_DB LAST ACTUAL BACKUP DATE',
+            'MDO_SERVER LAST ACTUAL BACKUP DATE',
+            'DATE CHECKED',
             'CMS INSTALL DATE/LIVE DATE',
             'E-INV PO RCVD DATE',
             'EINV PO RCVD DATE'
@@ -5942,6 +5991,7 @@
                 'activityLog': 'Activity Log',
                 'tasks': 'Tasks',
                 'mtnRenewal': 'MTN Renewal Tracking',
+                'cloudBackup': 'Cloud Backup Tracking',
                 'settings': 'Settings',
                 'users': 'Users',
                 'userManagement': 'User Management',
@@ -5995,6 +6045,11 @@
                     await refreshTableFromSupabase();
                 }
                 renderMTNRenewalModule();
+            } else if (sectionId === 'cloudBackup') {
+                if (crmData.length === 0) {
+                    await refreshTableFromSupabase();
+                }
+                renderCloudBackupModule();
             } else if (sectionId === 'reports') {
                 if (crmData.length === 0) {
                     await refreshTableFromSupabase();
@@ -12491,6 +12546,23 @@ async function exportActivityLog() {
         let mtnRenewalSelectedIds = new Set();
         let mtnRenewalProductTypeFilter = '';
 
+        // ============================================
+        // CLOUD BACKUP TRACKING MODULE
+        // ============================================
+        let cloudBackupCurrentPage = 1;
+        let cloudBackupRowsPerPage = 10;
+        let cloudBackupFilteredData = [];
+        let cloudBackupDebounceTimer = null;
+        let cloudBackupSortKey = '';
+        let cloudBackupSortDir = 'asc';
+        let cloudBackupStatusFilter = '';
+        let cloudBackupSearchText = '';
+        let cloudBackupMonthFrom = '';
+        let cloudBackupYearFrom = '';
+        let cloudBackupMonthTo = '';
+        let cloudBackupYearTo = '';
+        let cloudBackupSelectedIds = new Set();
+
         // Compute renewal data from crmData - same logic as MTN Categorized Report
         // Total = ALL crmData, Expired but Still Using = Category B only
         function computeRenewalData() {
@@ -13610,6 +13682,540 @@ async function exportActivityLog() {
             if (mtnRenewalDealerFilter) title += ' - ' + mtnRenewalDealerFilter;
             exportReportPDF(data, columns, columns, title);
         }
+
+        // ============================================
+        // CLOUD BACKUP TRACKING FUNCTIONS
+        // ============================================
+
+        function renderCloudBackupModule() {
+            const data = computeCloudBackupData();
+            renderCloudBackupKPIs(data);
+            filterCloudBackupData();
+        }
+
+        function computeCloudBackupData() {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let active = 0, expired = 0, terminated = 0, others = 0, checked = 0, total = 0;
+            if (!crmData || crmData.length === 0) {
+                return { total: 0, active: 0, expired: 0, terminated: 0, others: 0, checked: 0 };
+            }
+            crmData.forEach(r => {
+                if (!r) return;
+                total++;
+                const status = String(r['STATUS'] || '').trim().toLowerCase();
+                const cloudEnd = parseDate(r['CLOUD END DATE']);
+                const isChecked = String(r['CHECKED'] || '').trim().toLowerCase();
+                if (status === 'terminated') {
+                    terminated++;
+                } else if (status === 'others') {
+                    others++;
+                } else if (cloudEnd && cloudEnd < today) {
+                    expired++;
+                } else if (status === 'active' || (cloudEnd && cloudEnd >= today)) {
+                    active++;
+                } else {
+                    others++;
+                }
+                if (isChecked === 'yes' || isChecked === 'true' || isChecked === '1') {
+                    checked++;
+                }
+            });
+            return { total, active, expired, terminated, others, checked };
+        }
+
+        function renderCloudBackupKPIs(data) {
+            const container = document.getElementById('cloudBackupKpiCards');
+            if (!container) return;
+            const cards = [
+                { key: 'active', label: 'Active', value: data.active, icon: '&#9989;', color: 'green' },
+                { key: 'expired', label: 'Expired', value: data.expired, icon: '&#9888;&#65039;', color: 'red' },
+                { key: 'terminated', label: 'Terminated', value: data.terminated, icon: '&#128308;', color: 'grey' },
+                { key: 'others', label: 'Others', value: data.others, icon: '&#128204;', color: 'orange' },
+                { key: 'checked', label: 'Checked', value: data.checked, icon: '&#128505;', color: 'purple' }
+            ];
+            container.innerHTML = cards.map(c => {
+                const isActive = cloudBackupStatusFilter === c.key || (cloudBackupStatusFilter === '' && c.key === 'all');
+                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setCloudBackupStatusFilter('${c.key}')">
+                    <div class="kpi-bar"></div>
+                    <div class="kpi-icon">${c.icon}</div>
+                    <div class="kpi-value">${c.value}</div>
+                    <div class="kpi-label">${c.label}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function setCloudBackupStatusFilter(status) {
+            if (cloudBackupStatusFilter === status) {
+                cloudBackupStatusFilter = '';
+            } else {
+                cloudBackupStatusFilter = status;
+            }
+            cloudBackupCurrentPage = 1;
+            cloudBackupSelectedIds.clear();
+            const data = computeCloudBackupData();
+            renderCloudBackupKPIs(data);
+            filterCloudBackupData();
+        }
+
+        function filterCloudBackupData() {
+            if (!crmData || crmData.length === 0) {
+                cloudBackupFilteredData = [];
+                renderCloudBackupTable();
+                return;
+            }
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let filtered = crmData.filter(r => {
+                if (!r) return false;
+                const status = String(r['STATUS'] || '').trim().toLowerCase();
+                const cloudEnd = parseDate(r['CLOUD END DATE']);
+                const isChecked = String(r['CHECKED'] || '').trim().toLowerCase();
+                // Status filter
+                if (cloudBackupStatusFilter) {
+                    if (cloudBackupStatusFilter === 'active') {
+                        if (status === 'terminated' || status === 'others') return false;
+                        if (cloudEnd && cloudEnd < today) return false;
+                        if (status === 'active' || (cloudEnd && cloudEnd >= today)) return true;
+                        return false;
+                    } else if (cloudBackupStatusFilter === 'expired') {
+                        if (status === 'terminated' || status === 'others') return false;
+                        if (cloudEnd && cloudEnd < today) return true;
+                        return false;
+                    } else if (cloudBackupStatusFilter === 'terminated') {
+                        if (status === 'terminated') return true;
+                        return false;
+                    } else if (cloudBackupStatusFilter === 'others') {
+                        if (status === 'terminated') return false;
+                        if (status === 'others') return true;
+                        if (!status && (!cloudEnd || cloudEnd >= today)) return true;
+                        return false;
+                    } else if (cloudBackupStatusFilter === 'checked') {
+                        if (isChecked === 'yes' || isChecked === 'true' || isChecked === '1') return true;
+                        return false;
+                    }
+                }
+                // Search filter
+                if (cloudBackupSearchText) {
+                    const search = cloudBackupSearchText.toLowerCase();
+                    const clinic = String(r['CLINIC NAME'] || '').toLowerCase();
+                    const acct = String(r['ACCT NO'] || '').toLowerCase();
+                    const product = String(r['PRODUCT TYPE'] || '').toLowerCase();
+                    if (!clinic.includes(search) && !acct.includes(search) && !product.includes(search)) return false;
+                }
+                // Month filter
+                if (cloudBackupMonthFrom && cloudBackupYearFrom) {
+                    if (cloudEnd) {
+                        const endMonth = cloudEnd.getMonth() + 1;
+                        const endYear = cloudEnd.getFullYear();
+                        const fromMonth = parseInt(cloudBackupMonthFrom);
+                        const fromYear = parseInt(cloudBackupYearFrom);
+                        const toMonth = cloudBackupMonthTo ? parseInt(cloudBackupMonthTo) : fromMonth;
+                        const toYear = cloudBackupYearTo ? parseInt(cloudBackupYearTo) : fromYear;
+                        const endVal = endYear * 12 + endMonth;
+                        const fromVal = fromYear * 12 + fromMonth;
+                        const toVal = toYear * 12 + toMonth;
+                        if (endVal < fromVal || endVal > toVal) return false;
+                    } else {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            // Sort
+            if (cloudBackupSortKey) {
+                filtered.sort((a, b) => {
+                    let av = a[cloudBackupSortKey] || '';
+                    let bv = b[cloudBackupSortKey] || '';
+                    if (cloudBackupSortKey === 'CLOUD END DATE') {
+                        av = parseDate(av) || new Date(0);
+                        bv = parseDate(bv) || new Date(0);
+                        return cloudBackupSortDir === 'asc' ? av - bv : bv - av;
+                    }
+                    if (typeof av === 'string') av = av.toLowerCase();
+                    if (typeof bv === 'string') bv = bv.toLowerCase();
+                    if (av < bv) return cloudBackupSortDir === 'asc' ? -1 : 1;
+                    if (av > bv) return cloudBackupSortDir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+            cloudBackupFilteredData = filtered;
+            renderCloudBackupTable();
+        }
+
+        function onCloudBackupSearch() {
+            const el = document.getElementById('cloudBackupSearch');
+            cloudBackupSearchText = el ? el.value.trim() : '';
+            cloudBackupCurrentPage = 1;
+            cloudBackupSelectedIds.clear();
+            if (cloudBackupDebounceTimer) clearTimeout(cloudBackupDebounceTimer);
+            cloudBackupDebounceTimer = setTimeout(filterCloudBackupData, 300);
+        }
+
+        function onCloudBackupMonthFilter() {
+            const mf = document.getElementById('cloudBackupMonthFrom');
+            const yf = document.getElementById('cloudBackupYearFrom');
+            const mt = document.getElementById('cloudBackupMonthTo');
+            const yt = document.getElementById('cloudBackupYearTo');
+            cloudBackupMonthFrom = mf ? mf.value : '';
+            cloudBackupYearFrom = yf ? yf.value : '';
+            cloudBackupMonthTo = mt ? mt.value : '';
+            cloudBackupYearTo = yt ? yt.value : '';
+            cloudBackupCurrentPage = 1;
+            cloudBackupSelectedIds.clear();
+            filterCloudBackupData();
+        }
+
+        function resetCloudBackupFilters() {
+            cloudBackupSearchText = '';
+            cloudBackupMonthFrom = '';
+            cloudBackupYearFrom = '';
+            cloudBackupMonthTo = '';
+            cloudBackupYearTo = '';
+            cloudBackupStatusFilter = '';
+            cloudBackupCurrentPage = 1;
+            cloudBackupSelectedIds.clear();
+            const searchEl = document.getElementById('cloudBackupSearch');
+            if (searchEl) searchEl.value = '';
+            const mf = document.getElementById('cloudBackupMonthFrom');
+            const yf = document.getElementById('cloudBackupYearFrom');
+            const mt = document.getElementById('cloudBackupMonthTo');
+            const yt = document.getElementById('cloudBackupYearTo');
+            if (mf) mf.value = '';
+            if (yf) yf.value = '';
+            if (mt) mt.value = '';
+            if (yt) yt.value = '';
+            const data = computeCloudBackupData();
+            renderCloudBackupKPIs(data);
+            filterCloudBackupData();
+        }
+
+        function sortCloudBackupTable(key) {
+            if (cloudBackupSortKey === key) {
+                cloudBackupSortDir = cloudBackupSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                cloudBackupSortKey = key;
+                cloudBackupSortDir = 'asc';
+            }
+            filterCloudBackupData();
+        }
+
+        function toggleCloudBackupSelectAll() {
+            const cb = document.getElementById('cloudBackupSelectAll');
+            const checked = cb ? cb.checked : false;
+            const pageData = getCloudBackupPageData();
+            pageData.forEach(r => {
+                const id = String(r['ACCT NO'] || r.id || '');
+                if (checked) cloudBackupSelectedIds.add(id);
+                else cloudBackupSelectedIds.delete(id);
+            });
+            renderCloudBackupTable();
+            updateCloudBackupBulkBar();
+        }
+
+        function toggleCloudBackupRow(id) {
+            if (cloudBackupSelectedIds.has(id)) {
+                cloudBackupSelectedIds.delete(id);
+            } else {
+                cloudBackupSelectedIds.add(id);
+            }
+            updateCloudBackupBulkBar();
+        }
+
+        function getCloudBackupPageData() {
+            const start = (cloudBackupCurrentPage - 1) * cloudBackupRowsPerPage;
+            const end = start + cloudBackupRowsPerPage;
+            return cloudBackupFilteredData.slice(start, end);
+        }
+
+        function updateCloudBackupBulkBar() {
+            const bar = document.getElementById('cloudBackupBulkBar');
+            if (!bar) return;
+            const count = cloudBackupSelectedIds.size;
+            bar.style.display = count > 0 ? 'flex' : 'none';
+            const label = document.getElementById('cloudBackupBulkLabel');
+            if (label) label.textContent = `${count} record(s) selected`;
+        }
+
+        function renderCloudBackupTable() {
+            const container = document.getElementById('cloudBackupContent');
+            if (!container) return;
+            const pageData = getCloudBackupPageData();
+            const totalPages = Math.ceil(cloudBackupFilteredData.length / cloudBackupRowsPerPage) || 1;
+
+            // Toolbar
+            let html = `
+            <div class="mtn-renewal-toolbar" style="margin-bottom:16px;">
+                <input type="text" id="cloudBackupSearch" placeholder="Search clinic, account, product..." value="${escapeHtml(cloudBackupSearchText)}" oninput="onCloudBackupSearch()" style="flex:1;min-width:200px;max-width:320px;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                <select id="cloudBackupMonthFrom" onchange="onCloudBackupMonthFilter()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                    <option value="">Month From</option>`;
+            for (let m = 1; m <= 12; m++) {
+                html += `<option value="${m}" ${cloudBackupMonthFrom == m ? 'selected' : ''}>${m}</option>`;
+            }
+            html += `</select>
+                <select id="cloudBackupYearFrom" onchange="onCloudBackupMonthFilter()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                    <option value="">Year From</option>`;
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear - 2; y <= currentYear + 2; y++) {
+                html += `<option value="${y}" ${cloudBackupYearFrom == y ? 'selected' : ''}>${y}</option>`;
+            }
+            html += `</select>
+                <select id="cloudBackupMonthTo" onchange="onCloudBackupMonthFilter()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                    <option value="">Month To</option>`;
+            for (let m = 1; m <= 12; m++) {
+                html += `<option value="${m}" ${cloudBackupMonthTo == m ? 'selected' : ''}>${m}</option>`;
+            }
+            html += `</select>
+                <select id="cloudBackupYearTo" onchange="onCloudBackupMonthFilter()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                    <option value="">Year To</option>`;
+            for (let y = currentYear - 2; y <= currentYear + 2; y++) {
+                html += `<option value="${y}" ${cloudBackupYearTo == y ? 'selected' : ''}>${y}</option>`;
+            }
+            html += `</select>
+                <button class="btn btn-outline" onclick="resetCloudBackupFilters()" style="padding:8px 14px;font-size:13px;">Reset</button>
+            </div>`;
+
+            // Bulk action bar
+            html += `
+            <div id="cloudBackupBulkBar" class="cloud-backup-bulk-bar" style="display:none;">
+                <span id="cloudBackupBulkLabel" style="font-size:13px;font-weight:600;color:#374151;">0 record(s) selected</span>
+                <button onclick="bulkCloudBackupUpdateStatus()">Update Status</button>
+                <button onclick="bulkCloudBackupMarkChecked()">Mark Checked</button>
+                <button onclick="openCloudBackupSendReminder()">Send Reminder</button>
+            </div>`;
+
+            // Table
+            html += `
+            <div class="table-container" style="overflow-x:auto;">
+                <table class="saas-table cloud-backup-table" style="min-width:1400px;">
+                    <thead>
+                        <tr>`;
+            const sortIcon = (key) => cloudBackupSortKey === key ? (cloudBackupSortDir === 'asc' ? ' &#9650;' : ' &#9660;') : '';
+            html += `<th class="col-checkbox"><input type="checkbox" id="cloudBackupSelectAll" onchange="toggleCloudBackupSelectAll()"></th>`;
+            html += `<th class="col-acct" style="cursor:pointer;" onclick="sortCloudBackupTable('ACCT NO')">ACCT NO${sortIcon('ACCT NO')}</th>`;
+            html += `<th class="col-clinic" style="cursor:pointer;" onclick="sortCloudBackupTable('CLINIC NAME')">CLINIC NAME${sortIcon('CLINIC NAME')}</th>`;
+            html += `<th class="col-product" style="cursor:pointer;" onclick="sortCloudBackupTable('PRODUCT TYPE')">PRODUCT TYPE${sortIcon('PRODUCT TYPE')}</th>`;
+            html += `<th class="col-date" style="cursor:pointer;" onclick="sortCloudBackupTable('CLOUD START DATE')">CLOUD START${sortIcon('CLOUD START DATE')}</th>`;
+            html += `<th class="col-date" style="cursor:pointer;" onclick="sortCloudBackupTable('CLOUD END DATE')">CLOUD END${sortIcon('CLOUD END DATE')}</th>`;
+            html += `<th class="col-status">STATUS</th>`;
+            html += `<th class="col-365acct">365 ACCT NO</th>`;
+            html += `<th class="col-actualdate">MDO_DB LAST BACKUP</th>`;
+            html += `<th class="col-actualdate">MDO_SERVER LAST BACKUP</th>`;
+            html += `<th class="col-date">DATE CHECKED</th>`;
+            html += `<th class="col-status">ACTUAL STATUS</th>`;
+            html += `<th class="col-checked">CHECKED</th>`;
+            html += `<th class="col-remark">REMARK</th>`;
+            html += `<th class="col-actions">ACTIONS</th>`;
+            html += `</tr>
+                    </thead>
+                    <tbody>`;
+
+            if (pageData.length === 0) {
+                html += `<tr><td colspan="15" style="text-align:center;padding:40px;color:#64748b;">No cloud backup records found.</td></tr>`;
+            } else {
+                pageData.forEach((r, idx) => {
+                    const id = String(r['ACCT NO'] || r.id || '');
+                    const isSelected = cloudBackupSelectedIds.has(id);
+                    const status = String(r['STATUS'] || '').trim();
+                    const statusClass = status.toLowerCase() || 'others';
+                    const checkedVal = String(r['CHECKED'] || '').trim();
+                    const isChecked = checkedVal.toLowerCase() === 'yes' || checkedVal.toLowerCase() === 'true' || checkedVal === '1';
+                    html += `<tr data-row-id="${id}">`;
+                    html += `<td class="col-checkbox"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleCloudBackupRow('${id}')"></td>`;
+                    html += `<td class="col-acct">${escapeHtml(r['ACCT NO'] || '')}</td>`;
+                    html += `<td class="col-clinic">${escapeHtml(r['CLINIC NAME'] || '')}</td>`;
+                    html += `<td class="col-product">${escapeHtml(r['PRODUCT TYPE'] || '')}</td>`;
+                    html += `<td class="col-date">${renderCloudBackupCell(r, id, 'CLOUD START DATE')}</td>`;
+                    html += `<td class="col-date">${renderCloudBackupCell(r, id, 'CLOUD END DATE')}</td>`;
+                    html += `<td class="col-status"><span class="cloud-backup-status ${statusClass}">${escapeHtml(status || 'Others')}</span></td>`;
+                    html += `<td class="col-365acct">${escapeHtml(r['365 ACCOUNT NO'] || '')}</td>`;
+                    html += `<td class="col-actualdate">${renderCloudBackupCell(r, id, 'MDO_DB LAST ACTUAL BACKUP DATE')}</td>`;
+                    html += `<td class="col-actualdate">${renderCloudBackupCell(r, id, 'MDO_SERVER LAST ACTUAL BACKUP DATE')}</td>`;
+                    html += `<td class="col-date">${renderCloudBackupCell(r, id, 'DATE CHECKED')}</td>`;
+                    html += `<td class="col-status">${renderCloudBackupCell(r, id, 'ACTUAL STATUS')}</td>`;
+                    html += `<td class="col-checked">${renderCloudBackupCell(r, id, 'CHECKED')}</td>`;
+                    html += `<td class="col-remark">${renderCloudBackupCell(r, id, 'REMARK')}</td>`;
+                    html += `<td class="col-actions"><button class="btn btn-sm btn-outline" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')" style="padding:3px 8px;font-size:12px;">Edit</button></td>`;
+                    html += `</tr>`;
+                });
+            }
+            html += `</tbody>
+                </table>
+            </div>`;
+
+            // Pagination
+            html += `
+            <div class="pagination-container" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:13px;color:#6b7280;">Showing ${cloudBackupFilteredData.length} records</div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button onclick="cloudBackupCurrentPage = Math.max(1, cloudBackupCurrentPage - 1); renderCloudBackupTable();" ${cloudBackupCurrentPage <= 1 ? 'disabled' : ''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Prev</button>
+                    <span style="font-size:13px;color:#374151;">Page ${cloudBackupCurrentPage} of ${totalPages}</span>
+                    <button onclick="cloudBackupCurrentPage = Math.min(${totalPages}, cloudBackupCurrentPage + 1); renderCloudBackupTable();" ${cloudBackupCurrentPage >= totalPages ? 'disabled' : ''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Next</button>
+                </div>
+                <select onchange="cloudBackupRowsPerPage = parseInt(this.value); cloudBackupCurrentPage = 1; renderCloudBackupTable();" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+                    <option value="10" ${cloudBackupRowsPerPage === 10 ? 'selected' : ''}>10 / page</option>
+                    <option value="25" ${cloudBackupRowsPerPage === 25 ? 'selected' : ''}>25 / page</option>
+                    <option value="50" ${cloudBackupRowsPerPage === 50 ? 'selected' : ''}>50 / page</option>
+                    <option value="100" ${cloudBackupRowsPerPage === 100 ? 'selected' : ''}>100 / page</option>
+                </select>
+            </div>`;
+
+            container.innerHTML = html;
+            updateCloudBackupBulkBar();
+        }
+
+        function renderCloudBackupCell(r, id, field) {
+            const editingKey = id + '-' + field;
+            if (cloudBackupEditingCell === editingKey) {
+                const val = r[field] || '';
+                if (DATE_COLUMNS.includes(field)) {
+                    return `<div class="cloud-backup-inline-edit"><input type="date" id="cb-edit-${field}" value="${toInputDate(val)}"><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
+                } else if (field === 'STATUS' || field === 'ACTUAL STATUS') {
+                    return `<div class="cloud-backup-inline-edit"><select id="cb-edit-${field}"><option value="">-</option><option value="Active" ${String(val).toLowerCase() === 'active' ? 'selected' : ''}>Active</option><option value="Expired" ${String(val).toLowerCase() === 'expired' ? 'selected' : ''}>Expired</option><option value="Terminated" ${String(val).toLowerCase() === 'terminated' ? 'selected' : ''}>Terminated</option><option value="Others" ${String(val).toLowerCase() === 'others' ? 'selected' : ''}>Others</option></select><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
+                } else if (field === 'CHECKED') {
+                    return `<div class="cloud-backup-inline-edit"><select id="cb-edit-${field}"><option value="" ${!val ? 'selected' : ''}>-</option><option value="Yes" ${String(val).toLowerCase() === 'yes' || String(val).toLowerCase() === 'true' || String(val) === '1' ? 'selected' : ''}>Yes</option><option value="No" ${String(val).toLowerCase() === 'no' || String(val).toLowerCase() === 'false' || String(val) === '0' ? 'selected' : ''}>No</option></select><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
+                } else {
+                    return `<div class="cloud-backup-inline-edit"><input type="text" id="cb-edit-${field}" value="${escapeHtml(val)}"><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
+                }
+            }
+            if (field === 'CHECKED') {
+                const checked = String(r[field] || '').toLowerCase();
+                return checked === 'yes' || checked === 'true' || checked === '1' ? '<span style="color:#10b981;font-weight:600;">&#10003;</span>' : '<span style="color:#9ca3af;">-</span>';
+            }
+            return escapeHtml(r[field] || '');
+        }
+
+        let cloudBackupEditingCell = '';
+
+        function startCloudBackupInlineEdit(id, field) {
+            cloudBackupEditingCell = id + '-' + field;
+            renderCloudBackupTable();
+            const el = document.getElementById('cb-edit-' + field);
+            if (el) {
+                el.focus();
+                if (el.select) el.select();
+            }
+        }
+
+        async function saveCloudBackupInlineEdit(id, field) {
+            const el = document.getElementById('cb-edit-' + field);
+            if (!el) return;
+            let value = el.value.trim();
+            if (DATE_COLUMNS.includes(field)) {
+                value = formatDateDDMMYYYY(value);
+            }
+            const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
+            if (!row) return;
+            row[field] = value;
+            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+            row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+            try {
+                await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Updated ${field} for ${row['CLINIC NAME'] || id}` });
+                showToast('Updated successfully', 'success');
+            } catch (e) {
+                console.error('Update error:', e);
+                showToast('Update failed', 'error');
+            }
+            cloudBackupEditingCell = '';
+            renderCloudBackupModule();
+        }
+
+        function cancelCloudBackupInlineEdit() {
+            cloudBackupEditingCell = '';
+            renderCloudBackupTable();
+        }
+
+        async function bulkCloudBackupUpdateStatus() {
+            const newStatus = prompt('Enter new status (Active, Expired, Terminated, Others):');
+            if (!newStatus) return;
+            const ids = Array.from(cloudBackupSelectedIds);
+            let updated = 0;
+            for (const id of ids) {
+                const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
+                if (!row) continue;
+                row['STATUS'] = newStatus;
+                row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+                row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+                try {
+                    await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                    updated++;
+                } catch (e) { console.error('Bulk update error:', e); }
+            }
+            logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Bulk updated status to ${newStatus} for ${updated} records` });
+            cloudBackupSelectedIds.clear();
+            showToast(`Updated ${updated} records`, 'success');
+            renderCloudBackupModule();
+        }
+
+        async function bulkCloudBackupMarkChecked() {
+            const ids = Array.from(cloudBackupSelectedIds);
+            let updated = 0;
+            const today = new Date().toLocaleDateString('en-GB');
+            for (const id of ids) {
+                const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
+                if (!row) continue;
+                row['CHECKED'] = 'Yes';
+                row['DATE CHECKED'] = today;
+                row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+                row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+                try {
+                    await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                    updated++;
+                } catch (e) { console.error('Bulk check error:', e); }
+            }
+            logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Bulk marked ${updated} records as checked` });
+            cloudBackupSelectedIds.clear();
+            showToast(`Marked ${updated} records as checked`, 'success');
+            renderCloudBackupModule();
+        }
+
+        function openCloudBackupSendReminder() {
+            const selectedRows = cloudBackupFilteredData.filter(r => {
+                const id = String(r['ACCT NO'] || r.id || '');
+                return cloudBackupSelectedIds.has(id);
+            });
+            if (selectedRows.length === 0) { alert('No records selected.'); return; }
+            // Reuse existing send reminder modal but pre-populate with selected rows
+            // We'll open the modal and set manual emails from selected customers
+            openSendReminderModal();
+            // Set filter to manual and populate emails
+            const emails = selectedRows.map(r => r['EMAIL'] || '').filter(e => e).join('\n');
+            setTimeout(() => {
+                const manualArea = document.getElementById('manualEmailAddresses');
+                if (manualArea) manualArea.value = emails;
+                const filterSelect = document.getElementById('sendReminderFilterType');
+                if (filterSelect) filterSelect.value = 'manual';
+            }, 300);
+        }
+
+        function exportCloudBackupExcel() {
+            if (cloudBackupFilteredData.length === 0) { alert('No data to export.'); return; }
+            const rows = cloudBackupFilteredData.map(r => ({
+                'ACCT NO': r['ACCT NO'] || '',
+                'CLINIC NAME': r['CLINIC NAME'] || '',
+                'PRODUCT TYPE': r['PRODUCT TYPE'] || '',
+                'CLOUD START DATE': r['CLOUD START DATE'] || '',
+                'CLOUD END DATE': r['CLOUD END DATE'] || '',
+                'STATUS': r['STATUS'] || '',
+                '365 ACCOUNT NO': r['365 ACCOUNT NO'] || '',
+                'MDO_DB LAST ACTUAL BACKUP DATE': r['MDO_DB LAST ACTUAL BACKUP DATE'] || '',
+                'MDO_SERVER LAST ACTUAL BACKUP DATE': r['MDO_SERVER LAST ACTUAL BACKUP DATE'] || '',
+                'DATE CHECKED': r['DATE CHECKED'] || '',
+                'ACTUAL STATUS': r['ACTUAL STATUS'] || '',
+                'CHECKED': r['CHECKED'] || '',
+                'REMARK': r['REMARK'] || ''
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Cloud Backup Tracking');
+            XLSX.writeFile(wb, `Cloud_Backup_Tracking_${new Date().toISOString().split('T')[0]}.xlsx`);
+            logActivity({ module: 'Cloud Backup', action: 'EXPORT', description: 'Exported Cloud Backup to Excel' });
+        }
+
+        // ============================================
+        // END CLOUD BACKUP TRACKING
+        // ============================================
 
     </script>
     <div id="toastContainer" class="toast-container"></div>
