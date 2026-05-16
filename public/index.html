@@ -4459,6 +4459,8 @@
                         <p style="margin:4px 0 0;color:#64748b;font-size:14px;">Track and manage cloud backup status, expiry dates, and verification records</p>
                     </div>
                     <div style="display:flex;gap:10px;">
+                        <button class="btn btn-outline" onclick="document.getElementById('cloudBackupImportInput').click()">Import from Excel</button>
+                        <input type="file" id="cloudBackupImportInput" accept=".xlsx,.xls" style="display:none;" onchange="importCloudBackupData(this)">
                         <button class="btn btn-outline" onclick="exportCloudBackupExcel()">Export to Excel</button>
                     </div>
                 </div>
@@ -14252,6 +14254,143 @@ async function exportActivityLog() {
             XLSX.utils.book_append_sheet(wb, ws, 'Cloud Backup Tracking');
             XLSX.writeFile(wb, `Cloud_Backup_Tracking_${new Date().toISOString().split('T')[0]}.xlsx`);
             logActivity({ module: 'Cloud Backup', action: 'EXPORT', description: 'Exported Cloud Backup to Excel' });
+        }
+
+        async function importCloudBackupData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+
+                // Find the sheet with ACCT and STATUS columns
+                let targetSheet = null;
+                let sheetNameUsed = '';
+                for (const sheetName of workbook.SheetNames) {
+                    const sheet = workbook.Sheets[sheetName];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                    if (rows.length > 0) {
+                        const headers = rows[0].map(h => String(h).trim().toUpperCase());
+                        if (headers.some(h => h.includes('ACCT')) && headers.some(h => h.includes('STATUS'))) {
+                            targetSheet = sheet;
+                            sheetNameUsed = sheetName;
+                            console.log('[Import] Using sheet:', sheetName, 'with headers:', headers);
+                            break;
+                        }
+                    }
+                }
+
+                if (!targetSheet) {
+                    alert('Could not find a sheet with ACCT and STATUS columns. Sheets found: ' + workbook.SheetNames.join(', '));
+                    return;
+                }
+
+                const rows = XLSX.utils.sheet_to_json(targetSheet, { header: 1, defval: '' });
+                if (rows.length < 2) { alert('Excel file is empty.'); return; }
+
+                // Header mapping: find column indices by partial match
+                const headers = rows[0].map(h => String(h).trim().toUpperCase());
+                const findCol = (keywords) => {
+                    for (const kw of keywords) {
+                        const idx = headers.findIndex(h => h.includes(kw));
+                        if (idx !== -1) return idx;
+                    }
+                    return -1;
+                };
+
+                const colMap = {
+                    acct: findCol(['ACCT']),
+                    clinic: findCol(['CLINIC NAME', 'CLINIC']),
+                    cloudStart: findCol(['CLOUD START']),
+                    cloudEnd: findCol(['CLOUD END']),
+                    acct365: findCol(['365', 'ACCOUNT NO']),
+                    password: findCol(['PASSWORD', 'PASSPHRASE']),
+                    monthExpired: findCol(['MONTH EXPIRED']),
+                    daysExpired: findCol(['DAYS OF EXPIRED', 'DAYS EXPIRED']),
+                    status: findCol(['STATUS']),
+                    renewal: findCol(['RENEWAL']),
+                    mdoDb: findCol(['MDO_DB', 'DB LAST']),
+                    mdoServer: findCol(['MDO_SERVER', 'SERVER LAST']),
+                    dateChecked: findCol(['DATE CHECKED']),
+                    actualStatus: findCol(['ACTUAL STATUS']),
+                    checked: findCol(['CHECKED']),
+                    remark: findCol(['REMARK'])
+                };
+
+                console.log('[Import] Column mapping:', colMap);
+
+                // Build CRM lookup map
+                const crmAcctMap = new Map();
+                crmData.forEach(r => {
+                    const acct = String(r['ACCT NO'] || '').trim().toUpperCase();
+                    if (acct) crmAcctMap.set(acct, r);
+                });
+
+                let matched = 0, updated = 0, notFound = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length === 0) continue;
+
+                    let excelAcct = String(row[colMap.acct] || '').trim().toUpperCase();
+                    if (!excelAcct) continue;
+                    if (!excelAcct.startsWith('M_') && !excelAcct.startsWith('M-')) {
+                        excelAcct = 'M_' + excelAcct;
+                    }
+
+                    const crmRow = crmAcctMap.get(excelAcct);
+                    if (!crmRow) {
+                        notFound.push(excelAcct);
+                        continue;
+                    }
+                    matched++;
+
+                    let changed = false;
+                    const setField = (field, colIdx) => {
+                        if (colIdx === -1) return;
+                        const val = String(row[colIdx] || '').trim();
+                        const current = String(crmRow[field] || '').trim();
+                        if (val && val !== current) {
+                            crmRow[field] = val;
+                            changed = true;
+                        }
+                    };
+
+                    setField('CLINIC NAME', colMap.clinic);
+                    setField('CLOUD START DATE', colMap.cloudStart);
+                    setField('CLOUD END DATE', colMap.cloudEnd);
+                    setField('365 ACCOUNT NO', colMap.acct365);
+                    setField('PASSWORD/PASSPHRASE', colMap.password);
+                    setField('MONTH EXPIRED', colMap.monthExpired);
+                    setField('Days of Expired', colMap.daysExpired);
+                    setField('STATUS', colMap.status);
+                    setField('RENEWAL', colMap.renewal);
+                    setField('MDO_DB LAST ACTUAL BACKUP DATE', colMap.mdoDb);
+                    setField('MDO_SERVER LAST ACTUAL BACKUP DATE', colMap.mdoServer);
+                    setField('DATE CHECKED', colMap.dateChecked);
+                    setField('ACTUAL STATUS', colMap.actualStatus);
+                    setField('CHECKED', colMap.checked);
+                    setField('REMARK', colMap.remark);
+
+                    if (changed) {
+                        crmRow['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+                        crmRow['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+                        try {
+                            await supabaseClient.from('contacts').update({ data: crmRow }).eq('id', crmRow.id);
+                            updated++;
+                        } catch (e) {
+                            console.error('Update failed for', excelAcct, e);
+                        }
+                    }
+                }
+
+                logActivity({ module: 'Cloud Backup', action: 'IMPORT', description: `Imported ${updated} records from Excel (${matched} matched, ${notFound.length} not found)` });
+                alert(`Import complete!\nMatched: ${matched}\nUpdated: ${updated}\nNot found: ${notFound.length}${notFound.length > 0 ? '\n\nFirst 10 not found:\n' + notFound.slice(0, 10).join(', ') : ''}`);
+                renderCloudBackupModule();
+            } catch (err) {
+                console.error('Import error:', err);
+                alert('Import failed: ' + err.message);
+            }
+            input.value = '';
         }
 
         // ============================================
