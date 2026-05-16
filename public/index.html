@@ -14392,8 +14392,6 @@ async function exportActivityLog() {
                 const colMap = {
                     acct: findCol(['ACCT']),
                     clinic: findCol(['CLINIC NAME', 'CLINIC']),
-                    cloudStart: findCol(['CLOUD START']),
-                    cloudEnd: findCol(['CLOUD END']),
                     acct365: findCol(['365', 'ACCOUNT NO']),
                     password: findCol(['PASSWORD', 'PASSPHRASE']),
                     monthExpired: findCol(['MONTH EXPIRED']),
@@ -14417,7 +14415,7 @@ async function exportActivityLog() {
                     if (acct) crmAcctMap.set(acct, r);
                 });
         
-                const dateFields = ['CLOUD START DATE', 'CLOUD END DATE', 'MDO_DB LAST ACTUAL BACKUP DATE', 'MDO_SERVER LAST ACTUAL BACKUP DATE', 'DATE CHECKED'];
+                const dateFields = ['MDO_DB LAST ACTUAL BACKUP DATE', 'MDO_SERVER LAST ACTUAL BACKUP DATE', 'DATE CHECKED'];
         
                 let matched = 0, updated = 0, notFound = [];
                 for (let i = 1; i < rows.length; i++) {
@@ -14455,8 +14453,6 @@ async function exportActivityLog() {
                     };
         
                     setField('CLINIC NAME', colMap.clinic);
-                    setField('CLOUD START DATE', colMap.cloudStart);
-                    setField('CLOUD END DATE', colMap.cloudEnd);
                     setField('365 ACCOUNT NO', colMap.acct365);
                     setField('PASSWORD/PASSPHRASE', colMap.password);
                     setField('MONTH EXPIRED', colMap.monthExpired);
