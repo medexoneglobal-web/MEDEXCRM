@@ -3624,7 +3624,7 @@
         .cloud-backup-status.active { background: #d1fae5; color: #065f46; }
         .cloud-backup-status.expired { background: #fee2e2; color: #991b1b; }
         .cloud-backup-status.terminated { background: #f3f4f6; color: #4b5563; }
-        .cloud-backup-status.others { background: #ffedd5; color: #9a3412; }
+        .cloud-backup-status.hyb-foc { background: #e0e7ff; color: #3730a3; }
         .cloud-backup-status.checked { background: #dbeafe; color: #1e40af; }
         .cloud-backup-table th, .cloud-backup-table td { white-space: nowrap; }
         .cloud-backup-table .col-checkbox { width: 40px; min-width: 40px; }
@@ -13719,46 +13719,46 @@ async function exportActivityLog() {
         function computeCloudBackupData() {
             const today = new Date();
             today.setHours(0,0,0,0);
-            let active = 0, expired = 0, terminated = 0, others = 0, checked = 0, total = 0;
+            let active = 0, expired = 0, terminated = 0, hybFoc = 0, checked = 0, total = 0;
             if (!crmData || crmData.length === 0) {
-                return { total: 0, active: 0, expired: 0, terminated: 0, others: 0, checked: 0 };
+                return { total: 0, active: 0, expired: 0, terminated: 0, hybFoc: 0, checked: 0 };
             }
             crmData.forEach(r => {
                 if (!r || !hasCloudBackupData(r)) return;
                 total++;
                 const status = String(r['STATUS'] || '').trim().toLowerCase();
-                const cloudEnd = parseDateToJs(r['CLOUD END DATE']);
                 const isChecked = String(r['CHECKED'] || '').trim().toLowerCase();
-                if (status === 'terminated') {
-                    terminated++;
-                } else if (status === 'others') {
-                    others++;
-                } else if (cloudEnd && cloudEnd < today) {
-                    expired++;
-                } else if (status === 'active' || (cloudEnd && cloudEnd >= today)) {
+                if (status === 'active') {
                     active++;
+                } else if (status === 'expired') {
+                    expired++;
+                } else if (status === 'terminated') {
+                    terminated++;
+                } else if (status === 'hyb foc') {
+                    hybFoc++;
                 } else {
-                    others++;
+                    // Any other status goes to active by default for counting
+                    active++;
                 }
                 if (isChecked === 'yes' || isChecked === 'true' || isChecked === '1') {
                     checked++;
                 }
             });
-            return { total, active, expired, terminated, others, checked };
+            return { total, active, expired, terminated, hybFoc, checked };
         }
 
         function renderCloudBackupKPIs(data) {
             const container = document.getElementById('cloudBackupKpiCards');
             if (!container) return;
             const cards = [
-                { key: 'active', label: 'Active', value: data.active, icon: '&#9989;', color: 'green' },
-                { key: 'expired', label: 'Expired', value: data.expired, icon: '&#9888;&#65039;', color: 'red' },
-                { key: 'terminated', label: 'Terminated', value: data.terminated, icon: '&#128308;', color: 'grey' },
-                { key: 'others', label: 'Others', value: data.others, icon: '&#128204;', color: 'orange' },
-                { key: 'checked', label: 'Checked', value: data.checked, icon: '&#128505;', color: 'purple' }
+                { key: 'active', label: 'ACTIVE', value: data.active, icon: '&#9989;', color: 'green' },
+                { key: 'expired', label: 'EXPIRED', value: data.expired, icon: '&#9888;&#65039;', color: 'red' },
+                { key: 'hyb-foc', label: 'HYB FOC', value: data.hybFoc, icon: '&#128736;', color: 'blue' },
+                { key: 'terminated', label: 'TERMINATED', value: data.terminated, icon: '&#128308;', color: 'grey' },
+                { key: 'checked', label: 'CHECKED', value: data.checked, icon: '&#128505;', color: 'purple' }
             ];
             container.innerHTML = cards.map(c => {
-                const isActive = cloudBackupStatusFilter === c.key || (cloudBackupStatusFilter === '' && c.key === 'all');
+                const isActive = cloudBackupStatusFilter === c.key;
                 return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setCloudBackupStatusFilter('${c.key}')">
                     <div class="kpi-bar"></div>
                     <div class="kpi-icon">${c.icon}</div>
@@ -13797,21 +13797,16 @@ async function exportActivityLog() {
                 // Status filter
                 if (cloudBackupStatusFilter) {
                     if (cloudBackupStatusFilter === 'active') {
-                        if (status === 'terminated' || status === 'others') return false;
-                        if (cloudEnd && cloudEnd < today) return false;
-                        if (status === 'active' || (cloudEnd && cloudEnd >= today)) return true;
+                        if (status === 'active') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'expired') {
-                        if (status === 'terminated' || status === 'others') return false;
-                        if (cloudEnd && cloudEnd < today) return true;
+                        if (status === 'expired') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'terminated') {
                         if (status === 'terminated') return true;
                         return false;
-                    } else if (cloudBackupStatusFilter === 'others') {
-                        if (status === 'terminated') return false;
-                        if (status === 'others') return true;
-                        if (!status && (!cloudEnd || cloudEnd >= today)) return true;
+                    } else if (cloudBackupStatusFilter === 'hyb-foc') {
+                        if (status === 'hyb foc') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'checked') {
                         if (isChecked === 'yes' || isChecked === 'true' || isChecked === '1') return true;
@@ -14040,7 +14035,7 @@ async function exportActivityLog() {
                     const id = String(r['ACCT NO'] || r.id || '');
                     const isSelected = cloudBackupSelectedIds.has(id);
                     const status = String(r['STATUS'] || '').trim();
-                    const statusClass = status.toLowerCase() || 'others';
+                    const statusClass = status.toLowerCase().replace(/\s+/g, '-') || 'active';
                     const checkedVal = String(r['CHECKED'] || '').trim();
                     const isChecked = checkedVal.toLowerCase() === 'yes' || checkedVal.toLowerCase() === 'true' || checkedVal === '1';
                     html += `<tr data-row-id="${id}">`;
@@ -14050,7 +14045,7 @@ async function exportActivityLog() {
                     html += `<td class="col-product">${escapeHtml(r['PRODUCT TYPE'] || '')}</td>`;
                     html += `<td class="col-date">${renderCloudBackupCell(r, id, 'CLOUD START DATE')}</td>`;
                     html += `<td class="col-date">${renderCloudBackupCell(r, id, 'CLOUD END DATE')}</td>`;
-                    html += `<td class="col-status"><span class="cloud-backup-status ${statusClass}">${escapeHtml(status || 'Others')}</span></td>`;
+                    html += `<td class="col-status"><span class="cloud-backup-status ${statusClass}">${escapeHtml(status || 'ACTIVE')}</span></td>`;
                     html += `<td class="col-365acct">${escapeHtml(r['365 ACCOUNT NO'] || '')}</td>`;
                     html += `<td class="col-actualdate">${renderCloudBackupCell(r, id, 'MDO_DB LAST ACTUAL BACKUP DATE')}</td>`;
                     html += `<td class="col-actualdate">${renderCloudBackupCell(r, id, 'MDO_SERVER LAST ACTUAL BACKUP DATE')}</td>`;
@@ -14094,7 +14089,7 @@ async function exportActivityLog() {
                 if (DATE_COLUMNS.includes(field)) {
                     return `<div class="cloud-backup-inline-edit"><input type="date" id="cb-edit-${field}" value="${toInputDate(val)}"><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
                 } else if (field === 'STATUS' || field === 'ACTUAL STATUS') {
-                    return `<div class="cloud-backup-inline-edit"><select id="cb-edit-${field}"><option value="">-</option><option value="Active" ${String(val).toLowerCase() === 'active' ? 'selected' : ''}>Active</option><option value="Expired" ${String(val).toLowerCase() === 'expired' ? 'selected' : ''}>Expired</option><option value="Terminated" ${String(val).toLowerCase() === 'terminated' ? 'selected' : ''}>Terminated</option><option value="Others" ${String(val).toLowerCase() === 'others' ? 'selected' : ''}>Others</option></select><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
+                    return `<div class="cloud-backup-inline-edit"><select id="cb-edit-${field}"><option value="">-</option><option value="ACTIVE" ${String(val).toLowerCase() === 'active' ? 'selected' : ''}>ACTIVE</option><option value="EXPIRED" ${String(val).toLowerCase() === 'expired' ? 'selected' : ''}>EXPIRED</option><option value="HYB FOC" ${String(val).toLowerCase() === 'hyb foc' ? 'selected' : ''}>HYB FOC</option><option value="TERMINATED" ${String(val).toLowerCase() === 'terminated' ? 'selected' : ''}>TERMINATED</option></select><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
                 } else if (field === 'CHECKED') {
                     return `<div class="cloud-backup-inline-edit"><select id="cb-edit-${field}"><option value="" ${!val ? 'selected' : ''}>-</option><option value="Yes" ${String(val).toLowerCase() === 'yes' || String(val).toLowerCase() === 'true' || String(val) === '1' ? 'selected' : ''}>Yes</option><option value="No" ${String(val).toLowerCase() === 'no' || String(val).toLowerCase() === 'false' || String(val) === '0' ? 'selected' : ''}>No</option></select><button class="save-btn" onclick="saveCloudBackupInlineEdit('${id}', '${field}')">&#10003;</button><button class="cancel-btn" onclick="cancelCloudBackupInlineEdit()">&#10007;</button></div>`;
                 } else {
@@ -14148,7 +14143,7 @@ async function exportActivityLog() {
         }
 
         async function bulkCloudBackupUpdateStatus() {
-            const newStatus = prompt('Enter new status (Active, Expired, Terminated, Others):');
+            const newStatus = prompt('Enter new status (ACTIVE, EXPIRED, HYB FOC, TERMINATED):');
             if (!newStatus) return;
             const ids = Array.from(cloudBackupSelectedIds);
             let updated = 0;
