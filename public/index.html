@@ -14249,6 +14249,7 @@ async function exportActivityLog() {
                 
                 // Find column indices - first row is header
                 const headers = rows[0].map(h => String(h).trim().toUpperCase());
+                console.log('[Import] Excel headers:', headers);
                 const acctIdx = headers.findIndex(h => h.includes('ACCT'));
                 const statusIdx = headers.findIndex(h => h.includes('STATUS'));
                 
@@ -14257,21 +14258,32 @@ async function exportActivityLog() {
                     return;
                 }
                 
-                let matched = 0, updated = 0, notFound = [];
+                // Build lookup map from CRM data for faster matching
+                const crmAcctMap = new Map();
+                crmData.forEach(r => {
+                    const acct = String(r['ACCT NO'] || '').trim().toUpperCase();
+                    if (acct) crmAcctMap.set(acct, r);
+                });
+                console.log('[Import] CRM records with ACCT NO:', crmAcctMap.size);
+                
+                let matched = 0, updated = 0, skipped = 0, notFound = [];
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     if (!row || row.length === 0) continue;
-                    const excelAcct = String(row[acctIdx] || '').trim();
+                    let excelAcct = String(row[acctIdx] || '').trim().toUpperCase();
                     const status = String(row[statusIdx] || '').trim();
-                    if (!excelAcct || !status) continue;
+                    if (!excelAcct || !status) { skipped++; continue; }
                     
-                    // Match: Excel ACCT -> CRM ACCT NO (prepend M_ if not present)
-                    const crmAcct = excelAcct.startsWith('M_') ? excelAcct : 'M_' + excelAcct;
-                    const crmRow = crmData.find(r => String(r['ACCT NO'] || '').trim() === crmAcct);
+                    // Normalize: handle numeric values and add M_ prefix if missing
+                    if (!excelAcct.startsWith('M_') && !excelAcct.startsWith('M-')) {
+                        excelAcct = 'M_' + excelAcct;
+                    }
+                    
+                    const crmRow = crmAcctMap.get(excelAcct);
                     
                     if (crmRow) {
                         matched++;
-                        if (String(crmRow['STATUS'] || '').trim() !== status) {
+                        if (String(crmRow['STATUS'] || '').trim().toUpperCase() !== status.toUpperCase()) {
                             crmRow['STATUS'] = status;
                             crmRow['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
                             crmRow['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
@@ -14279,7 +14291,7 @@ async function exportActivityLog() {
                                 await supabaseClient.from('contacts').update({ data: crmRow }).eq('id', crmRow.id);
                                 updated++;
                             } catch (e) {
-                                console.error('Update failed for', crmAcct, e);
+                                console.error('Update failed for', excelAcct, e);
                             }
                         }
                     } else {
@@ -14287,8 +14299,8 @@ async function exportActivityLog() {
                     }
                 }
                 
-                logActivity({ module: 'Cloud Backup', action: 'IMPORT', description: `Imported ${updated} statuses from Excel (${matched} matched, ${notFound.length} not found)` });
-                alert(`Import complete!\nMatched: ${matched}\nUpdated: ${updated}\nNot found: ${notFound.length}${notFound.length > 0 ? '\nFirst 5 not found: ' + notFound.slice(0, 5).join(', ') : ''}`);
+                logActivity({ module: 'Cloud Backup', action: 'IMPORT', description: `Imported ${updated} statuses from Excel (${matched} matched, ${notFound.length} not found, ${skipped} skipped)` });
+                alert(`Import complete!\nMatched: ${matched}\nUpdated: ${updated}\nNot found: ${notFound.length}\nSkipped (empty): ${skipped}${notFound.length > 0 ? '\n\nFirst 10 not found:\n' + notFound.slice(0, 10).join(', ') : ''}`);
                 renderCloudBackupModule();
             } catch (err) {
                 console.error('Import error:', err);
