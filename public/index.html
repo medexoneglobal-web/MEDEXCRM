@@ -13370,6 +13370,11 @@ async function exportActivityLog() {
                             <label>Message Body</label>
                             <textarea id="sendReminderBody" placeholder="Type your announcement message here..." rows="6"></textarea>
                         </div>
+                        <div class="send-reminder-field">
+                            <label>Attachments <span style="font-weight:normal;color:#9ca3af;font-size:12px;">(Max 5MB total per email)</span></label>
+                            <input type="file" id="sendReminderAttachments" multiple onchange="updateSendReminderAttachmentPreview()" style="padding:8px 0;font-size:14px;">
+                            <div id="sendReminderAttachmentList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+                        </div>
 
                         <div class="send-reminder-filter-row">
                             <label style="font-size:13px;font-weight:600;color:#374151;">Recipients:</label>
@@ -13496,6 +13501,31 @@ async function exportActivityLog() {
             }
         }
 
+        function updateSendReminderAttachmentPreview() {
+            const fileInput = document.getElementById('sendReminderAttachments');
+            const listEl = document.getElementById('sendReminderAttachmentList');
+            if (!fileInput || !listEl) return;
+
+            if (fileInput.files.length === 0) {
+                listEl.innerHTML = '';
+                return;
+            }
+
+            let totalSize = 0;
+            const items = Array.from(fileInput.files).map(file => {
+                totalSize += file.size;
+                const sizeText = file.size < 1024 ? file.size + ' B' : file.size < 1024 * 1024 ? (file.size / 1024).toFixed(1) + ' KB' : (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+                return `<span style="background:#f3f4f6;padding:4px 10px;border-radius:6px;font-size:12px;color:#374151;border:1px solid #e5e7eb;display:flex;align-items:center;gap:4px;">
+                    <span style="font-size:14px;">${file.type.startsWith('image/') ? '\u{1F4F7}' : '\u{1F4C4}'}</span>
+                    ${escapeHtml(file.name)} <span style="color:#9ca3af;">(${sizeText})</span>
+                </span>`;
+            }).join('');
+
+            const totalText = totalSize < 1024 * 1024 ? (totalSize / 1024).toFixed(1) + ' KB' : (totalSize / (1024 * 1024)).toFixed(1) + ' MB';
+            const sizeColor = totalSize > 5 * 1024 * 1024 ? '#dc2626' : '#6b7280';
+            listEl.innerHTML = items + `<span style="font-size:12px;color:${sizeColor};align-self:center;">Total: ${totalText}</span>`;
+        }
+
         async function testSmtpConnection() {
             const btn = document.getElementById('testSmtpBtn');
             const progressEl = document.getElementById('sendReminderProgress');
@@ -13544,6 +13574,35 @@ async function exportActivityLog() {
                 acctNo: r['ACCT NO'] || ''
             })).filter(r => r.email && r.email.includes('@'));
 
+            // Read attachments
+            const fileInput = document.getElementById('sendReminderAttachments');
+            let attachments = [];
+            if (fileInput && fileInput.files.length > 0) {
+                progressEl.textContent = 'Reading attachments...';
+                try {
+                    attachments = await Promise.all(Array.from(fileInput.files).map(file => {
+                        return new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const base64 = reader.result.split(',')[1];
+                                resolve({
+                                    filename: file.name,
+                                    contentType: file.type || 'application/octet-stream',
+                                    content: base64
+                                });
+                            };
+                            reader.onerror = reject;
+                            reader.readAsDataURL(file);
+                        });
+                    }));
+                } catch (err) {
+                    progressEl.textContent = 'Failed to read attachments.';
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = 'Send Email';
+                    return;
+                }
+            }
+
             // Send in batches of 50
             const BATCH_SIZE = 50;
             let totalSent = 0;
@@ -13562,7 +13621,8 @@ async function exportActivityLog() {
                             subject,
                             body: body.replace(/\n/g, '<br>'),
                             recipients: batch,
-                            fromName: currentUser?.username || 'CRM System'
+                            fromName: currentUser?.username || 'CRM System',
+                            attachments: attachments.length > 0 ? attachments : undefined
                         })
                     });
 

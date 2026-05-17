@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const { subject, body, recipients, fromName } = req.body || {};
+        const { subject, body, recipients, fromName, attachments } = req.body || {};
 
         if (!subject || !body) {
             return res.status(400).json({ error: 'Subject and body are required' });
@@ -63,6 +63,16 @@ module.exports = async function handler(req, res) {
         const transporter = getTransporter();
         const smtpFrom = process.env.SMTP_FROM || process.env.SMTP_USER;
         const fromHeader = fromName ? `"${fromName}" <${smtpFrom}>` : smtpFrom;
+
+        // Build nodemailer attachments from base64
+        let nodemailerAttachments = [];
+        if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+            nodemailerAttachments = attachments.map(att => ({
+                filename: att.filename || 'attachment',
+                content: Buffer.from(att.content, 'base64'),
+                contentType: att.contentType || 'application/octet-stream'
+            }));
+        }
 
         let sentCount = 0;
         const failedRecipients = [];
@@ -81,6 +91,7 @@ module.exports = async function handler(req, res) {
                     to: `"${recipient.name || ''}" <${email}>`,
                     subject,
                     html: body,
+                    attachments: nodemailerAttachments
                 });
                 sentCount++;
             } catch (err) {
