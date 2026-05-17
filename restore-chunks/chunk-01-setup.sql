@@ -5,10 +5,10 @@ INSERT INTO users (username, password, name, email, phone, role, status, created
 -- -----------------------------------------------------------------------------
 -- Access Rights
 -- -----------------------------------------------------------------------------
-INSERT INTO access_rights (config, created_at) VALUES ('{"crm":{"admin":{"view":true,"edit":true,"delete":true},"user":{"view":true,"edit":true,"delete":false},"viewer":{"view":true,"edit":false,"delete":false}},"licenseKey":{"admin":{"view":true,"edit":true,"delete":true},"user":{"view":true,"edit":true,"delete":false},"viewer":{"view":true,"edit":false,"delete":false}},"jobsheet":{"admin":{"view":true,"edit":true,"delete":true},"user":{"view":true,"edit":true,"delete":false},"viewer":{"view":true,"edit":false,"delete":false}}}'::jsonb, '2026-05-17T01:37:33.821Z') ON CONFLICT DO NOTHING;
+INSERT INTO access_rights (config) VALUES ('{"crm":{"admin":{"view":true,"edit":true,"delete":true},"user":{"view":true,"edit":true,"delete":false},"viewer":{"view":true,"edit":false,"delete":false}},"licenseKey":{"admin":{"view":true,"edit":true,"delete":true},"user":{"view":true,"edit":true,"delete":false},"viewer":{"view":true,"edit":false,"delete":false}},"jobsheet":{"admin":{"view":true,"edit":true,"delete":true},"user":{"view":true,"edit":true,"delete":false},"viewer":{"view":true,"edit":false,"delete":false}}}'::jsonb) ON CONFLICT DO NOTHING;
 -- -----------------------------------------------------------------------------
 -- Mandatory Fields
 -- -----------------------------------------------------------------------------
-INSERT INTO mandatory_fields (fields, created_at) VALUES ('[]'::jsonb, '2026-05-17T01:37:33.832Z') ON CONFLICT DO NOTHING;
+INSERT INTO mandatory_fields (fields) VALUES ('[]'::jsonb) ON CONFLICT DO NOTHING;
 -- -----------------------------------------------------------------------------
 COMMIT;

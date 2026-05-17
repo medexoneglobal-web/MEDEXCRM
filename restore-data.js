@@ -76,8 +76,7 @@ async function main() {
   const rights = await queryAll('SELECT * FROM access_rights');
   for (const row of rights) {
     const config = formatJson(row.config);
-    const created_at = formatText(row.created_at || new Date().toISOString());
-    sqlOutput.push(`INSERT INTO access_rights (config, created_at) VALUES (${config}, ${created_at});`);
+    sqlOutput.push(`INSERT INTO access_rights (config) VALUES (${config}) ON CONFLICT DO NOTHING;`);
   }
   sqlOutput.push('');
 
@@ -89,8 +88,7 @@ async function main() {
     const fields = await queryAll('SELECT * FROM mandatory_fields');
     for (const row of fields) {
       const f = formatJson(row.fields);
-      const created_at = formatText(row.created_at || new Date().toISOString());
-      sqlOutput.push(`INSERT INTO mandatory_fields (fields, created_at) VALUES (${f}, ${created_at});`);
+      sqlOutput.push(`INSERT INTO mandatory_fields (fields) VALUES (${f}) ON CONFLICT DO NOTHING;`);
     }
   } catch (e) {
     sqlOutput.push('-- No mandatory_fields table found, skipping');
@@ -124,8 +122,7 @@ async function main() {
       const old_data = formatJson(row.old_data);
       const new_data = formatJson(row.new_data);
       const changed_fields = formatJson(row.changed_fields);
-      const created_at = formatText(row.changed_at || row.created_at);
-      sqlOutput.push(`INSERT INTO audit_log (contacts_id, action, changed_by, changed_at, old_data, new_data, changed_fields, created_at) VALUES (${contacts_id}, ${action}, ${changed_by}, ${changed_at}, ${old_data}, ${new_data}, ${changed_fields}, ${created_at});`);
+      sqlOutput.push(`INSERT INTO audit_log (contacts_id, action, changed_by, changed_at, old_data, new_data, changed_fields) VALUES (${contacts_id}, ${action}, ${changed_by}, ${changed_at}, ${old_data}, ${new_data}, ${changed_fields}) ON CONFLICT DO NOTHING;`);
     }
   } catch (e) {
     sqlOutput.push('-- No crm_audit_log table found, skipping');
