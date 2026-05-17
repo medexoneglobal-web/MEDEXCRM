@@ -6241,7 +6241,7 @@
                     changeCount++;
                 }
                 
-                if (mtnEndDate) {
+                if (mtnEndDate && hasMTNMaintenance(row)) {
                     if (mtnEndDate < today) {
                         expiredCount++;
                     } else if (mtnEndDate <= thirtyDaysFromNow) {
@@ -6371,7 +6371,7 @@
                 case 'active':
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
-                        return mtnEndDate && mtnEndDate > thirtyDaysFromNow;
+                        return mtnEndDate && mtnEndDate > thirtyDaysFromNow && hasMTNMaintenance(row);
                     });
                     title = `Maintenance Active - ${data.length} Clinics`;
                     columns = ['ACCT NO', 'CLINIC NAME', 'CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -6381,7 +6381,7 @@
                 case 'expiring':
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
-                        return mtnEndDate && mtnEndDate >= today && mtnEndDate <= thirtyDaysFromNow;
+                        return mtnEndDate && mtnEndDate >= today && mtnEndDate <= thirtyDaysFromNow && hasMTNMaintenance(row);
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         return { ...row, daysUntilExpiry: daysBetween(today, mtnEndDate) };
@@ -6394,7 +6394,7 @@
                 case 'expired':
                     data = crmData.filter(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
-                        return mtnEndDate && mtnEndDate < today;
+                        return mtnEndDate && mtnEndDate < today && hasMTNMaintenance(row);
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         return { ...row, daysExpired: daysBetween(mtnEndDate, today) };
@@ -6538,7 +6538,7 @@
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return mtnEndDate && mtnEndDate > thirtyDaysFromNow && matchesDealer && matchesProduct;
+                        return mtnEndDate && mtnEndDate > thirtyDaysFromNow && hasMTNMaintenance(row) && matchesDealer && matchesProduct;
                     });
                     title = `Maintenance Active - ${data.length} Clinics`;
                     columns = ['ACCT NO', 'CLINIC NAME', 'CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'PRODUCT', 'PRODUCT TYPE', 'EMAIL ID MAIN', 'Contact Name', 'Contact Tel1', 'COMPANY NAME', 'State'];
@@ -6550,7 +6550,7 @@
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return mtnEndDate && mtnEndDate >= today && mtnEndDate <= thirtyDaysFromNow && matchesDealer && matchesProduct;
+                        return mtnEndDate && mtnEndDate >= today && mtnEndDate <= thirtyDaysFromNow && hasMTNMaintenance(row) && matchesDealer && matchesProduct;
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         return { ...row, daysUntilExpiry: daysBetween(today, mtnEndDate) };
@@ -6565,7 +6565,7 @@
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         const matchesDealer = !dealerFilter || row['M1G/ DEALER CASE'] === dealerFilter;
                         const matchesProduct = !productFilter || row['PRODUCT TYPE'] === productFilter;
-                        return mtnEndDate && mtnEndDate < today && matchesDealer && matchesProduct;
+                        return mtnEndDate && mtnEndDate < today && hasMTNMaintenance(row) && matchesDealer && matchesProduct;
                     }).map(row => {
                         const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                         return { ...row, daysExpired: daysBetween(mtnEndDate, today) };
@@ -12150,6 +12150,11 @@ async function exportActivityLog() {
             const productType = String(row['PRODUCT TYPE'] || '').toUpperCase();
             return product.includes('CMS') || product.includes('MHIS') ||
                    productType.includes('CMS') || productType.includes('MHIS');
+        }
+
+        function hasMTNMaintenance(row) {
+            const productType = String(row['PRODUCT TYPE'] || '').toUpperCase();
+            return isUsingCMSMHIS(row) || productType.includes('GP+EM2');
         }
 
         // Check if customer is GFLEX-only or EM2-only (should be excluded from expired list)
