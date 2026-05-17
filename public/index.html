@@ -5722,7 +5722,7 @@
 
             const { error } = await supabaseClient
                 .from('users')
-                .update({ full_name: fullName, email: email, phone: phone })
+                .update({ name: fullName, email: email, phone: phone })
                 .eq('id', user.id);
 
             if (error) { alert('Error saving profile: ' + error.message); return; }

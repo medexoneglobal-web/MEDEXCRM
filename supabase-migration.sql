@@ -31,6 +31,8 @@ CREATE TABLE users (
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     name TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    phone TEXT DEFAULT '',
     role TEXT DEFAULT 'user',
     status TEXT DEFAULT 'active',
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -153,6 +155,10 @@ CREATE TABLE IF NOT EXISTS public.isp_checklists (
 
 CREATE INDEX IF NOT EXISTS idx_isp_checklists_contact_id ON public.isp_checklists(contact_id);
 CREATE INDEX IF NOT EXISTS idx_isp_checklists_status ON public.isp_checklists(status);
+
+-- Fix for existing databases: add email and phone columns if missing
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS email TEXT DEFAULT '';
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone TEXT DEFAULT '';
 
 -- =============================================================================
 -- END OF MIGRATION
