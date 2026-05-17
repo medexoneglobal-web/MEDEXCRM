@@ -135,5 +135,25 @@ INSERT INTO access_rights (config) VALUES ('{
 INSERT INTO mandatory_fields (fields) VALUES ('[]'::jsonb);
 
 -- =============================================================================
+-- ISP CHECKLIST TABLE
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.isp_checklists (
+    id BIGSERIAL PRIMARY KEY,
+    contact_id BIGINT NOT NULL REFERENCES public.contacts(id) ON DELETE CASCADE,
+    items JSONB DEFAULT '[]'::jsonb,
+    schedule_date TEXT,
+    assigned_staff TEXT,
+    status TEXT DEFAULT 'pending',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by TEXT,
+    updated_by TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_isp_checklists_contact_id ON public.isp_checklists(contact_id);
+CREATE INDEX IF NOT EXISTS idx_isp_checklists_status ON public.isp_checklists(status);
+
+-- =============================================================================
 -- END OF MIGRATION
 -- =============================================================================
