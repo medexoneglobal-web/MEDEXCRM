@@ -14238,7 +14238,8 @@ async function exportActivityLog() {
         // ============================================
 
         function getCloudBackupDerivedStatus(r) {
-            const manualStatus = String(r['STATUS'] || '').trim().toLowerCase();
+            const rawStatus = r['STATUS'];
+            const manualStatus = String(rawStatus || '').trim().toLowerCase();
             // TERMINATED and HYB FOC are manual overrides - keep them
             if (manualStatus === 'terminated' || manualStatus === 'hyb foc') {
                 return manualStatus;
@@ -14252,6 +14253,27 @@ async function exportActivityLog() {
             today.setHours(0, 0, 0, 0);
             // If end date is today or in the future → ACTIVE, else EXPIRED
             return endDate >= today ? 'active' : 'expired';
+        }
+
+        // Diagnostic: check why a specific record gets its derived status
+        function debugCloudBackupStatus(acctNo) {
+            const row = crmData.find(r => String(r['ACCT NO'] || '') === acctNo);
+            if (!row) { console.log('Record not found:', acctNo); return; }
+            const rawStatus = row['STATUS'];
+            const manualStatus = String(rawStatus || '').trim().toLowerCase();
+            const endDateStr = String(row['CLOUD END DATE'] || '').trim();
+            const endDate = parseDateToJs(endDateStr);
+            const today = new Date(); today.setHours(0,0,0,0);
+            const derived = getCloudBackupDerivedStatus(row);
+            console.log('--- Debug for', acctNo, '---');
+            console.log('  raw STATUS:', JSON.stringify(rawStatus), 'type:', typeof rawStatus);
+            console.log('  manualStatus:', JSON.stringify(manualStatus));
+            console.log('  CLOUD END DATE:', JSON.stringify(endDateStr));
+            console.log('  parsed endDate:', endDate);
+            console.log('  today:', today);
+            console.log('  derivedStatus:', derived);
+            console.log('  hasCloudBackupData:', hasCloudBackupData(row));
+            console.log('  all keys:', Object.keys(row).filter(k => !k.startsWith('_') && k !== 'id').sort().join(', '));
         }
 
         function renderCloudBackupCheckButton(r, id) {
@@ -14273,12 +14295,17 @@ async function exportActivityLog() {
             row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
             row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
             try {
-                await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                if (error) {
+                    console.error('Check update failed:', error);
+                    alert('Update failed: ' + error.message);
+                    return;
+                }
                 logActivity({ module: 'Cloud Backup', action: 'CHECK', description: `${id} marked as ${newVal}` });
                 renderCloudBackupModule();
             } catch (e) {
-                console.error('Check update failed', e);
-                alert('Update failed');
+                console.error('Check update exception', e);
+                alert('Update failed: ' + e.message);
             }
         }
 
@@ -14370,12 +14397,14 @@ async function exportActivityLog() {
                 } else if (status === 'no-status') {
                     noStatus++;
                 } else {
+                    console.warn('[Cloud Backup] Unknown derived status:', status, 'for ACCT NO:', r['ACCT NO']);
                     active++;
                 }
                 if (isChecked === 'yes' || isChecked === 'true' || isChecked === '1') {
                     checked++;
                 }
             });
+            console.log('[Cloud Backup] computeCloudBackupData:', { total, active, expired, terminated, hybFoc, noStatus, checked });
             return { total, active, expired, terminated, hybFoc, noStatus, checked };
         }
 
@@ -14822,12 +14851,18 @@ async function exportActivityLog() {
             row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
             row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
             try {
-                await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                if (error) {
+                    console.error('Update error:', error);
+                    showToast('Update failed: ' + error.message, 'error');
+                    return;
+                }
                 logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Updated ${field} for ${row['CLINIC NAME'] || id}` });
                 showToast('Updated successfully', 'success');
             } catch (e) {
-                console.error('Update error:', e);
-                showToast('Update failed', 'error');
+                console.error('Update exception:', e);
+                showToast('Update failed: ' + e.message, 'error');
+                return;
             }
             cloudBackupEditingCell = '';
             renderCloudBackupModule();
@@ -14850,9 +14885,10 @@ async function exportActivityLog() {
                 row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
                 row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
                 try {
-                    await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                    const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                    if (error) { console.error('Bulk update error:', error); continue; }
                     updated++;
-                } catch (e) { console.error('Bulk update error:', e); }
+                } catch (e) { console.error('Bulk update exception:', e); }
             }
             logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Bulk updated status to ${newStatus} for ${updated} records` });
             cloudBackupSelectedIds.clear();
@@ -14872,9 +14908,10 @@ async function exportActivityLog() {
                 row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
                 row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
                 try {
-                    await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                    const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                    if (error) { console.error('Bulk check error:', error); continue; }
                     updated++;
-                } catch (e) { console.error('Bulk check error:', e); }
+                } catch (e) { console.error('Bulk check exception:', e); }
             }
             logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Bulk marked ${updated} records as checked` });
             cloudBackupSelectedIds.clear();
