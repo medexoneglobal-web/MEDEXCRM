@@ -4938,7 +4938,8 @@
             'Customer ID- Certificate No.', 'CMS INSTALL DATE/LIVE DATE',
             'State', 'Contact Name', 'Contact Tel1',
             'CUSTOMER TYPE', 'EXCLUDE FROM MTN TRACKING', 'RENEWAL STATUS 2', 'COMPLETED DATE', 'LAST UPDATED BY', 'LAST UPDATED AT',
-            'DATE CHECKED'
+            'DATE CHECKED',
+            'SUPPORT NAME'
         ];
 
         // Access Rights and Mandatory Fields Settings
@@ -5233,6 +5234,7 @@
             'EMAIL ID 2',
             'STATUS RENEWAL',
             'DATE CHECKED',
+            'SUPPORT NAME',
             'REMARKS - FOLLOW UP'
         ];
 
@@ -5263,6 +5265,7 @@
                 case 'E-INV PO RCVD DATE': return 'col-einvoice';
                 case 'CLOUD END DATE': return 'col-cloudbackup';
                 case 'DATE CHECKED': return 'col-datechecked';
+                case 'SUPPORT NAME': return 'col-support';
                 case '_action': return 'col-action';
                 default: return '';
             }
@@ -5280,6 +5283,7 @@
                 'E-INV PO RCVD DATE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
                 'CLOUD END DATE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
                 'DATE CHECKED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+                'SUPPORT NAME': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
                 '_action': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.67 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.67 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.67a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.33 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
             };
             return icons[key] || '';
@@ -14166,13 +14170,14 @@ async function exportActivityLog() {
             html += `<th class="col-date">DATE CHECKED</th>`;
             html += `<th class="col-checked">CHECKED</th>`;
             html += `<th class="col-remark">REMARK</th>`;
+            html += `<th class="col-support">SUPPORT NAME</th>`;
             html += `<th class="col-actions">ACTIONS</th>`;
             html += `</tr>
                     </thead>
                     <tbody>`;
 
             if (pageData.length === 0) {
-                html += `<tr><td colspan="18" style="text-align:center;padding:40px;color:#64748b;">No cloud backup records found.</td></tr>`;
+                html += `<tr><td colspan="19" style="text-align:center;padding:40px;color:#64748b;">No cloud backup records found.</td></tr>`;
             } else {
                 pageData.forEach((r, idx) => {
                     const id = String(r['ACCT NO'] || r.id || '');
@@ -14193,6 +14198,7 @@ async function exportActivityLog() {
                     html += `<td class="col-date" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'DATE CHECKED')">${renderCloudBackupCell(r, id, 'DATE CHECKED')}</td>`;
                     html += `<td class="col-checked">${renderCloudBackupCheckButton(r, id)}</td>`;
                     html += `<td class="col-remark" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')">${renderCloudBackupCell(r, id, 'REMARK')}</td>`;
+                    html += `<td class="col-support" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'SUPPORT NAME')">${renderCloudBackupCell(r, id, 'SUPPORT NAME')}</td>`;
                     html += `<td class="col-actions"><button class="btn btn-sm btn-outline" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')" style="padding:3px 8px;font-size:12px;">Edit</button></td>`;
                     html += `</tr>`;
                 });
@@ -14392,7 +14398,8 @@ async function exportActivityLog() {
                 'MDO_SERVER LAST ACTUAL BACKUP DATE': r['MDO_SERVER LAST ACTUAL BACKUP DATE'] || '',
                 'DATE CHECKED': r['DATE CHECKED'] || '',
                 'CHECKED': r['CHECKED'] || '',
-                'REMARK': r['REMARK'] || ''
+                'REMARK': r['REMARK'] || '',
+                'SUPPORT NAME': r['SUPPORT NAME'] || ''
             }));
             const ws = XLSX.utils.json_to_sheet(rows);
             const wb = XLSX.utils.book_new();
@@ -14503,6 +14510,7 @@ async function exportActivityLog() {
                     dateChecked: findCol(['DATE CHECKED']),
                     actualStatus: findCol(['ACTUAL STATUS']),
                     checked: findCol(['CHECKED']),
+                    supportName: findCol(['SUPPORT NAME', 'SUPPORT', 'Support Name']),
                     remark: findCol(['REMARK'])
                 };
         
@@ -14561,6 +14569,7 @@ async function exportActivityLog() {
                     setField('MDO_SERVER LAST ACTUAL BACKUP DATE', colMap.mdoServer);
                     setField('DATE CHECKED', colMap.dateChecked);
                     setField('CHECKED', colMap.checked);
+                    setField('SUPPORT NAME', colMap.supportName);
                     setField('REMARK', colMap.remark);
         
                     if (changed) {
