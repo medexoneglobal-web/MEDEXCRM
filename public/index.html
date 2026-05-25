@@ -5136,7 +5136,6 @@
             'E-INV PO RCVD DATE',
             'EINV PO RCVD DATE',
             'MOBILE APPS LIVE DATE',
-            'PATIENT APPS LIVE DATE',
             'INVENTORY PORTAL LIVE DATE'
         ];
 
@@ -7807,7 +7806,7 @@
             'Maintenance Dates': ['CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'CLOUD START DATE', 'CLOUD END DATE', 'CMS INSTALL DATE/LIVE DATE'],
             'MTN Renewal Tracking': ['CUSTOMER TYPE', 'EXCLUDE FROM MTN TRACKING', 'RENEWAL STATUS 2', 'COMPLETED DATE', 'LAST UPDATED BY', 'LAST UPDATED AT'],
             'E-Invoice': ['E-INV PO RCVD DATE', 'EINV PO RCVD DATE', 'E-INV START', 'E-INV END', 'E-INV LIVE DATE', 'E-INV TRACKING STATUS'],
-            'Portal & Apps': ['MOBILE APPS LIVE DATE', 'MOBILE APPS STATUS', 'PATIENT APPS LIVE DATE', 'PATIENT APPS STATUS', 'INVENTORY PORTAL LIVE DATE', 'INVENTORY PORTAL STATUS', 'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS']
+            'Portal & Apps': ['MOBILE APPS LIVE DATE', 'MOBILE APPS STATUS', 'INVENTORY PORTAL LIVE DATE', 'INVENTORY PORTAL STATUS', 'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS']
         };
 
         // Group colors for visual separation
@@ -7823,7 +7822,6 @@
         // Portal & Apps field definitions
         const PORTAL_APPS_FIELDS = [
             'MOBILE APPS LIVE DATE', 'MOBILE APPS STATUS',
-            'PATIENT APPS LIVE DATE', 'PATIENT APPS STATUS',
             'INVENTORY PORTAL LIVE DATE', 'INVENTORY PORTAL STATUS',
             'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS'
         ];
@@ -7969,7 +7967,7 @@
             const inputId = `viewDetail_${colIdx}`;
             const disabledAttr = hasEdit ? '' : 'disabled';
             const isDropdownField = ['PRODUCT', 'PRODUCT TYPE', 'M1G/ DEALER CASE', 'RENEWAL STATUS 2', 'CUSTOMER TYPE'].includes(headerName);
-            const isStatusField = ['MOBILE APPS STATUS', 'PATIENT APPS STATUS', 'INVENTORY PORTAL STATUS', 'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS'].includes(headerName);
+            const isStatusField = ['MOBILE APPS STATUS', 'INVENTORY PORTAL STATUS', 'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS'].includes(headerName);
             const isCheckboxField = headerName === 'EXCLUDE FROM MTN TRACKING';
             
             let inputHTML = '';
@@ -9188,18 +9186,6 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom: 16px;">
-                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Patient Apps Live Date</label>
-                    <input type="date" id="newPatientAppsDate" name="PATIENT APPS LIVE DATE" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit;">
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Patient Apps Status</label>
-                    <select id="newPatientAppsStatus" name="PATIENT APPS STATUS" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
-                        <option value="">-- Select --</option>
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
                     <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Inventory Portal Live Date</label>
                     <input type="date" id="newInventoryPortalDate" name="INVENTORY PORTAL LIVE DATE" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit;">
                 </div>
@@ -9325,15 +9311,11 @@
             // Save Portal & Apps fields
             const mobileAppsDate = document.getElementById('newMobileAppsDate');
             const mobileAppsStatus = document.getElementById('newMobileAppsStatus');
-            const patientAppsDate = document.getElementById('newPatientAppsDate');
-            const patientAppsStatus = document.getElementById('newPatientAppsStatus');
             const inventoryPortalDate = document.getElementById('newInventoryPortalDate');
             const inventoryPortalStatus = document.getElementById('newInventoryPortalStatus');
 
             if (mobileAppsDate && mobileAppsDate.value) newCustomer['MOBILE APPS LIVE DATE'] = fromInputDate(mobileAppsDate.value);
             if (mobileAppsStatus && mobileAppsStatus.value) newCustomer['MOBILE APPS STATUS'] = mobileAppsStatus.value;
-            if (patientAppsDate && patientAppsDate.value) newCustomer['PATIENT APPS LIVE DATE'] = fromInputDate(patientAppsDate.value);
-            if (patientAppsStatus && patientAppsStatus.value) newCustomer['PATIENT APPS STATUS'] = patientAppsStatus.value;
             if (inventoryPortalDate && inventoryPortalDate.value) newCustomer['INVENTORY PORTAL LIVE DATE'] = fromInputDate(inventoryPortalDate.value);
             if (inventoryPortalStatus && inventoryPortalStatus.value) newCustomer['INVENTORY PORTAL STATUS'] = inventoryPortalStatus.value;
 
