@@ -3864,6 +3864,9 @@
                 <a class="nav-item" data-section="ispChecklist" onclick="showSection('ispChecklist')">
                     <span class="nav-icon">📋</span> ISP Checklist
                 </a>
+                <a class="nav-item" data-section="mtnService" onclick="showSection('mtnService')">
+                    <span class="nav-icon">🔧</span> MTN Service
+                </a>
                 <a class="nav-item" data-section="reports" onclick="showSection('reports')">
                     <span class="nav-icon">📋</span> Reports
                 </a>
@@ -4000,6 +4003,12 @@
                         </div>
                     </div>
 
+
+                    <!-- Product Type Breakdown -->
+                    <div class="dash-analytics-card" style="margin-top:20px;">
+                        <h4 style="margin-bottom:16px;">Customer Count by Product Group</h4>
+                        <div id="dashProductBreakdown" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
+                    </div>
 
                     <!-- Footer -->
                     <div class="dashboard-footer">© 2026 Medexone Global. All rights reserved.</div>
@@ -4165,6 +4174,23 @@
                                         </tr>
                                     </thead>
                                     <tbody id="ispChecklistPermissionsTable">
+                                        <!-- Generated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="table-container" style="margin-top: 24px;">
+                                <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text);">MTN Service Permissions</h4>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                    <thead>
+                                        <tr style="background: #f8f9fa; color: #374151;">
+                                            <th style="padding: 12px; font-weight: 600; font-size: 13px;">Action</th>
+                                            <th style="text-align: center; padding: 12px; font-weight: 600; font-size: 13px;">Admin</th>
+                                            <th style="text-align: center; padding: 12px; font-weight: 600; font-size: 13px;">User</th>
+                                            <th style="text-align: center; padding: 12px; font-weight: 600; font-size: 13px;">Viewer</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mtnServicePermissionsTable">
                                         <!-- Generated dynamically -->
                                     </tbody>
                                 </table>
@@ -4512,6 +4538,23 @@
                 </div>
                 <div id="ispChecklistKpiCards" class="mtn-renewal-kpi-container"></div>
                 <div id="ispChecklistContent" class="mtn-renewal-content"></div>
+            </div>
+
+            <!-- MTN Service Tracking Section -->
+            <div id="mtnService" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>MTN Service Tracking</h2>
+                        <p style="margin:4px 0 0;color:#64748b;font-size:14px;">Track and schedule maintenance services based on contract duration</p>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-outline" onclick="document.getElementById('mtnServiceImportInput').click()">Import from Excel</button>
+                        <input type="file" id="mtnServiceImportInput" accept=".xlsx,.xls" style="display:none;" onchange="importMTNServiceData(this)">
+                        <button class="btn btn-outline" onclick="exportMTNServiceExcel()">Export to Excel</button>
+                    </div>
+                </div>
+                <div id="mtnServiceKpiCards" class="mtn-renewal-kpi-container"></div>
+                <div id="mtnServiceContent" class="mtn-renewal-content"></div>
             </div>
 
             <!-- Users Section -->
@@ -5011,6 +5054,12 @@
                 edit: { admin: true, user: true, viewer: false },
                 delete: { admin: true, user: false, viewer: false },
                 schedule: { admin: true, user: true, viewer: false }
+            },
+            mtnService: {
+                view: { admin: true, user: true, viewer: true },
+                edit: { admin: true, user: true, viewer: false },
+                delete: { admin: true, user: false, viewer: false },
+                schedule: { admin: true, user: true, viewer: false }
             }
         };
 
@@ -5083,7 +5132,10 @@
             'DATE CHECKED',
             'CMS INSTALL DATE/LIVE DATE',
             'E-INV PO RCVD DATE',
-            'EINV PO RCVD DATE'
+            'EINV PO RCVD DATE',
+            'MOBILE APPS LIVE DATE',
+            'PATIENT APPS LIVE DATE',
+            'INVENTORY PORTAL LIVE DATE'
         ];
 
         // Convert date from data format (M/D/YYYY or DD/MM/YYYY) to YYYY-MM-DD for input
@@ -5207,28 +5259,30 @@
             
             const strValue = String(value).trim();
             
-            // Check if it's a date string with / (D/M/YYYY format)
+            // YYYY-MM-DD (HTML date input format)
+            if (/^\d{4}-\d{2}-\d{2}$/.test(strValue)) {
+                const [y, m, d] = strValue.split('-').map(Number);
+                const date = new Date(y, m - 1, d);
+                if (!isNaN(date.getTime())) return date;
+            }
+            
+            // DD/MM/YYYY or D/M/YYYY
             if (strValue.includes('/')) {
                 const parts = strValue.split('/');
                 if (parts.length === 3) {
                     const day = parseInt(parts[0], 10);
-                    const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+                    const month = parseInt(parts[1], 10) - 1;
                     const year = parseInt(parts[2], 10);
                     const date = new Date(year, month, day);
-                    if (!isNaN(date.getTime())) {
-                        return date;
-                    }
+                    if (!isNaN(date.getTime())) return date;
                 }
             }
             
-            // Check if it's a numeric value (Excel serial date)
+            // Excel serial date (only if value is clearly a large serial number, not a year)
             const numValue = parseFloat(strValue);
-            if (!isNaN(numValue) && numValue > 1 && numValue < 100000) {
-                // Convert Excel serial to JavaScript Date
+            if (!isNaN(numValue) && numValue > 40000 && numValue < 100000) {
                 const jsDate = new Date((numValue - 25569) * 86400 * 1000);
-                if (!isNaN(jsDate.getTime())) {
-                    return jsDate;
-                }
+                if (!isNaN(jsDate.getTime())) return jsDate;
             }
             
             return null;
@@ -5491,7 +5545,7 @@
 
         async function loadCRMDataFromAPI() {
             try {
-                console.log('[CRM v2026-05-12b] Loading data from Supabase...');
+                console.log('[CRM v2026-05-12c] Loading data from Supabase...');
                 const records = await fetchAllContacts();
                 if (!records) { console.error('Failed to load CRM data'); return false; }
                 if (records && records.length > 0) {
@@ -5506,7 +5560,7 @@
                     });
                     const allKeys = Array.from(keySet);
                     headers = allKeys;
-                    console.log(`[CRM v2026-05-12b] Headers extracted: ${allKeys.length} keys, including ACCT NO: ${allKeys.includes('ACCT NO')}`);
+                    console.log(`[CRM v2026-05-12c] Headers extracted: ${allKeys.length} keys, including ACCT NO: ${allKeys.includes('ACCT NO')}`);
                     
                     // Convert records to the format crmData expects
                     crmData = records.map((record, idx) => {
@@ -5524,7 +5578,7 @@
                     // Verify M_1805 and M_3071 are loaded
                     const m1805 = crmData.find(r => r['ACCT NO'] === 'M_1805');
                     const m3071 = crmData.find(r => r['ACCT NO'] === 'M_3071');
-                    console.log(`[CRM v2026-05-12b] Verification - M_1805: ${m1805 ? 'FOUND' : 'MISSING'}, M_3071: ${m3071 ? 'FOUND' : 'MISSING'}`);
+                    console.log(`[CRM v2026-05-12c] Verification - M_1805: ${m1805 ? 'FOUND' : 'MISSING'}, M_3071: ${m3071 ? 'FOUND' : 'MISSING'}`);
                     
                     // Initialize visible columns from VISIBLE_COLUMN_NAMES
                     visibleColumns = [];
@@ -6060,6 +6114,7 @@
                 'mtnRenewal': 'MTN Renewal Tracking',
                 'cloudBackup': 'Cloud Backup Tracking',
                 'ispChecklist': 'ISP Checklist',
+                'mtnService': 'MTN Service Tracking',
                 'settings': 'Settings',
                 'users': 'Users',
                 'userManagement': 'User Management',
@@ -6126,14 +6181,22 @@
                 }
             } else if (sectionId === 'ispChecklist') {
                 try {
-                    if (crmData.length === 0) {
-                        await refreshTableFromSupabase();
-                    }
-                    renderISPChecklistModule();
+                    await renderISPChecklistModule();
                 } catch (err) {
                     console.error('[ISP Checklist] section error:', err);
                     const content = document.getElementById('ispChecklistContent');
                     if (content) content.innerHTML = '<div style="color:red;padding:20px;">Failed to load ISP Checklist data. Please check console for details.</div>';
+                }
+            } else if (sectionId === 'mtnService') {
+                try {
+                    if (crmData.length === 0) {
+                        await refreshTableFromSupabase();
+                    }
+                    renderMTNServiceModule();
+                } catch (err) {
+                    console.error('[MTN Service] section error:', err);
+                    const content = document.getElementById('mtnServiceContent');
+                    if (content) content.innerHTML = '<div style="color:red;padding:20px;">Failed to load MTN Service data. Please check console for details.</div>';
                 }
             } else if (sectionId === 'reports') {
                 if (crmData.length === 0) {
@@ -6358,7 +6421,7 @@
         
         /**
          * Show detail table for a specific maintenance category
-         * @param {string} type - 'active', 'expiring', 'expired', 'changed'
+         * @param {string} type - 'active', 'expiring', 'expired', 'pending', 'changed'
          */
         function showMaintenanceDetail(type) {
             currentMaintenanceDetailType = type;
@@ -7741,7 +7804,8 @@
             'Product Info': ['PRODUCT', 'PRODUCT TYPE', 'GROUP', 'M1G/ DEALER CASE', 'PC TOTAL'],
             'Maintenance Dates': ['CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'CLOUD START DATE', 'CLOUD END DATE', 'CMS INSTALL DATE/LIVE DATE'],
             'MTN Renewal Tracking': ['CUSTOMER TYPE', 'EXCLUDE FROM MTN TRACKING', 'RENEWAL STATUS 2', 'COMPLETED DATE', 'LAST UPDATED BY', 'LAST UPDATED AT'],
-            'E-Invoice': ['E-INV PO RCVD DATE', 'EINV PO RCVD DATE', 'E-INV START', 'E-INV END', 'E-INV LIVE DATE', 'E-INV TRACKING STATUS']
+            'E-Invoice': ['E-INV PO RCVD DATE', 'EINV PO RCVD DATE', 'E-INV START', 'E-INV END', 'E-INV LIVE DATE', 'E-INV TRACKING STATUS'],
+            'Portal & Apps': ['MOBILE APPS LIVE DATE', 'MOBILE APPS STATUS', 'PATIENT APPS LIVE DATE', 'PATIENT APPS STATUS', 'INVENTORY PORTAL LIVE DATE', 'INVENTORY PORTAL STATUS', 'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS']
         };
 
         // Group colors for visual separation
@@ -7750,8 +7814,17 @@
             'Product Info': '#8b5cf6',
             'Maintenance Dates': '#10b981',
             'E-Invoice': '#f59e0b',
+            'Portal & Apps': '#ec4899',
             'Status & Other': '#6b7280'
         };
+
+        // Portal & Apps field definitions
+        const PORTAL_APPS_FIELDS = [
+            'MOBILE APPS LIVE DATE', 'MOBILE APPS STATUS',
+            'PATIENT APPS LIVE DATE', 'PATIENT APPS STATUS',
+            'INVENTORY PORTAL LIVE DATE', 'INVENTORY PORTAL STATUS',
+            'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS'
+        ];
 
         function viewRowDetails(rowId) {
             currentViewRowId = rowId;
@@ -7763,6 +7836,16 @@
             }
             const hasEdit = hasPermission('crm', 'edit');
             currentViewContactId = row.id;
+
+            // Ensure Portal & Apps fields exist in headers and row
+            PORTAL_APPS_FIELDS.forEach(field => {
+                if (!headers.includes(field)) {
+                    headers.push(field);
+                }
+                if (row[field] === undefined) {
+                    row[field] = '';
+                }
+            });
 
             // Get customer identifier for title
             const acctNo = row['ACCT NO'] || '';
@@ -7884,6 +7967,7 @@
             const inputId = `viewDetail_${colIdx}`;
             const disabledAttr = hasEdit ? '' : 'disabled';
             const isDropdownField = ['PRODUCT', 'PRODUCT TYPE', 'M1G/ DEALER CASE', 'RENEWAL STATUS 2', 'CUSTOMER TYPE'].includes(headerName);
+            const isStatusField = ['MOBILE APPS STATUS', 'PATIENT APPS STATUS', 'INVENTORY PORTAL STATUS', 'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS'].includes(headerName);
             const isCheckboxField = headerName === 'EXCLUDE FROM MTN TRACKING';
             
             let inputHTML = '';
@@ -7903,6 +7987,16 @@
                 inputHTML = `<select id="${inputId}" ${disabledAttr} style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; background: ${hasEdit ? 'white' : '#f3f4f6'};">`;
                 inputHTML += `<option value="">-- Select --</option>`;
                 uniqueValues.forEach(opt => {
+                    const selected = opt === value ? 'selected' : '';
+                    inputHTML += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
+                });
+                inputHTML += `</select>`;
+            } else if (isStatusField) {
+                // Active/Inactive dropdown for app/portal status fields
+                const statusOptions = ['Active', 'Inactive'];
+                inputHTML = `<select id="${inputId}" ${disabledAttr} style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; background: ${hasEdit ? 'white' : '#f3f4f6'};">`;
+                inputHTML += `<option value="">-- Select --</option>`;
+                statusOptions.forEach(opt => {
                     const selected = opt === value ? 'selected' : '';
                     inputHTML += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
                 });
@@ -8647,6 +8741,12 @@
             if (ispChecklistTableBody) {
                 ispChecklistTableBody.innerHTML = renderPermissionRows('ispChecklist');
             }
+
+            // Render MTN Service permissions table
+            const mtnServiceTableBody = document.getElementById('mtnServicePermissionsTable');
+            if (mtnServiceTableBody) {
+                mtnServiceTableBody.innerHTML = renderPermissionRows('mtnService');
+            }
             
             // Render User Management table
             renderAccessRightsUsers();
@@ -8654,7 +8754,7 @@
 
         // Render permission rows for a module
         function renderPermissionRows(module) {
-            const actions = module === 'crm' ? ['view', 'edit', 'delete', 'send_reminder'] : module === 'ispChecklist' ? ['view', 'edit', 'delete', 'schedule'] : ['view', 'edit', 'delete'];
+            const actions = module === 'crm' ? ['view', 'edit', 'delete', 'send_reminder'] : module === 'ispChecklist' ? ['view', 'edit', 'delete', 'schedule'] : module === 'mtnService' ? ['view', 'edit', 'delete', 'schedule'] : ['view', 'edit', 'delete'];
             const actionLabels = { view: 'View', edit: 'Edit', delete: 'Delete', send_reminder: 'Send Reminder', schedule: 'Schedule' };
             const roles = ['admin', 'user', 'viewer'];
             
@@ -8999,15 +9099,41 @@
                 const isDate = isDateColumn(header);
                 // Use mandatoryFields configuration - check if this field is in the mandatory list
                 const isRequired = mandatoryFields.includes(header);
+                // Explicit dropdown fields that should always show as select in create modal
+                const explicitDropdownFields = ['PRODUCT', 'PRODUCT TYPE', 'M1G/ DEALER CASE', 'RENEWAL STATUS 2', 'STATUS RENEWAL', 'RENEWAL STATUS', 'CUSTOMER TYPE'];
+                const isExplicitDropdown = explicitDropdownFields.includes(header);
                 
                 let fieldHTML = `<div class="form-group" style="margin-bottom: 16px;">`;
                 fieldHTML += `<label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">${escapeHtml(header)}${isRequired ? ' <span style="color: #ef4444;">*</span>' : ''}</label>`;
                 
-                if (hasOptions) {
-                    // Dropdown for fields with options
+                if (hasOptions || isExplicitDropdown) {
+                    // Build dropdown options
+                    let options = [];
+                    if (hasOptions) {
+                        options = columnOptions[colIdx];
+                    } else if (isExplicitDropdown) {
+                        // Collect unique values from crmData for this field
+                        const uniqueValues = new Set();
+                        crmData.forEach(row => {
+                            const val = row[header];
+                            if (val && String(val).trim()) {
+                                uniqueValues.add(String(val).trim());
+                            }
+                        });
+                        options = Array.from(uniqueValues).sort();
+                        // Predefined options for CUSTOMER TYPE if no existing values
+                        if (header === 'CUSTOMER TYPE' && options.length === 0) {
+                            options = ['Dealer', 'Corporate', 'Clinic', 'Pharmacy', 'Internal'];
+                        } else if (header === 'CUSTOMER TYPE') {
+                            const predefined = ['Dealer', 'Corporate', 'Clinic', 'Pharmacy', 'Internal'];
+                            predefined.forEach(v => { if (!options.includes(v)) options.push(v); });
+                            options.sort();
+                        }
+                    }
+                    
                     fieldHTML += `<select id="newField_${colIdx}" name="${escapeHtml(header)}" ${isRequired ? 'required' : ''} style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">`;
                     fieldHTML += `<option value="">-- Select ${escapeHtml(header)} --</option>`;
-                    columnOptions[colIdx].forEach(opt => {
+                    options.forEach(opt => {
                         fieldHTML += `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`;
                     });
                     fieldHTML += `</select>`;
@@ -9045,6 +9171,69 @@
                     <input type="text" id="newLkeyContactTel1" name="Contact Tel1" placeholder="Enter Tel: (TEL & FAX)" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
                 </div>
                 <div style="grid-column: 1 / -1; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text);">Portal & Apps</h3>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Mobile Apps Live Date</label>
+                    <input type="date" id="newMobileAppsDate" name="MOBILE APPS LIVE DATE" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit;">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Mobile Apps Status</label>
+                    <select id="newMobileAppsStatus" name="MOBILE APPS STATUS" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                        <option value="">-- Select --</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Patient Apps Live Date</label>
+                    <input type="date" id="newPatientAppsDate" name="PATIENT APPS LIVE DATE" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit;">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Patient Apps Status</label>
+                    <select id="newPatientAppsStatus" name="PATIENT APPS STATUS" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                        <option value="">-- Select --</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Inventory Portal Live Date</label>
+                    <input type="date" id="newInventoryPortalDate" name="INVENTORY PORTAL LIVE DATE" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit;">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Inventory Portal Status</label>
+                    <select id="newInventoryPortalStatus" name="INVENTORY PORTAL STATUS" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                        <option value="">-- Select --</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">SST Status</label>
+                    <select id="newSstStatus" name="SST STATUS" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                        <option value="">-- Select --</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">E-Invoice Status</label>
+                    <select id="newEInvoiceStatus" name="E-INVOICE STATUS" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                        <option value="">-- Select --</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">WhatsApp Status</label>
+                    <select id="newWhatsappStatus" name="WHATSAPP STATUS" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                        <option value="">-- Select --</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div style="grid-column: 1 / -1; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
                     <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text);">ISP Checklist Items</h3>
                     <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Select items the customer has taken. Support will use this to prepare for installation.</p>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
@@ -9061,7 +9250,21 @@
             document.getElementById('newCustomerModal').classList.add('active');
         }
 
+        let isSavingNewCustomer = false;
+
         async function saveNewCustomer() {
+            if (isSavingNewCustomer) {
+                showToast('Save already in progress, please wait...', 'warning');
+                return;
+            }
+            isSavingNewCustomer = true;
+            const saveBtn = document.querySelector('#newCustomerModal button[onclick="saveNewCustomer()"]');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+            }
+
+            try {
             const form = document.getElementById('newCustomerForm');
             
             // Validate all mandatory fields have non-empty values
@@ -9116,7 +9319,30 @@
             if (address2) newCustomer['Address2'] = address2.value.trim();
             if (address3) newCustomer['Address3'] = address3.value.trim();
             if (contactTel1) newCustomer['Contact Tel1'] = contactTel1.value.trim();
-            
+
+            // Save Portal & Apps fields
+            const mobileAppsDate = document.getElementById('newMobileAppsDate');
+            const mobileAppsStatus = document.getElementById('newMobileAppsStatus');
+            const patientAppsDate = document.getElementById('newPatientAppsDate');
+            const patientAppsStatus = document.getElementById('newPatientAppsStatus');
+            const inventoryPortalDate = document.getElementById('newInventoryPortalDate');
+            const inventoryPortalStatus = document.getElementById('newInventoryPortalStatus');
+
+            if (mobileAppsDate && mobileAppsDate.value) newCustomer['MOBILE APPS LIVE DATE'] = fromInputDate(mobileAppsDate.value);
+            if (mobileAppsStatus && mobileAppsStatus.value) newCustomer['MOBILE APPS STATUS'] = mobileAppsStatus.value;
+            if (patientAppsDate && patientAppsDate.value) newCustomer['PATIENT APPS LIVE DATE'] = fromInputDate(patientAppsDate.value);
+            if (patientAppsStatus && patientAppsStatus.value) newCustomer['PATIENT APPS STATUS'] = patientAppsStatus.value;
+            if (inventoryPortalDate && inventoryPortalDate.value) newCustomer['INVENTORY PORTAL LIVE DATE'] = fromInputDate(inventoryPortalDate.value);
+            if (inventoryPortalStatus && inventoryPortalStatus.value) newCustomer['INVENTORY PORTAL STATUS'] = inventoryPortalStatus.value;
+
+            // Save SST / E-Invoice / WhatsApp status fields
+            const sstStatus = document.getElementById('newSstStatus');
+            const eInvoiceStatus = document.getElementById('newEInvoiceStatus');
+            const whatsappStatus = document.getElementById('newWhatsappStatus');
+            if (sstStatus && sstStatus.value) newCustomer['SST STATUS'] = sstStatus.value;
+            if (eInvoiceStatus && eInvoiceStatus.value) newCustomer['E-INVOICE STATUS'] = eInvoiceStatus.value;
+            if (whatsappStatus && whatsappStatus.value) newCustomer['WHATSAPP STATUS'] = whatsappStatus.value;
+
             // Check for duplicate ACCT NO
             const acctNo = newCustomer['ACCT NO'];
             if (acctNo) {
@@ -9144,23 +9370,108 @@
                 }
             }
 
-            // Save to Supabase first
-            let newId = null;
+            // Get next available ID to avoid sequence conflicts from restored data with explicit IDs
+            // Query actual database max id to avoid stale local crmData
+            let nextId = null;
+            let maxId = 0;
             try {
-                const { data: result, error } = await supabaseClient.from('contacts').insert([{ data: newCustomer }]).select();
-                if (error) {
-                    console.error('Failed to save customer to Supabase:', error);
-                    showToast('Failed to save customer: ' + error.message, 'error');
+                const { data: maxRow, error: maxErr } = await supabaseClient
+                    .from('contacts')
+                    .select('id')
+                    .order('id', { ascending: false })
+                    .limit(1);
+                if (!maxErr && maxRow && maxRow[0] && maxRow[0].id) {
+                    const dbMax = parseInt(maxRow[0].id, 10);
+                    if (!isNaN(dbMax) && dbMax > 0) {
+                        maxId = dbMax;
+                        nextId = maxId + 1;
+                    }
+                }
+            } catch (dbErr) {
+                console.error('[saveNewCustomer] Failed to query max id from DB:', dbErr);
+            }
+            // Fallback to crmData if DB query failed
+            if (!nextId && crmData.length > 0) {
+                const ids = crmData.map(r => {
+                    const idVal = r.id;
+                    if (typeof idVal === 'number') return idVal;
+                    if (typeof idVal === 'string' && !isNaN(parseInt(idVal))) return parseInt(idVal);
+                    return 0;
+                }).filter(v => v > 0);
+                if (ids.length > 0) {
+                    maxId = Math.max(...ids);
+                    nextId = maxId + 1;
+                }
+            }
+            console.warn('[saveNewCustomer] Computed nextId:', nextId, 'maxId:', maxId, 'crmData count:', crmData.length);
+
+            // Save to Supabase with retry on duplicate key
+            let newId = null;
+            let attempts = 0;
+            const maxAttempts = 3;
+            while (attempts < maxAttempts && !newId) {
+                attempts++;
+                try {
+                    const currentId = nextId ? nextId + attempts - 1 : null;
+                    const insertPayload = currentId ? { id: currentId, data: newCustomer } : { data: newCustomer };
+                    console.warn('[saveNewCustomer] Insert attempt', attempts, 'payload:', JSON.stringify(insertPayload));
+                    const { data: result, error } = await supabaseClient.from('contacts').insert([insertPayload]).select();
+                    if (error) {
+                        const isDupKey = error.message && error.message.toLowerCase().includes('duplicate key');
+                        console.error('Failed to save customer to Supabase (attempt', attempts, '):', error);
+                        if (isDupKey && attempts < maxAttempts) {
+                            console.warn('[saveNewCustomer] Duplicate key detected, will retry...');
+                            continue;
+                        }
+                        showToast('Failed to save customer: ' + error.message, 'error');
+                        return; // Don't close modal on error
+                    }
+                    // Use currentId as newId when insert succeeds — .select() may return empty due to RLS policies
+                    if (currentId) {
+                        newCustomer.id = currentId;
+                        newId = currentId;
+                    } else if (result && result[0] && result[0].id) {
+                        newCustomer.id = result[0].id;
+                        newId = result[0].id;
+                    }
+                    console.warn('[saveNewCustomer] Success on attempt', attempts, 'newId:', newId);
+                } catch (err) {
+                    console.error('Error saving customer to Supabase (attempt', attempts, '):', err);
+                    showToast('Failed to save customer: ' + err.message, 'error');
                     return; // Don't close modal on error
                 }
-                if (result && result[0]) {
-                    newCustomer.id = result[0].id;
-                    newId = result[0].id;
+            }
+            
+            // Fallback: use raw fetch if Supabase JS client still fails (ensures id is sent)
+            if (!newId && nextId) {
+                const fallbackId = nextId + maxAttempts;
+                console.warn('[saveNewCustomer] Trying raw fetch fallback with id:', fallbackId);
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/contacts?select=*`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify({ id: fallbackId, data: newCustomer })
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        newCustomer.id = fallbackId;
+                        newId = fallbackId;
+                        console.warn('[saveNewCustomer] Raw fetch success, newId:', newId);
+                    } else {
+                        console.error('[saveNewCustomer] Raw fetch failed:', response.status, result);
+                        showToast('Failed to save customer: ' + (result.message || 'Unknown error'), 'error');
+                        return;
+                    }
+                } catch (fetchErr) {
+                    console.error('[saveNewCustomer] Raw fetch error:', fetchErr);
+                    showToast('Failed to save customer: ' + fetchErr.message, 'error');
+                    return;
                 }
-            } catch (err) {
-                console.error('Error saving customer to Supabase:', err);
-                showToast('Failed to save customer: ' + err.message, 'error');
-                return; // Don't close modal on error
             }
             
             // Insert audit log for creation
@@ -9180,22 +9491,32 @@
                 await logActivity({ module: 'CRM', action: 'CREATE', customerName: newCustomer['CLINIC NAME'] || newCustomer['ACCOUNT NAME'] || '', description: `${currentUser?.username || 'User'} created new customer ${newCustomer['CLINIC NAME'] || newCustomer['ACCOUNT NAME'] || ''}` });
             }
 
-            // Create ISP Checklist record for new customer
+            // Create ISP Checklist record for new customer (always create, even with empty items)
             if (newId) {
                 const checkedItems = Array.from(document.querySelectorAll('input[name="ispItem"]:checked')).map(cb => cb.value);
-                if (checkedItems.length > 0) {
-                    try {
-                        await supabaseClient.from('isp_checklists').insert([{
+                try {
+                    // Guard: check if ISP checklist already exists for this contact_id (prevents duplicate on retry)
+                    const { data: existingIsp } = await supabaseClient.from('isp_checklists').select('id').eq('contact_id', newId).limit(1);
+                    if (existingIsp && existingIsp.length > 0) {
+                        console.warn('[saveNewCustomer] ISP checklist already exists for contact_id', newId, '- skipping insert');
+                    } else {
+                        const { error: ispInsertErr } = await supabaseClient.from('isp_checklists').insert([{
                             contact_id: newId,
-                            items: checkedItems,
+                            items: checkedItems.length > 0 ? checkedItems : [],
                             status: 'pending',
                             created_by: currentUser ? currentUser.username : 'system',
                             updated_by: currentUser ? currentUser.username : 'system'
                         }]);
-                        logActivity({ module: 'ISP Checklist', action: 'CREATE', description: `Created ISP checklist for ${newCustomer['ACCT NO']} with ${checkedItems.length} items` });
-                    } catch (ispErr) {
-                        console.error('Failed to create ISP checklist:', ispErr);
+                        if (ispInsertErr) {
+                            console.error('Failed to create ISP checklist:', ispInsertErr);
+                            showToast('Customer saved but ISP checklist creation failed: ' + ispInsertErr.message, 'warning');
+                        } else {
+                            logActivity({ module: 'ISP Checklist', action: 'CREATE', description: `Created ISP checklist for ${newCustomer['ACCT NO']} with ${checkedItems.length} items` });
+                        }
                     }
+                } catch (ispErr) {
+                    console.error('Failed to create ISP checklist:', ispErr);
+                    showToast('Customer saved but ISP checklist creation failed: ' + ispErr.message, 'warning');
                 }
             }
             
@@ -9234,12 +9555,15 @@
                         visibleColumns = headers.map((_, idx) => idx);
                     }
                     // Ensure newly created customer is present if insert succeeded but not yet in fetch result
-                    if (newId && !crmData.some(r => r.id === newId)) {
+                    // Use String comparison to handle type mismatch between JS numbers and Supabase-returned strings
+                    const newIdStr = String(newId);
+                    if (newId && !crmData.some(r => String(r.id) === newIdStr)) {
                         crmData.push(newCustomer);
                     }
                 } else {
                     // If fetch returned empty but insert succeeded, keep the new customer
-                    if (!crmData.some(r => r.id === newCustomer.id || r['ACCT NO'] === newCustomer['ACCT NO'])) {
+                    const newCustIdStr = String(newCustomer.id);
+                    if (!crmData.some(r => String(r.id) === newCustIdStr || r['ACCT NO'] === newCustomer['ACCT NO'])) {
                         crmData.push(newCustomer);
                     }
                 }
@@ -9251,11 +9575,19 @@
             } catch (refreshErr) {
                 console.error('Error refreshing customer list after save:', refreshErr);
                 // Fallback: append to local data and render
-                if (!crmData.some(r => r.id === newCustomer.id || r['ACCT NO'] === newCustomer['ACCT NO'])) {
+                const newCustIdStr = String(newCustomer.id);
+                if (!crmData.some(r => String(r.id) === newCustIdStr || r['ACCT NO'] === newCustomer['ACCT NO'])) {
                     crmData.push(newCustomer);
                 }
                 renderTable();
                 saveCRMData();
+            }
+            } finally {
+                isSavingNewCustomer = false;
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save Customer';
+                }
             }
         }
 
@@ -12605,10 +12937,10 @@ async function exportActivityLog() {
         let mtnRenewalStatusFilter = '';
         let mtnRenewalDealerFilter = '';
         let mtnRenewalCustTypeFilter = ''; // REMOVED - no longer used
-        let mtnRenewalMonthFrom = new Date().getMonth() + 1; // 1-12, default current month
-        let mtnRenewalYearFrom = new Date().getFullYear();
-        let mtnRenewalMonthTo = new Date().getMonth() + 1;
-        let mtnRenewalYearTo = new Date().getFullYear();
+        let mtnRenewalMonthFrom = 0; // 0 = no filter
+        let mtnRenewalYearFrom = 0;
+        let mtnRenewalMonthTo = 0;
+        let mtnRenewalYearTo = 0;
         let mtnRenewalShowExcluded = false;
         let mtnRenewalSelectedIds = new Set();
         let mtnRenewalProductTypeFilter = '';
@@ -12653,7 +12985,7 @@ async function exportActivityLog() {
             const thirtyDays = new Date(today); thirtyDays.setDate(today.getDate() + 30);
             const nowMonth = today.getMonth(); const nowYear = today.getFullYear();
 
-            let total = 0, overdue = 0, upcoming = 0, completed = 0, excluded = 0;
+            let total = 0, overdue = 0, upcoming = 0, completed = 0, excluded = 0, paid = 0;
             let catA = 0, catB = 0, catC = 0, catD = 0, catE = 0;
             const enriched = [];
 
@@ -12686,6 +13018,8 @@ async function exportActivityLog() {
                 const mtnStart = parseDateToJs(row['CMS/MHIS MTN START DATE']);
                 const isExcluded = row['EXCLUDE FROM MTN TRACKING'] === true || row['EXCLUDE FROM MTN TRACKING'] === 'true';
                 const completedDate = parseDateToJs(row['COMPLETED DATE']);
+                const paidDate = row['MTN PAID DATE'];
+                if (paidDate) paid++;
 
                 // Determine renewal status based on category
                 let status = 'Active';
@@ -12744,14 +13078,15 @@ async function exportActivityLog() {
                     _customerType: custType,
                     _mtnEndDate: mtnEnd,
                     _mtnStartDate: mtnStart,
-                    _category: cat
+                    _category: cat,
+                    _paidDate: paidDate || null
                 });
             });
 
             const completionRate = (overdue + upcoming + completed) > 0
                 ? Math.round((completed / (overdue + upcoming + completed)) * 100) : 0;
 
-            return { enriched, total, overdue, upcoming, completed, excluded, completionRate, nowMonth, nowYear,
+            return { enriched, total, overdue, upcoming, completed, excluded, completionRate, paid, nowMonth, nowYear,
                      catA, catB, catC, catD, catE };
         }
 
@@ -12771,14 +13106,15 @@ async function exportActivityLog() {
                 { key: 'overdue', label: 'Expired but Still Using', value: data.overdue, icon: '&#9888;&#65039;', color: 'red' },
                 { key: 'upcoming', label: 'Upcoming Renewal', value: data.upcoming, icon: '&#128337;', color: 'orange' },
                 { key: 'completed', label: 'Completed', value: data.completed, icon: '&#9989;', color: 'green' },
-                { key: 'rate', label: 'Staff Completion Rate', value: data.completionRate + '%', icon: '&#127942;', color: 'purple' }
+                { key: 'paid', label: 'Paid', value: data.paid, icon: '&#128176;', color: 'purple' }
             ];
             container.innerHTML = cards.map(c => {
                 const isActive = (c.key === 'overdue' && mtnRenewalStatusFilter === 'Expired but Still Using') ||
                     (c.key === 'upcoming' && mtnRenewalStatusFilter === 'Upcoming Renewal') ||
                     (c.key === 'completed' && mtnRenewalStatusFilter === 'Completed') ||
+                    (c.key === 'paid' && mtnRenewalStatusFilter === 'Paid') ||
                     (c.key === 'total' && mtnRenewalStatusFilter === '');
-                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Expired but Still Using' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'completed' ? 'Completed' : ''}')">
+                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Expired but Still Using' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'completed' ? 'Completed' : c.key === 'paid' ? 'Paid' : ''}')">
                     <div class="kpi-bar"></div>
                     <div class="kpi-icon">${c.icon}</div>
                     <div class="kpi-value">${c.value}</div>
@@ -12790,6 +13126,11 @@ async function exportActivityLog() {
         function setMTNRenewalStatusFilter(status) {
             mtnRenewalStatusFilter = status;
             mtnRenewalCurrentPage = 1;
+            // Clear date range when clicking a KPI card so all matching records are shown
+            mtnRenewalMonthFrom = 0;
+            mtnRenewalYearFrom = 0;
+            mtnRenewalMonthTo = 0;
+            mtnRenewalYearTo = 0;
             const data = computeRenewalData();
             renderMTNRenewalKPIs(data);
             filterMTNRenewalData();
@@ -12805,6 +13146,10 @@ async function exportActivityLog() {
             }
             const search = (document.getElementById('mtnRenewalSearch')?.value || '').toLowerCase().trim();
             mtnRenewalFilteredData = data.enriched.filter(row => {
+                // Special filter: Paid = only rows with MTN PAID DATE set
+                if (mtnRenewalStatusFilter === 'Paid') {
+                    return !!row._paidDate;
+                }
                 if (mtnRenewalStatusFilter && row._renewalStatus !== mtnRenewalStatusFilter) return false;
                 if (!mtnRenewalShowExcluded && row._renewalStatus === 'Excluded') return false;
                 if (mtnRenewalDealerFilter) {
@@ -12859,10 +13204,10 @@ async function exportActivityLog() {
         }
 
         function applyMTNRenewalMonthPicker() {
-            mtnRenewalMonthFrom = parseInt(document.getElementById('mtnRenewalMonthFrom')?.value) || 1;
-            mtnRenewalYearFrom = parseInt(document.getElementById('mtnRenewalYearFrom')?.value) || new Date().getFullYear();
-            mtnRenewalMonthTo = parseInt(document.getElementById('mtnRenewalMonthTo')?.value) || mtnRenewalMonthFrom;
-            mtnRenewalYearTo = parseInt(document.getElementById('mtnRenewalYearTo')?.value) || mtnRenewalYearFrom;
+            mtnRenewalMonthFrom = parseInt(document.getElementById('mtnRenewalMonthFrom')?.value) || 0;
+            mtnRenewalYearFrom = parseInt(document.getElementById('mtnRenewalYearFrom')?.value) || 0;
+            mtnRenewalMonthTo = parseInt(document.getElementById('mtnRenewalMonthTo')?.value) || 0;
+            mtnRenewalYearTo = parseInt(document.getElementById('mtnRenewalYearTo')?.value) || 0;
             mtnRenewalCurrentPage = 1;
             filterMTNRenewalData();
         }
@@ -12879,11 +13224,10 @@ async function exportActivityLog() {
             mtnRenewalStatusFilter = '';
             mtnRenewalDealerFilter = '';
             mtnRenewalProductTypeFilter = '';
-            const now = new Date();
-            mtnRenewalMonthFrom = now.getMonth() + 1;
-            mtnRenewalYearFrom = now.getFullYear();
-            mtnRenewalMonthTo = now.getMonth() + 1;
-            mtnRenewalYearTo = now.getFullYear();
+            mtnRenewalMonthFrom = 0;
+            mtnRenewalYearFrom = 0;
+            mtnRenewalMonthTo = 0;
+            mtnRenewalYearTo = 0;
             mtnRenewalShowExcluded = false;
             mtnRenewalCurrentPage = 1;
             const data = computeRenewalData();
@@ -12911,6 +13255,19 @@ async function exportActivityLog() {
         // Date formatting helper
         const mtnRenewalFmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '-';
         const mtnRenewalInputFmt = d => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : '';
+        // Convert DD/MM/YYYY (CRM display format) to YYYY-MM-DD (Supabase DATE format)
+        function toSupabaseDate(val) {
+            if (!val || val === '-') return null;
+            // Already YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+            // DD/MM/YYYY
+            const parts = val.split('/');
+            if (parts.length === 3) {
+                const [d, m, y] = parts;
+                if (y && y.length === 4) return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+            }
+            return null;
+        }
 
         // Render the renewal tracking table
         function renderMTNRenewalTable() {
@@ -12968,6 +13325,7 @@ async function exportActivityLog() {
                             <div class="mtn-renewal-actions">
                                 <button class="mtn-renewal-action-btn renew" onclick="renewMTN(${row.id})" title="Renew MTN">Renew</button>
                                 <button class="mtn-renewal-action-btn complete" onclick="completeMTN(${row.id})" title="Complete Task" ${row._renewalStatus === 'Completed' ? 'disabled' : ''}>Complete</button>
+                                <button class="mtn-renewal-action-btn" onclick="markMTNPaid(${row.id})" title="Mark as Paid" style="background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;${row._paidDate ? 'opacity:0.6;' : ''}">${row._paidDate ? '&#10003; Paid' : 'Paid'}</button>
                                 <button class="mtn-renewal-action-btn history" onclick="viewMTNHistory(${row.id})" title="View History">History</button>
                             </div>
                         </td>
@@ -13007,6 +13365,7 @@ async function exportActivityLog() {
                         ).join('')}
                     </select>
                     <select id="mtnRenewalMonthFrom" onchange="applyMTNRenewalMonthPicker()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;color:#374151;">
+                        <option value="0" ${!mtnRenewalMonthFrom ? 'selected' : ''}>All Months</option>
                         <option value="1" ${mtnRenewalMonthFrom === 1 ? 'selected' : ''}>January</option>
                         <option value="2" ${mtnRenewalMonthFrom === 2 ? 'selected' : ''}>February</option>
                         <option value="3" ${mtnRenewalMonthFrom === 3 ? 'selected' : ''}>March</option>
@@ -13020,9 +13379,10 @@ async function exportActivityLog() {
                         <option value="11" ${mtnRenewalMonthFrom === 11 ? 'selected' : ''}>November</option>
                         <option value="12" ${mtnRenewalMonthFrom === 12 ? 'selected' : ''}>December</option>
                     </select>
-                    <input type="number" id="mtnRenewalYearFrom" value="${mtnRenewalYearFrom}" min="2020" max="2040" onchange="applyMTNRenewalMonthPicker()" style="width:75px;padding:7px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;">
+                    <input type="number" id="mtnRenewalYearFrom" value="${mtnRenewalYearFrom || ''}" placeholder="Year" min="2020" max="2040" onchange="applyMTNRenewalMonthPicker()" style="width:75px;padding:7px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;">
                     <span style="font-size:12px;color:#6b7280;">to</span>
                     <select id="mtnRenewalMonthTo" onchange="applyMTNRenewalMonthPicker()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;color:#374151;">
+                        <option value="0" ${!mtnRenewalMonthTo ? 'selected' : ''}>All Months</option>
                         <option value="1" ${mtnRenewalMonthTo === 1 ? 'selected' : ''}>January</option>
                         <option value="2" ${mtnRenewalMonthTo === 2 ? 'selected' : ''}>February</option>
                         <option value="3" ${mtnRenewalMonthTo === 3 ? 'selected' : ''}>March</option>
@@ -13036,8 +13396,8 @@ async function exportActivityLog() {
                         <option value="11" ${mtnRenewalMonthTo === 11 ? 'selected' : ''}>November</option>
                         <option value="12" ${mtnRenewalMonthTo === 12 ? 'selected' : ''}>December</option>
                     </select>
-                    <input type="number" id="mtnRenewalYearTo" value="${mtnRenewalYearTo}" min="2020" max="2040" onchange="applyMTNRenewalMonthPicker()" style="width:75px;padding:7px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;">
-                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalProductTypeFilter) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
+                    <input type="number" id="mtnRenewalYearTo" value="${mtnRenewalYearTo || ''}" placeholder="Year" min="2020" max="2040" onchange="applyMTNRenewalMonthPicker()" style="width:75px;padding:7px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;">
+                    ${(mtnRenewalStatusFilter || mtnRenewalDealerFilter || mtnRenewalProductTypeFilter || mtnRenewalMonthFrom || mtnRenewalYearFrom) ? '<button class="btn btn-outline btn-sm" onclick="clearMTNRenewalFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>' : ''}
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalExcel()" style="font-size:12px;padding:4px 10px;">Export Excel</button>
                     <button class="btn btn-outline btn-sm" onclick="exportMTNRenewalPDF()" style="font-size:12px;padding:4px 10px;">Export PDF</button>
                     <span class="mtn-renewal-count">${total.toLocaleString()} records</span>
@@ -13099,7 +13459,9 @@ async function exportActivityLog() {
                 if (newEl) {
                     newEl.focus();
                     if (selStart !== null && selEnd !== null && 'setSelectionRange' in newEl) {
-                        newEl.setSelectionRange(selStart, selEnd);
+                        try {
+                            newEl.setSelectionRange(selStart, selEnd);
+                        } catch (_) {}
                     }
                 }
             }
@@ -13242,6 +13604,37 @@ async function exportActivityLog() {
             renderMTNRenewalModule();
         }
 
+        async function markMTNPaid(rowId) {
+            const rowIdx = crmData.findIndex(r => r.id === rowId);
+            if (rowIdx === -1) return;
+            const row = crmData[rowIdx];
+            const alreadyPaid = row['MTN PAID DATE'];
+            if (alreadyPaid) {
+                if (!confirm(`This customer already has Paid Date: ${alreadyPaid}. Update to today?`)) return;
+            }
+            const now = new Date();
+            const paidFmt = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+            row['MTN PAID DATE'] = paidFmt;
+            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
+            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            try {
+                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
+                logActivity({ module: 'MTN Renewal', action: 'PAID', description: `Marked paid: ${row['ACCT NO']} on ${paidFmt}` });
+            } catch (err) { console.error(err); showToast('Failed to update', 'error'); return; }
+            try {
+                await supabaseClient.from('mtn_renewal_audit').insert([{
+                    contacts_id: rowId,
+                    old_end_date: row['CMS/MHIS MTN END DATE'] || '',
+                    new_end_date: row['CMS/MHIS MTN END DATE'] || '',
+                    edited_by: currentUser?.username || 'Unknown',
+                    action: 'PAID',
+                    remarks: `Paid on ${paidFmt}`
+                }]);
+            } catch (err) { console.warn('Audit insert failed:', err.message); }
+            showToast('Marked as Paid', 'success');
+            renderMTNRenewalModule();
+        }
+
         // Renew MTN modal
         function showMTNRenewalModal(rowId, title, defaultStart, defaultEnd) {
             const row = crmData.find(r => r.id === rowId);
@@ -13288,6 +13681,11 @@ async function exportActivityLog() {
             try {
                 await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: rowId, old_start_date: oldStart, old_end_date: oldEnd, new_start_date: newStart, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'RENEW', remarks: 'MTN Renewed' }]);
             } catch (err) { console.warn('Audit insert failed:', err.message); }
+
+            // Auto-create or update MTN Service Tracking record
+            try {
+                await ensureMTNServiceTrackingForContact(rowId);
+            } catch (err) { console.warn('MTN Service tracking ensure failed:', err.message); }
 
             document.getElementById('mtnRenewalModal')?.remove();
             showToast('MTN renewed successfully', 'success');
@@ -13357,21 +13755,91 @@ async function exportActivityLog() {
             const modal = document.createElement('div');
             modal.className = 'modal active';
             modal.id = 'mtnHistoryModal';
+
+            // The most recent record is the one we can undo
+            const lastEntry = auditRows[0];
+            const canUndo = lastEntry && (lastEntry.old_start_date || lastEntry.old_end_date);
+
             const rowsHtml = auditRows.length === 0
-                ? '<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af;">No history records found.</td></tr>'
-                : auditRows.map(a => `<tr>
+                ? '<tr><td colspan="7" style="text-align:center;padding:20px;color:#9ca3af;">No history records found.</td></tr>'
+                : auditRows.map((a, idx) => `<tr style="${idx === 0 ? 'background:#fefce8;' : ''}">
                     <td>${a.edited_at ? new Date(a.edited_at).toLocaleString() : '-'}</td>
                     <td>${escapeHtml(a.edited_by || '-')}</td>
                     <td>${escapeHtml(a.action || '-')}</td>
                     <td>${escapeHtml(a.old_start_date || '-')} / ${escapeHtml(a.old_end_date || '-')}</td>
                     <td>${escapeHtml(a.new_start_date || '-')} / ${escapeHtml(a.new_end_date || '-')}</td>
                     <td>${escapeHtml(a.remarks || '-')}</td>
+                    <td>${idx === 0 && canUndo ? `<button class="btn btn-sm" style="padding:3px 10px;font-size:12px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="undoMTNRenewal(${rowId}, '${a.old_start_date || ''}', '${a.old_end_date || ''}', ${a.id})">&#8630; Undo</button>` : '-'}</td>
                 </tr>`).join('');
-            modal.innerHTML = `<div class="modal-content" style="max-width:800px;max-height:80vh;display:flex;flex-direction:column;">
-                <div class="modal-header"><h3>MTN Renewal History - ${escapeHtml(row['CLINIC NAME'] || '')} (${escapeHtml(row['ACCT NO'] || '')})</h3><button class="close-btn" onclick="document.getElementById('mtnHistoryModal').remove()">&times;</button></div>
-                <div style="padding:20px;overflow-y:auto;"><table class="mtn-renewal-table" style="width:100%;"><thead><tr><th>Date/Time</th><th>By</th><th>Action</th><th>Old Start / End</th><th>New Start / End</th><th>Remarks</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+
+            modal.innerHTML = `<div class="modal-content" style="max-width:900px;max-height:80vh;display:flex;flex-direction:column;">
+                <div class="modal-header">
+                    <h3>MTN Renewal History - ${escapeHtml(row['CLINIC NAME'] || '')} (${escapeHtml(row['ACCT NO'] || '')})</h3>
+                    <button class="close-btn" onclick="document.getElementById('mtnHistoryModal').remove()">&times;</button>
+                </div>
+                ${canUndo ? `<div style="padding:12px 20px 0;background:#fef3c7;border-bottom:1px solid #fde68a;font-size:13px;color:#92400e;">
+                    <strong>&#8630; Undo Available:</strong> The most recent change (highlighted in yellow) can be reverted. Click the Undo button in that row.
+                </div>` : ''}
+                <div style="padding:20px;overflow-y:auto;">
+                    <table class="mtn-renewal-table" style="width:100%;">
+                        <thead><tr><th>Date/Time</th><th>By</th><th>Action</th><th>Old Start / End</th><th>New Start / End</th><th>Remarks</th><th>Undo</th></tr></thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
             </div>`;
             document.body.appendChild(modal);
+        }
+
+        async function undoMTNRenewal(rowId, oldStart, oldEnd, auditId) {
+            if (!confirm('Are you sure you want to undo this change? The MTN dates will be reverted to the previous values.')) return;
+
+            const rowIdx = crmData.findIndex(r => r.id === rowId);
+            if (rowIdx === -1) { showToast('Customer not found', 'error'); return; }
+            const row = crmData[rowIdx];
+
+            const currentStart = row['CMS/MHIS MTN START DATE'] || '';
+            const currentEnd = row['CMS/MHIS MTN END DATE'] || '';
+
+            // Restore old dates back into the contact row
+            if (oldStart) row['CMS/MHIS MTN START DATE'] = oldStart;
+            if (oldEnd) row['CMS/MHIS MTN END DATE'] = oldEnd;
+            // Clear COMPLETED DATE since we are reverting
+            row['COMPLETED DATE'] = '';
+            const now = new Date();
+            row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
+            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            try {
+                // 1. Save reverted dates to contacts
+                const { error: contactErr } = await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
+                if (contactErr) throw contactErr;
+
+                // 2. Log the undo action in audit
+                const { error: auditErr } = await supabaseClient.from('mtn_renewal_audit').insert([{
+                    contacts_id: rowId,
+                    old_start_date: currentStart,
+                    old_end_date: currentEnd,
+                    new_start_date: oldStart || currentStart,
+                    new_end_date: oldEnd || currentEnd,
+                    edited_by: currentUser?.username || 'Unknown',
+                    action: 'UNDO',
+                    remarks: `Reverted from audit #${auditId}`
+                }]);
+                if (auditErr) console.warn('Audit log failed (non-fatal):', auditErr.message);
+
+                // 3. Also update MTN service tracking if exists
+                try {
+                    await ensureMTNServiceTrackingForContact(rowId);
+                } catch (trackErr) { console.warn('MTN tracking sync failed:', trackErr.message); }
+
+                logActivity({ module: 'MTN Renewal', action: 'UNDO', description: `Undid MTN change for ${row['ACCT NO']}: restored Start=${oldStart}, End=${oldEnd}` });
+                showToast('Change successfully undone', 'success');
+                document.getElementById('mtnHistoryModal')?.remove();
+                renderMTNRenewalModule();
+            } catch (err) {
+                console.error('Undo error:', err);
+                showToast('Failed to undo: ' + (err.message || JSON.stringify(err)), 'error');
+            }
         }
 
         // Bulk actions
@@ -13396,7 +13864,8 @@ async function exportActivityLog() {
                 row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
                 try {
                     await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
-                    await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, old_end_date: oldEnd, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'BULK_EXTEND', remarks: `Bulk extended by ${m} months` }]).catch(() => {});
+                    const { error: bulkExtendAuditErr } = await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, old_end_date: oldEnd, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'BULK_EXTEND', remarks: `Bulk extended by ${m} months` }]);
+                    if (bulkExtendAuditErr) console.warn('Bulk extend audit failed:', bulkExtendAuditErr.message);
                     count++;
                 } catch (err) { console.error('Bulk extend error:', err); }
             }
@@ -13419,7 +13888,8 @@ async function exportActivityLog() {
                 row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
                 try {
                     await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
-                    await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, edited_by: currentUser?.username || 'Unknown', action: 'BULK_COMPLETE', remarks: 'Bulk marked as completed' }]).catch(() => {});
+                    const { error: bulkCompleteAuditErr } = await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, edited_by: currentUser?.username || 'Unknown', action: 'BULK_COMPLETE', remarks: 'Bulk marked as completed' }]);
+                    if (bulkCompleteAuditErr) console.warn('Bulk complete audit failed:', bulkCompleteAuditErr.message);
                     count++;
                 } catch (err) { console.error('Bulk complete error:', err); }
             }
@@ -13469,24 +13939,61 @@ async function exportActivityLog() {
         let ispChecklistCurrentPage = 1;
         let ispChecklistRowsPerPage = 25;
 
-        const ISP_ITEMS = ['E-Invoice', 'Cloud Backup', 'Hybrid', 'MyCard', 'Printer & Label', 'Kiosk', 'Customization'];
+        // ==================== MTN SERVICE MODULE ====================
+
+        let mtnServiceData = [];
+        let mtnServiceFiltered = [];
+        let mtnServiceSortKey = '';
+        let mtnServiceSortDir = 'asc';
+        let mtnServiceSearch = '';
+        let mtnServiceStatusFilter = '';
+        let mtnServiceCurrentPage = 1;
+        let mtnServiceRowsPerPage = 25;
+
+        const ISP_ITEMS = ['E-Invoice', 'Cloud Backup', 'Hybrid', 'MyCard', 'Printer & Label', 'Kiosk', 'Customization', 'WhatsApp', 'Inventory Portal', 'Patient Apps', 'CMS', 'MHIS', 'XP Pen', 'Server', 'Desktop'];
 
         async function loadISPChecklists() {
             try {
                 const { data, error } = await supabaseClient.from('isp_checklists').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
+                if (error) {
+                    console.error('[ISP Checklist] Load error:', error);
+                    ispChecklistData = [];
+                    return;
+                }
                 ispChecklistData = data || [];
+                console.log('[ISP Checklist] Loaded', ispChecklistData.length, 'records');
             } catch (err) {
-                console.error('[ISP Checklist] Load error:', err);
+                console.error('[ISP Checklist] Load exception:', err);
                 ispChecklistData = [];
             }
         }
 
-        function renderISPChecklistModule() {
+        async function renderISPChecklistModule() {
             if (!hasPermission('ispChecklist', 'view')) {
                 document.getElementById('ispChecklistContent').innerHTML = '<div style="padding:40px;text-align:center;color:#64748b;">You do not have permission to view ISP Checklist.</div>';
                 return;
             }
+            // Ensure customer data is loaded
+            if (crmData.length === 0) {
+                await refreshTableFromSupabase();
+            }
+            // Reset filters to prevent stale browser-cached input values from hiding results
+            ispChecklistSearch = '';
+            ispChecklistStatusFilter = '';
+            ispChecklistStaffFilter = '';
+            ispChecklistCurrentPage = 1;
+            // Load real checklist records
+            await loadISPChecklists();
+            renderISPChecklistKPIs(ispChecklistData);
+            filterISPChecklistData();
+        }
+
+        function setISPChecklistStatusFilter(status) {
+            ispChecklistStatusFilter = status;
+            ispChecklistCurrentPage = 1;
+            const dropdown = document.getElementById('ispStatusFilter');
+            if (dropdown) dropdown.value = status;
+            renderISPChecklistKPIs(ispChecklistData);
             filterISPChecklistData();
         }
 
@@ -13499,23 +14006,28 @@ async function exportActivityLog() {
             const today = new Date().toLocaleDateString('en-GB');
             const todayScheduled = data.filter(d => d.schedule_date === today && d.status === 'scheduled').length;
 
+            const isActive = (key) => {
+                if (key === 'total') return !ispChecklistStatusFilter;
+                return ispChecklistStatusFilter === key;
+            };
+
             container.innerHTML = `
-                <div class="mtn-renewal-kpi-card blue">
+                <div class="mtn-renewal-kpi-card blue ${isActive('total') ? 'active' : ''}" style="cursor:pointer;" onclick="setISPChecklistStatusFilter('')">
                     <div class="kpi-number">${data.length}</div>
                     <div class="kpi-label">Total Checklists</div>
                     <div class="kpi-bar"></div>
                 </div>
-                <div class="mtn-renewal-kpi-card yellow">
+                <div class="mtn-renewal-kpi-card yellow ${isActive('pending') ? 'active' : ''}" style="cursor:pointer;" onclick="setISPChecklistStatusFilter('pending')">
                     <div class="kpi-number">${pending}</div>
                     <div class="kpi-label">Pending</div>
                     <div class="kpi-bar"></div>
                 </div>
-                <div class="mtn-renewal-kpi-card purple">
+                <div class="mtn-renewal-kpi-card purple ${isActive('scheduled') ? 'active' : ''}" style="cursor:pointer;" onclick="setISPChecklistStatusFilter('scheduled')">
                     <div class="kpi-number">${scheduled}</div>
                     <div class="kpi-label">Scheduled</div>
                     <div class="kpi-bar"></div>
                 </div>
-                <div class="mtn-renewal-kpi-card green">
+                <div class="mtn-renewal-kpi-card green ${isActive('completed') ? 'active' : ''}" style="cursor:pointer;" onclick="setISPChecklistStatusFilter('completed')">
                     <div class="kpi-number">${completed}</div>
                     <div class="kpi-label">Completed</div>
                     <div class="kpi-bar"></div>
@@ -13529,11 +14041,32 @@ async function exportActivityLog() {
         }
 
         function filterISPChecklistData() {
-            let filtered = ispChecklistData.map(ic => {
-                const contact = crmData.find(c => c.id === ic.contact_id);
-                return { ...ic, contact };
-            }).filter(ic => ic.contact);
+            // Deduplicate by contact_id — keep only the latest record per contact
+            const checklistMap = new Map();
+            ispChecklistData.forEach(ic => {
+                const cid = parseInt(ic.contact_id, 10);
+                if (!isNaN(cid)) {
+                    // Keep the one with the higher id (more recent insert)
+                    if (!checklistMap.has(cid) || ic.id > checklistMap.get(cid).id) {
+                        checklistMap.set(cid, ic);
+                    }
+                }
+            });
 
+            // Only show customers that have a REAL checklist record in DB
+            const allMerged = [];
+            checklistMap.forEach((ic, cid) => {
+                const contact = crmData.find(c => parseInt(c.id, 10) === cid);
+                if (contact) {
+                    allMerged.push({ ...ic, contact });
+                }
+            });
+
+            // KPIs always use the full real list
+            renderISPChecklistKPIs(allMerged);
+
+            // Apply filters for the table
+            let filtered = allMerged.slice();
             if (ispChecklistStatusFilter) {
                 filtered = filtered.filter(ic => ic.status === ispChecklistStatusFilter);
             }
@@ -13556,7 +14089,6 @@ async function exportActivityLog() {
                 });
             }
             ispChecklistFiltered = filtered;
-            renderISPChecklistKPIs(ispChecklistData);
             renderISPChecklistTable();
         }
 
@@ -13607,7 +14139,6 @@ async function exportActivityLog() {
                             <th>ACCT NO</th>
                             <th>CLINIC NAME</th>
                             <th>Items</th>
-                            <th>SUPPORT NAME</th>
                             <th>Schedule Date</th>
                             <th>Assigned Staff</th>
                             <th>Status</th>
@@ -13617,7 +14148,7 @@ async function exportActivityLog() {
                     <tbody>`;
 
             if (pageData.length === 0) {
-                html += `<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">No ISP checklists found.</td></tr>`;
+                html += `<tr><td colspan="7" style="text-align:center;padding:40px;color:#64748b;">No customers found.</td></tr>`;
             } else {
                 pageData.forEach(ic => {
                     const c = ic.contact;
@@ -13628,18 +14159,42 @@ async function exportActivityLog() {
                         completed: '<span style="background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;">Completed</span>'
                     }[ic.status] || ic.status;
 
+                    const isVirtual = ic._virtual === true;
+                    const canDelete = hasPermission('ispChecklist', 'delete');
+                    const canSchedule = hasPermission('ispChecklist', 'schedule');
+
+                    let actionBtns = '';
+                    if (isVirtual) {
+                        actionBtns = canSchedule ? `<button class="btn btn-sm btn-primary" onclick="createISPChecklistForContact(${ic.contact_id})" style="padding:4px 10px;font-size:12px;">Create Checklist</button>` : '-';
+                    } else {
+                        // Schedule / Reschedule
+                        if (ic.status !== 'completed' && canSchedule) {
+                            actionBtns += `<button class="btn btn-sm btn-primary" onclick="openISPScheduleModal(${ic.id})" style="padding:4px 10px;font-size:12px;margin-right:4px;">${ic.status==='pending'?'Schedule':'Reschedule'}</button>`;
+                        }
+                        // Complete
+                        if (ic.status === 'scheduled' && canSchedule) {
+                            actionBtns += `<button class="btn btn-sm btn-outline" onclick="completeISPChecklist(${ic.id})" style="padding:4px 10px;font-size:12px;margin-right:4px;">Complete</button>`;
+                        }
+                        // Undo — revert to previous step (completed→scheduled, scheduled→pending)
+                        if (ic.status !== 'pending' && canSchedule) {
+                            const prevStatus = ic.status === 'completed' ? 'scheduled' : 'pending';
+                            actionBtns += `<button class="btn btn-sm" onclick="undoISPChecklist(${ic.id},'${prevStatus}')" style="padding:4px 10px;font-size:12px;margin-right:4px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;">&#8630; Undo</button>`;
+                        }
+                        // Delete — admin only
+                        if (canDelete) {
+                            actionBtns += `<button class="btn btn-sm" onclick="deleteISPChecklist(${ic.id})" style="padding:4px 10px;font-size:12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;">Delete</button>`;
+                        }
+                        if (!actionBtns) actionBtns = '-';
+                    }
+
                     html += `<tr>
                         <td>${escapeHtml(c['ACCT NO'] || '')}</td>
                         <td>${escapeHtml(c['CLINIC NAME'] || '')}</td>
                         <td>${items || '-'}</td>
-                        <td>${escapeHtml(c['SUPPORT NAME'] || '-')}</td>
                         <td>${escapeHtml(ic.schedule_date || '-')}</td>
                         <td>${escapeHtml(ic.assigned_staff || '-')}</td>
                         <td>${statusBadge}</td>
-                        <td>
-                            ${ic.status !== 'completed' ? `<button class="btn btn-sm btn-primary" onclick="openISPScheduleModal(${ic.id})" style="padding:4px 10px;font-size:12px;">${ic.status==='pending'?'Schedule':'Reschedule'}</button>` : ''}
-                            ${ic.status === 'scheduled' ? ` <button class="btn btn-sm btn-outline" onclick="completeISPChecklist(${ic.id})" style="padding:4px 10px;font-size:12px;">Complete</button>` : ''}
-                        </td>
+                        <td style="white-space:nowrap;">${actionBtns}</td>
                     </tr>`;
                 });
             }
@@ -13719,14 +14274,16 @@ async function exportActivityLog() {
             const staffEl = document.getElementById('ispAssignedStaff');
             const notesEl = document.getElementById('ispScheduleNotes');
 
-            const scheduleDateRaw = scheduleDateEl ? scheduleDateEl.value : '';
+            const scheduleDateRaw = scheduleDateEl ? scheduleDateEl.value : ''; // YYYY-MM-DD from <input type="date">
             const staff = staffEl ? staffEl.value.trim() : '';
             const notes = notesEl ? notesEl.value.trim() : '';
 
             if (!scheduleDateRaw) { alert('Please enter a schedule date.'); return; }
             if (!staff) { alert('Please enter assigned staff.'); return; }
 
-            const scheduleDate = formatDateDDMMYYYY(parseDateToJs(scheduleDateRaw));
+            // Convert YYYY-MM-DD (from date input) directly to DD/MM/YYYY for display/storage
+            const [sy, sm, sd] = scheduleDateRaw.split('-');
+            const scheduleDate = `${sd}/${sm}/${sy}`; // e.g. 18/05/2026
 
             const ic = ispChecklistData.find(d => d.id === checklistId);
             if (!ic) return;
@@ -13748,10 +14305,17 @@ async function exportActivityLog() {
 
                 // If new customer (no MTN start date), set MTN start/end to schedule date
                 const mtnStart = contact['CMS/MHIS MTN START DATE'];
+                // Set MTN start = schedule date, end = 1 year later minus 1 day
                 const isNewCustomer = !mtnStart || String(mtnStart).trim() === '';
                 if (isNewCustomer) {
+                    // Build end date: same day/month, year+1, day-1
+                    const startD = parseInt(sd, 10);
+                    const startM = parseInt(sm, 10);
+                    const startY = parseInt(sy, 10);
+                    const endDate = new Date(startY + 1, startM - 1, startD - 1); // -1 day
+                    const endDateStr = `${String(endDate.getDate()).padStart(2,'0')}/${String(endDate.getMonth()+1).padStart(2,'0')}/${endDate.getFullYear()}`;
                     contact['CMS/MHIS MTN START DATE'] = scheduleDate;
-                    contact['CMS/MHIS MTN END DATE'] = scheduleDate;
+                    contact['CMS/MHIS MTN END DATE'] = endDateStr;
                     contact['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
                     contact['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
                     await supabaseClient.from('contacts').update({ data: contact }).eq('id', contact.id);
@@ -13770,6 +14334,39 @@ async function exportActivityLog() {
             } catch (err) {
                 console.error('Save schedule error:', err);
                 alert('Failed to save schedule: ' + err.message);
+            }
+        }
+
+        async function createISPChecklistForContact(contactId) {
+            if (!hasPermission('ispChecklist', 'schedule')) {
+                showToast('You do not have permission to create ISP checklists.', 'error');
+                return;
+            }
+            const contact = crmData.find(c => parseInt(c.id, 10) === parseInt(contactId, 10));
+            if (!contact) {
+                showToast('Customer not found.', 'error');
+                return;
+            }
+            try {
+                const { data, error } = await supabaseClient.from('isp_checklists').insert([{
+                    contact_id: parseInt(contactId, 10),
+                    items: [],
+                    status: 'pending',
+                    created_by: currentUser ? currentUser.username : 'system',
+                    updated_by: currentUser ? currentUser.username : 'system'
+                }]).select();
+                if (error) {
+                    console.error('Failed to create ISP checklist:', error);
+                    showToast('Failed to create checklist: ' + error.message, 'error');
+                    return;
+                }
+                showToast('ISP checklist created for ' + (contact['CLINIC NAME'] || contact['ACCT NO']), 'success');
+                logActivity({ module: 'ISP Checklist', action: 'CREATE', description: `Created ISP checklist for ${contact['ACCT NO']}` });
+                await loadISPChecklists();
+                filterISPChecklistData();
+            } catch (err) {
+                console.error('Create checklist error:', err);
+                showToast('Failed to create checklist: ' + err.message, 'error');
             }
         }
 
@@ -13796,13 +14393,79 @@ async function exportActivityLog() {
             }
         }
 
+        async function undoISPChecklist(checklistId, targetStatus) {
+            const statusLabels = { pending: 'Pending', scheduled: 'Scheduled' };
+            const label = statusLabels[targetStatus] || targetStatus;
+            if (!confirm(`Undo this action? The checklist status will be reverted to "${label}".`)) return;
+
+            const ic = ispChecklistData.find(d => d.id === checklistId);
+            if (!ic) return;
+
+            const updateData = {
+                status: targetStatus,
+                updated_at: new Date().toISOString(),
+                updated_by: currentUser ? currentUser.username : 'system'
+            };
+            // If reverting to pending, also clear schedule info
+            if (targetStatus === 'pending') {
+                updateData.schedule_date = null;
+                updateData.assigned_staff = null;
+                updateData.notes = null;
+            }
+
+            try {
+                const { error } = await supabaseClient.from('isp_checklists').update(updateData).eq('id', checklistId);
+                if (error) throw error;
+
+                ic.status = targetStatus;
+                if (targetStatus === 'pending') {
+                    ic.schedule_date = null;
+                    ic.assigned_staff = null;
+                    ic.notes = null;
+                }
+                logActivity({ module: 'ISP Checklist', action: 'UNDO', description: `Reverted ISP checklist ${checklistId} to ${targetStatus}` });
+                showToast(`ISP checklist reverted to ${label}`, 'success');
+                filterISPChecklistData();
+            } catch (err) {
+                console.error('Undo ISP error:', err);
+                showToast('Failed to undo: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteISPChecklist(checklistId) {
+            if (!hasPermission('ispChecklist', 'delete')) {
+                showToast('You do not have permission to delete ISP checklists.', 'error');
+                return;
+            }
+            const ic = ispChecklistData.find(d => d.id === checklistId);
+            const contact = ic ? crmData.find(c => parseInt(c.id, 10) === parseInt(ic.contact_id, 10)) : null;
+            const label = contact ? `${contact['ACCT NO']} - ${contact['CLINIC NAME']}` : `Checklist #${checklistId}`;
+
+            if (!confirm(`Permanently delete the ISP checklist for:\n${label}\n\nThis cannot be undone.`)) return;
+
+            try {
+                const { error } = await supabaseClient.from('isp_checklists').delete().eq('id', checklistId);
+                if (error) throw error;
+
+                // Remove from local data
+                const idx = ispChecklistData.findIndex(d => d.id === checklistId);
+                if (idx !== -1) ispChecklistData.splice(idx, 1);
+
+                logActivity({ module: 'ISP Checklist', action: 'DELETE', description: `Deleted ISP checklist for ${label}` });
+                showToast('ISP checklist deleted', 'success');
+                filterISPChecklistData();
+            } catch (err) {
+                console.error('Delete ISP error:', err);
+                showToast('Failed to delete: ' + err.message, 'error');
+            }
+        }
+
         function exportISPChecklistExcel() {
             if (ispChecklistFiltered.length === 0) { alert('No data to export.'); return; }
             const rows = ispChecklistFiltered.map(ic => ({
                 'ACCT NO': ic.contact['ACCT NO'] || '',
                 'CLINIC NAME': ic.contact['CLINIC NAME'] || '',
                 'ITEMS': (ic.items || []).join(', '),
-                'SUPPORT NAME': ic.contact['SUPPORT NAME'] || '',
                 'SCHEDULE DATE': ic.schedule_date || '',
                 'ASSIGNED STAFF': ic.assigned_staff || '',
                 'STATUS': ic.status || '',
@@ -13820,63 +14483,114 @@ async function exportActivityLog() {
             if (!container) return;
             container.innerHTML = '<p style="color:#9ca3af;text-align:center;">Loading ISP checklist...</p>';
 
+            const normalizedContactId = parseInt(contactId, 10);
+            if (isNaN(normalizedContactId)) {
+                console.error('[loadCustomerISPChecklist] Invalid contactId:', contactId);
+                container.innerHTML = '<p style="color:#dc2626;text-align:center;">Failed to load ISP checklist: Invalid customer ID.</p>';
+                return;
+            }
+
             try {
-                const { data, error } = await supabaseClient.from('isp_checklists').select('*').eq('contact_id', contactId).order('created_at', { ascending: false }).limit(1);
+                const { data, error } = await supabaseClient.from('isp_checklists').select('*').eq('contact_id', normalizedContactId).order('created_at', { ascending: false }).limit(1);
                 if (error) throw error;
                 const ic = data && data[0];
-                const contact = crmData.find(c => c.id === contactId);
+                const contact = crmData.find(c => parseInt(c.id, 10) === normalizedContactId);
+                const canEdit = hasPermission('ispChecklist', 'schedule');
+                const existingItems = ic ? (ic.items || []) : [];
 
-                if (!ic) {
-                    container.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:20px;">No ISP checklist found for this customer.</p>';
-                    return;
+                // Editable ISP Items checkboxes (always shown)
+                const itemsHtml = ISP_ITEMS.map(item => {
+                    const checked = existingItems.includes(item) ? 'checked' : '';
+                    return `<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px;">
+                        <input type="checkbox" class="isp-item-checkbox" value="${escapeHtml(item)}" ${checked} ${canEdit ? '' : 'disabled'} style="width:16px;height:16px;">
+                        ${escapeHtml(item)}
+                    </label>`;
+                }).join('');
+
+                let statusSection = '';
+                if (ic) {
+                    const statusBadge = {
+                        pending: '<span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:6px;font-size:13px;font-weight:600;">Pending</span>',
+                        scheduled: '<span style="background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:6px;font-size:13px;font-weight:600;">Scheduled</span>',
+                        completed: '<span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:6px;font-size:13px;font-weight:600;">Completed</span>'
+                    }[ic.status] || ic.status;
+
+                    statusSection = `
+                        <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                <h4 style="font-size:14px;font-weight:600;color:#374151;margin:0;">Checklist Status</h4>
+                                <div>${statusBadge}</div>
+                            </div>
+                            ${ic.schedule_date ? `<div style="font-size:13px;color:#64748b;">Schedule Date: <strong>${escapeHtml(ic.schedule_date)}</strong></div>` : ''}
+                            ${ic.assigned_staff ? `<div style="font-size:13px;color:#64748b;">Assigned Staff: <strong>${escapeHtml(ic.assigned_staff)}</strong></div>` : ''}
+                            ${ic.notes ? `<div style="font-size:13px;color:#64748b;margin-top:8px;">Notes: ${escapeHtml(ic.notes)}</div>` : ''}
+                            ${ic.status !== 'completed' && canEdit ? `
+                                <div style="margin-top:12px;display:flex;gap:8px;">
+                                    <button class="btn btn-primary btn-sm" onclick="openISPScheduleModal(${ic.id})" style="padding:6px 16px;">${ic.status==='pending'?'Schedule Visit':'Reschedule'}</button>
+                                    ${ic.status==='scheduled' ? `<button class="btn btn-outline btn-sm" onclick="completeISPChecklist(${ic.id})" style="padding:6px 16px;">Mark Complete</button>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>`;
                 }
 
-                const items = (ic.items || []).map(item => `<span style="display:inline-block;background:#e0f2fe;color:#0369a1;padding:4px 12px;border-radius:6px;font-size:13px;margin:4px;">${escapeHtml(item)}</span>`).join('');
-                const statusBadge = {
-                    pending: '<span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:6px;font-size:13px;font-weight:600;">Pending</span>',
-                    scheduled: '<span style="background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:6px;font-size:13px;font-weight:600;">Scheduled</span>',
-                    completed: '<span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:6px;font-size:13px;font-weight:600;">Completed</span>'
-                }[ic.status] || ic.status;
-
-                const isSupport = hasPermission('ispChecklist', 'schedule');
-                const scheduleInfo = isSupport ? `
-                    <div style="margin-top:16px;">
-                        <h4 style="font-size:14px;font-weight:600;color:#374151;margin-bottom:8px;">Schedule Details</h4>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                            <div style="background:#f8fafc;padding:12px;border-radius:8px;">
-                                <div style="font-size:12px;color:#64748b;">Schedule Date</div>
-                                <div style="font-size:14px;font-weight:500;color:#1e293b;">${escapeHtml(ic.schedule_date || '-')}</div>
-                            </div>
-                            <div style="background:#f8fafc;padding:12px;border-radius:8px;">
-                                <div style="font-size:12px;color:#64748b;">Assigned Staff</div>
-                                <div style="font-size:14px;font-weight:500;color:#1e293b;">${escapeHtml(ic.assigned_staff || contact?.['SUPPORT NAME'] || '-')}</div>
-                            </div>
-                        </div>
-                        ${ic.notes ? `<div style="margin-top:12px;background:#f8fafc;padding:12px;border-radius:8px;"><div style="font-size:12px;color:#64748b;">Notes</div><div style="font-size:14px;color:#1e293b;">${escapeHtml(ic.notes)}</div></div>` : ''}
-                    </div>
-                ` : '';
-
                 container.innerHTML = `
-                    <div style="margin-bottom:16px;">
+                    <div style="padding:4px 0;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                            <h3 style="font-size:16px;font-weight:600;color:#1e293b;margin:0;">Installation Items</h3>
-                            <div>${statusBadge}</div>
+                            <h3 style="font-size:15px;font-weight:600;color:#1e293b;margin:0;">Installation Items</h3>
+                            ${!ic && canEdit ? `<button class="btn btn-primary btn-sm" onclick="saveISPChecklistFromModal(${normalizedContactId})" style="padding:6px 14px;">Create &amp; Save Checklist</button>` : ''}
+                            ${ic && canEdit ? `<button class="btn btn-outline btn-sm" onclick="saveISPChecklistFromModal(${normalizedContactId})" style="padding:6px 14px;">Save Items</button>` : ''}
                         </div>
-                        <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                            ${items || '<span style="color:#9ca3af;">No items selected</span>'}
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:4px;">
+                            ${itemsHtml}
                         </div>
+                        ${statusSection}
                     </div>
-                    ${scheduleInfo}
-                    ${ic.status !== 'completed' && hasPermission('ispChecklist', 'schedule') ? `
-                        <div style="margin-top:20px;text-align:right;">
-                            <button class="btn btn-primary btn-sm" onclick="openISPScheduleModal(${ic.id})" style="padding:6px 16px;">${ic.status==='pending'?'Schedule Visit':'Reschedule'}</button>
-                            ${ic.status==='scheduled' ? ` <button class="btn btn-outline btn-sm" onclick="completeISPChecklist(${ic.id})" style="padding:6px 16px;">Mark Complete</button>` : ''}
-                        </div>
-                    ` : ''}
                 `;
             } catch (err) {
                 console.error('Load customer ISP checklist error:', err);
                 container.innerHTML = '<p style="color:#dc2626;text-align:center;">Failed to load ISP checklist.</p>';
+            }
+        }
+
+        async function saveISPChecklistFromModal(contactId) {
+            if (!hasPermission('ispChecklist', 'schedule')) {
+                showToast('You do not have permission to update ISP checklist.', 'error');
+                return;
+            }
+            const checked = Array.from(document.querySelectorAll('.isp-item-checkbox:checked')).map(cb => cb.value);
+            const normalizedContactId = parseInt(contactId, 10);
+
+            try {
+                // Check if record exists
+                const { data: existing, error: fetchErr } = await supabaseClient.from('isp_checklists').select('id').eq('contact_id', normalizedContactId).limit(1);
+                if (fetchErr) throw fetchErr;
+
+                if (existing && existing.length > 0) {
+                    // Update
+                    const { error } = await supabaseClient.from('isp_checklists').update({
+                        items: checked,
+                        updated_by: currentUser ? currentUser.username : 'system'
+                    }).eq('id', existing[0].id);
+                    if (error) throw error;
+                } else {
+                    // Insert new
+                    const { error } = await supabaseClient.from('isp_checklists').insert([{
+                        contact_id: normalizedContactId,
+                        items: checked,
+                        status: 'pending',
+                        created_by: currentUser ? currentUser.username : 'system',
+                        updated_by: currentUser ? currentUser.username : 'system'
+                    }]);
+                    if (error) throw error;
+                }
+
+                showToast('ISP checklist items saved', 'success');
+                logActivity({ module: 'ISP Checklist', action: 'UPDATE', description: `Updated ISP items for contact ${contactId}` });
+                await loadISPChecklists();
+                loadCustomerISPChecklist(contactId);
+            } catch (err) {
+                console.error('Save ISP checklist error:', err);
+                showToast('Failed to save: ' + err.message, 'error');
             }
         }
 
@@ -14357,6 +15071,540 @@ async function exportActivityLog() {
             renderCloudBackupModule();
         }
 
+        // ==================== MTN SERVICE MODULE FUNCTIONS ====================
+
+        function calculateTotalMTNRequired(startDate, endDate) {
+            if (!startDate || !endDate) return 0;
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+            const diffMs = end - start;
+            const diffDays = diffMs / (1000 * 60 * 60 * 24);
+            const years = Math.ceil(diffDays / 365);
+            return Math.max(1, years);
+        }
+
+        async function loadMTNServiceData() {
+            try {
+                const { data, error } = await supabaseClient.from('mtn_service_tracking').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                mtnServiceData = data || [];
+            } catch (err) {
+                console.error('[MTN Service] load error:', err);
+                mtnServiceData = [];
+            }
+        }
+
+        function renderMTNServiceModule() {
+            // Reset filters to prevent stale browser-cached input values
+            mtnServiceSearch = '';
+            mtnServiceStatusFilter = '';
+            mtnServiceCurrentPage = 1;
+            loadMTNServiceData().then(() => {
+                renderMTNServiceKPIs();
+                filterMTNServiceData();
+            });
+        }
+
+        function renderMTNServiceKPIs() {
+            const container = document.getElementById('mtnServiceKpiCards');
+            if (!container) return;
+
+            // KPIs count only real DB records (not virtual)
+            const realData = mtnServiceData;
+            const pending = realData.filter(d => d.status === 'pending').length;
+            const completed = realData.filter(d => d.status === 'completed').length;
+            const postponed = realData.filter(d => d.status === 'postponed').length;
+            const rejected = realData.filter(d => d.status === 'rejected').length;
+            const remote = realData.filter(d => d.service_type === 'remote').length;
+            const onsite = realData.filter(d => d.service_type === 'onsite').length;
+
+            const cards = [
+                { key: 'pending', label: 'Total Pending', value: pending, icon: '&#128993;', color: 'yellow' },
+                { key: 'completed', label: 'Total Completed', value: completed, icon: '&#9989;', color: 'green' },
+                { key: 'postponed', label: 'Total Postponed', value: postponed, icon: '&#9208;', color: 'orange' },
+                { key: 'rejected', label: 'Total Rejected', value: rejected, icon: '&#10060;', color: 'red' },
+                { key: 'remote', label: 'Total Remote', value: remote, icon: '&#128187;', color: 'blue' },
+                { key: 'onsite', label: 'Total Onsite', value: onsite, icon: '&#128295;', color: 'purple' }
+            ];
+
+            container.innerHTML = cards.map(c => {
+                const isActive = mtnServiceStatusFilter === c.key;
+                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNServiceStatusFilter('${c.key}')">
+                    <div class="kpi-bar"></div>
+                    <div class="kpi-icon">${c.icon}</div>
+                    <div class="kpi-value">${c.value}</div>
+                    <div class="kpi-label">${c.label}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function setMTNServiceStatusFilter(status) {
+            if (mtnServiceStatusFilter === status) {
+                mtnServiceStatusFilter = '';
+            } else {
+                mtnServiceStatusFilter = status;
+            }
+            mtnServiceCurrentPage = 1;
+            renderMTNServiceKPIs();
+            filterMTNServiceData();
+        }
+
+        function filterMTNServiceData() {
+            // Only show real DB records (not virtual) — merged with CRM data for display
+            // Only include customers that have been marked as PAID in MTN Renewal Tracking
+            let merged = mtnServiceData.map(d => {
+                const contactId = parseInt(d.contact_id, 10);
+                const contact = crmData.find(c => parseInt(c.id, 10) === contactId) || {};
+                const mtnStart = contact['CMS/MHIS MTN START DATE'] || contact['MTN START DATE'] || d.mtn_start_date || null;
+                const mtnEnd = contact['CMS/MHIS MTN END DATE'] || contact['MTN END DATE'] || d.mtn_end_date || null;
+                const totalRequired = calculateTotalMTNRequired(mtnStart, mtnEnd);
+                return {
+                    ...d,
+                    contact,
+                    mtn_start_date: mtnStart,
+                    mtn_end_date: mtnEnd,
+                    _totalRequired: totalRequired,
+                    _balance: Math.max(0, totalRequired - (d.mtn_completed_count || 0))
+                };
+            }).filter(d => !!d.contact['MTN PAID DATE']); // only paid customers
+
+            if (mtnServiceStatusFilter) {
+                merged = merged.filter(d => d.status === mtnServiceStatusFilter);
+            }
+            if (mtnServiceSearch) {
+                const q = mtnServiceSearch.toLowerCase();
+                merged = merged.filter(d => {
+                    const c = d.contact;
+                    return (c['ACCT NO'] || '').toLowerCase().includes(q) || (c['CLINIC NAME'] || '').toLowerCase().includes(q);
+                });
+            }
+            if (mtnServiceSortKey) {
+                merged.sort((a, b) => {
+                    let av = a.contact[mtnServiceSortKey] || '';
+                    let bv = b.contact[mtnServiceSortKey] || '';
+                    if (typeof av === 'string') av = av.toLowerCase();
+                    if (typeof bv === 'string') bv = bv.toLowerCase();
+                    if (av < bv) return mtnServiceSortDir === 'asc' ? -1 : 1;
+                    if (av > bv) return mtnServiceSortDir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+            mtnServiceFiltered = merged;
+            renderMTNServiceTable();
+        }
+
+        function renderMTNServiceTable() {
+            const container = document.getElementById('mtnServiceContent');
+            if (!container) return;
+
+            const start = (mtnServiceCurrentPage - 1) * mtnServiceRowsPerPage;
+            const pageData = mtnServiceFiltered.slice(start, start + mtnServiceRowsPerPage);
+            const totalPages = Math.ceil(mtnServiceFiltered.length / mtnServiceRowsPerPage) || 1;
+
+            const statusColors = {
+                pending: { bg: '#fef3c7', color: '#92400e' },
+                completed: { bg: '#d1fae5', color: '#065f46' },
+                postponed: { bg: '#ffedd5', color: '#9a3412' },
+                rejected: { bg: '#fee2e2', color: '#991b1b' }
+            };
+
+            let html = `
+            <div class="mtn-renewal-toolbar" style="margin-bottom:16px;">
+                <input type="text" id="mtnServiceSearch" placeholder="Search account or clinic..." value="${escapeHtml(mtnServiceSearch)}" oninput="onMTNServiceSearch()" style="flex:1;min-width:200px;max-width:300px;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                <select id="mtnServiceStatusFilter" onchange="onMTNServiceStatusFilter()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                    <option value="">All Status</option>
+                    <option value="pending" ${mtnServiceStatusFilter==='pending'?'selected':''}>Pending</option>
+                    <option value="completed" ${mtnServiceStatusFilter==='completed'?'selected':''}>Completed</option>
+                    <option value="postponed" ${mtnServiceStatusFilter==='postponed'?'selected':''}>Postponed</option>
+                    <option value="rejected" ${mtnServiceStatusFilter==='rejected'?'selected':''}>Rejected</option>
+                </select>
+                <button class="btn btn-outline" onclick="renderMTNServiceModule()" style="padding:8px 14px;">Refresh</button>
+            </div>
+            <div class="table-container" style="overflow-x:auto;">
+                <table class="saas-table" style="min-width:1200px;">
+                    <thead>
+                        <tr>
+                            <th onclick="sortMTNServiceTable('ACCT NO')" style="cursor:pointer;">ACCT NO ${mtnServiceSortKey==='ACCT NO'? (mtnServiceSortDir==='asc'?'▲':'▼'):''}</th>
+                            <th onclick="sortMTNServiceTable('CLINIC NAME')" style="cursor:pointer;">Clinic Name ${mtnServiceSortKey==='CLINIC NAME'? (mtnServiceSortDir==='asc'?'▲':'▼'):''}</th>
+                            <th>MTN Period</th>
+                            <th>Required MTN</th>
+                            <th>Completed MTN</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Service Type</th>
+                            <th>Service By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            if (pageData.length === 0) {
+                html += `<tr><td colspan="10" style="text-align:center;padding:40px;color:#64748b;">No customers found.</td></tr>`;
+            } else {
+                pageData.forEach(d => {
+                    const c = d.contact;
+                    const sc = statusColors[d.status] || { bg: '#f3f4f6', color: '#374151' };
+                    const statusBadge = `<span style="background:${sc.bg};color:${sc.color};padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;">${d.status.charAt(0).toUpperCase() + d.status.slice(1)}</span>`;
+                    const mtnPeriod = (d.mtn_start_date && d.mtn_end_date) ? `${mtnRenewalFmt(parseDateToJs(d.mtn_start_date))} - ${mtnRenewalFmt(parseDateToJs(d.mtn_end_date))}` : '-';
+
+                    const canDelete = hasPermission('mtnService', 'delete');
+                    const actions = `<button class="btn btn-sm btn-primary" onclick="openMTNServiceUpdateModal(${d.contact_id})" style="padding:4px 10px;font-size:12px;margin-right:4px;">Update</button>${canDelete ? `<button class="btn btn-sm" onclick="deleteMTNServiceTracking(${d.id})" style="padding:4px 10px;font-size:12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;">Remove</button>` : ''}`;
+
+                    html += `<tr>
+                        <td>${escapeHtml(c['ACCT NO'] || '')}</td>
+                        <td>${escapeHtml(c['CLINIC NAME'] || '')}</td>
+                        <td>${escapeHtml(mtnPeriod)}</td>
+                        <td>${d._totalRequired || 0}</td>
+                        <td>${d.mtn_completed_count || 0}</td>
+                        <td>${d._balance || 0}</td>
+                        <td>${statusBadge}</td>
+                        <td>${escapeHtml(d.service_type || '-')}</td>
+                        <td>${escapeHtml(d.service_by || '-')}</td>
+                        <td>${actions}</td>
+                    </tr>`;
+                });
+            }
+            html += `</tbody></table></div>`;
+
+            html += `<div class="pagination-container" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:13px;color:#6b7280;">Showing ${mtnServiceFiltered.length} records</div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button onclick="mtnServiceCurrentPage=Math.max(1,mtnServiceCurrentPage-1);renderMTNServiceTable();" ${mtnServiceCurrentPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Prev</button>
+                    <span style="font-size:13px;color:#374151;">Page ${mtnServiceCurrentPage} of ${totalPages}</span>
+                    <button onclick="mtnServiceCurrentPage=Math.min(${totalPages},mtnServiceCurrentPage+1);renderMTNServiceTable();" ${mtnServiceCurrentPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Next</button>
+                </div>
+                <select onchange="mtnServiceRowsPerPage=parseInt(this.value);mtnServiceCurrentPage=1;renderMTNServiceTable();" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+                    <option value="10" ${mtnServiceRowsPerPage===10?'selected':''}>10 / page</option>
+                    <option value="25" ${mtnServiceRowsPerPage===25?'selected':''}>25 / page</option>
+                    <option value="50" ${mtnServiceRowsPerPage===50?'selected':''}>50 / page</option>
+                </select>
+            </div>`;
+
+            container.innerHTML = html;
+        }
+
+        function sortMTNServiceTable(key) {
+            if (mtnServiceSortKey === key) mtnServiceSortDir = mtnServiceSortDir === 'asc' ? 'desc' : 'asc';
+            else { mtnServiceSortKey = key; mtnServiceSortDir = 'asc'; }
+            mtnServiceCurrentPage = 1;
+            filterMTNServiceData();
+        }
+
+        function onMTNServiceSearch() {
+            mtnServiceSearch = document.getElementById('mtnServiceSearch')?.value || '';
+            mtnServiceCurrentPage = 1;
+            filterMTNServiceData();
+        }
+
+        function onMTNServiceStatusFilter() {
+            mtnServiceStatusFilter = document.getElementById('mtnServiceStatusFilter')?.value || '';
+            mtnServiceCurrentPage = 1;
+            renderMTNServiceKPIs();
+            filterMTNServiceData();
+        }
+
+        async function createMTNServiceTrackingForContact(contactId) {
+            if (!hasPermission('mtnService', 'schedule')) {
+                showToast('You do not have permission to create MTN service tracking.', 'error');
+                return;
+            }
+            const contact = crmData.find(c => parseInt(c.id, 10) === parseInt(contactId, 10));
+            if (!contact) {
+                showToast('Customer not found.', 'error');
+                return;
+            }
+            const mtnStart = contact['CMS/MHIS MTN START DATE'] || contact['MTN START DATE'] || null;
+            const mtnEnd = contact['CMS/MHIS MTN END DATE'] || contact['MTN END DATE'] || null;
+            const totalRequired = calculateTotalMTNRequired(mtnStart, mtnEnd);
+
+            try {
+                const { data, error } = await supabaseClient.from('mtn_service_tracking').insert([{
+                    contact_id: parseInt(contactId, 10),
+                    acct_no: contact['ACCT NO'] || '',
+                    clinic_name: contact['CLINIC NAME'] || '',
+                    mtn_start_date: toSupabaseDate(mtnStart),
+                    mtn_end_date: toSupabaseDate(mtnEnd),
+                    total_mtn_required: totalRequired,
+                    mtn_completed_count: 0,
+                    status: 'pending',
+                    service_by: contact['SUPPORT NAME'] || null,
+                    created_by: currentUser ? currentUser.username : 'system',
+                    updated_by: currentUser ? currentUser.username : 'system'
+                }]).select();
+                if (error) {
+                    showToast('Failed to create tracking: ' + error.message, 'error');
+                    return;
+                }
+                showToast('MTN service tracking created for ' + (contact['CLINIC NAME'] || contact['ACCT NO']), 'success');
+                logActivity({ module: 'MTN Service', action: 'CREATE', description: `Created MTN service tracking for ${contact['ACCT NO']}` });
+                await loadMTNServiceData();
+                filterMTNServiceData();
+            } catch (err) {
+                console.error('Create tracking error:', err);
+                showToast('Failed to create tracking: ' + err.message, 'error');
+            }
+        }
+
+        async function ensureMTNServiceTrackingForContact(contactId) {
+            const contact = crmData.find(c => parseInt(c.id, 10) === parseInt(contactId, 10));
+            if (!contact) return;
+            const existing = mtnServiceData.find(d => parseInt(d.contact_id, 10) === parseInt(contactId, 10));
+            if (existing) {
+                // Update existing record with latest contract dates
+                const mtnStart = contact['CMS/MHIS MTN START DATE'] || contact['MTN START DATE'] || null;
+                const mtnEnd = contact['CMS/MHIS MTN END DATE'] || contact['MTN END DATE'] || null;
+                const totalRequired = calculateTotalMTNRequired(mtnStart, mtnEnd);
+                try {
+                    await supabaseClient.from('mtn_service_tracking').update({
+                        acct_no: contact['ACCT NO'] || '',
+                        clinic_name: contact['CLINIC NAME'] || '',
+                        mtn_start_date: toSupabaseDate(mtnStart),
+                        mtn_end_date: toSupabaseDate(mtnEnd),
+                        total_mtn_required: totalRequired,
+                        updated_by: currentUser ? currentUser.username : 'system',
+                        last_updated_date: new Date().toISOString()
+                    }).eq('id', existing.id);
+                    await loadMTNServiceData();
+                } catch (err) {
+                    console.error('Ensure tracking update error:', err);
+                }
+            } else {
+                await createMTNServiceTrackingForContact(contactId);
+            }
+        }
+
+        async function openMTNServiceUpdateModal(contactId) {
+            if (!hasPermission('mtnService', 'schedule')) {
+                showToast('You do not have permission to update MTN service.', 'error');
+                return;
+            }
+            const contact = crmData.find(c => parseInt(c.id, 10) === parseInt(contactId, 10));
+            if (!contact) return;
+            const tracking = mtnServiceData.find(d => parseInt(d.contact_id, 10) === parseInt(contactId, 10));
+            if (!tracking) return;
+
+            const modal = document.createElement('div');
+            modal.id = 'mtnServiceUpdateModal';
+            modal.className = 'send-reminder-overlay';
+            modal.innerHTML = `
+                <div class="send-reminder-modal" style="max-width:500px;">
+                    <div class="send-reminder-header">
+                        <h3>Update MTN Service Status</h3>
+                        <button class="close-btn" onclick="document.getElementById('mtnServiceUpdateModal').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;">&times;</button>
+                    </div>
+                    <div class="send-reminder-body">
+                        <p style="margin-bottom:16px;font-size:14px;color:#374151;"><strong>${escapeHtml(contact['CLINIC NAME'] || '')}</strong> (${escapeHtml(contact['ACCT NO'] || '')})</p>
+                        <div class="send-reminder-field">
+                            <label>Status <span style="color:#dc2626;">*</span></label>
+                            <select id="mtnUpdateStatus" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                                <option value="pending" ${tracking.status==='pending'?'selected':''}>Pending</option>
+                                <option value="completed" ${tracking.status==='completed'?'selected':''}>Completed</option>
+                                <option value="postponed" ${tracking.status==='postponed'?'selected':''}>Postponed</option>
+                                <option value="rejected" ${tracking.status==='rejected'?'selected':''}>Do Not Want Maintenance Service</option>
+                            </select>
+                        </div>
+                        <div class="send-reminder-field">
+                            <label>Service Type</label>
+                            <select id="mtnUpdateServiceType" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                                <option value="" ${!tracking.service_type?'selected':''}>-- Select --</option>
+                                <option value="remote" ${tracking.service_type==='remote'?'selected':''}>Remote</option>
+                                <option value="onsite" ${tracking.service_type==='onsite'?'selected':''}>Onsite</option>
+                            </select>
+                        </div>
+                        <div class="send-reminder-field">
+                            <label>Service By</label>
+                            <input type="text" id="mtnUpdateServiceBy" value="${escapeHtml(tracking.service_by || contact['SUPPORT NAME'] || '')}" placeholder="Enter staff name" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+                        </div>
+                        <div class="send-reminder-field">
+                            <label>Remark</label>
+                            <textarea id="mtnUpdateRemark" rows="3" placeholder="Any additional notes..." style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">${escapeHtml(tracking.remark || '')}</textarea>
+                        </div>
+                    </div>
+                    <div class="send-reminder-footer">
+                        <button class="btn btn-outline" onclick="document.getElementById('mtnServiceUpdateModal').remove()">Cancel</button>
+                        <button class="btn btn-primary" onclick="saveMTNServiceUpdate(${tracking.id})">Save</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        async function saveMTNServiceUpdate(trackingId) {
+            const status = document.getElementById('mtnUpdateStatus')?.value || 'pending';
+            const serviceType = document.getElementById('mtnUpdateServiceType')?.value || null;
+            const serviceBy = document.getElementById('mtnUpdateServiceBy')?.value || null;
+            const remark = document.getElementById('mtnUpdateRemark')?.value || null;
+
+            const tracking = mtnServiceData.find(d => d.id === trackingId);
+            if (!tracking) return;
+
+            // If status changed to completed, increment completed count
+            let completedCount = tracking.mtn_completed_count || 0;
+            if (status === 'completed' && tracking.status !== 'completed') {
+                completedCount += 1;
+            } else if (status !== 'completed' && tracking.status === 'completed') {
+                completedCount = Math.max(0, completedCount - 1);
+            }
+
+            try {
+                const { error } = await supabaseClient.from('mtn_service_tracking').update({
+                    status: status,
+                    service_type: serviceType,
+                    service_by: serviceBy,
+                    remark: remark,
+                    mtn_completed_count: completedCount,
+                    last_updated_date: new Date().toISOString(),
+                    updated_by: currentUser ? currentUser.username : 'system'
+                }).eq('id', trackingId);
+                if (error) throw error;
+
+                showToast('MTN service status updated', 'success');
+                logActivity({ module: 'MTN Service', action: 'UPDATE', description: `Updated MTN service status for ${tracking.acct_no} to ${status}` });
+                document.getElementById('mtnServiceUpdateModal')?.remove();
+                await loadMTNServiceData();
+                filterMTNServiceData();
+            } catch (err) {
+                console.error('Update error:', err);
+                showToast('Failed to update: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteMTNServiceTracking(trackingId) {
+            if (!hasPermission('mtnService', 'delete')) {
+                showToast('You do not have permission to remove MTN service tracking.', 'error');
+                return;
+            }
+            const tracking = mtnServiceData.find(d => d.id === trackingId);
+            const label = tracking ? `${tracking.acct_no} - ${tracking.clinic_name}` : `Record #${trackingId}`;
+            if (!confirm(`Remove MTN service tracking for:\n${label}\n\nThe customer will no longer appear in MTN Service tracking. This cannot be undone.`)) return;
+
+            try {
+                const { error } = await supabaseClient.from('mtn_service_tracking').delete().eq('id', trackingId);
+                if (error) throw error;
+
+                // Remove from local data
+                const idx = mtnServiceData.findIndex(d => d.id === trackingId);
+                if (idx !== -1) mtnServiceData.splice(idx, 1);
+
+                logActivity({ module: 'MTN Service', action: 'DELETE', description: `Removed MTN service tracking for ${label}` });
+                showToast('MTN service tracking removed', 'success');
+                renderMTNServiceKPIs();
+                filterMTNServiceData();
+            } catch (err) {
+                console.error('Delete MTN service error:', err);
+                showToast('Failed to remove: ' + err.message, 'error');
+            }
+        }
+
+        async function importMTNServiceData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                if (rows.length < 2) { showToast('No data found in file.', 'warning'); return; }
+
+                const headers = rows[0].map(h => String(h).trim().toLowerCase());
+                // Accept any column containing 'acct', 'account', or 'no'
+                const acctIdx = headers.findIndex(h => h.includes('acct') || h.includes('account no') || h === 'acct no');
+                if (acctIdx === -1) { showToast('Column not found. File must have an ACCT NO column.', 'error'); return; }
+
+                // Reload latest tracking data before import
+                await loadMTNServiceData();
+
+                let createdCount = 0;
+                let updatedCount = 0;
+                let skippedCount = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const acctNo = String(row[acctIdx] || '').trim();
+                    if (!acctNo) continue;
+
+                    // Find matching CRM customer
+                    const contact = crmData.find(c => String(c['ACCT NO'] || '').trim() === acctNo);
+                    if (!contact) { skippedCount++; continue; }
+
+                    const mtnStart = contact['CMS/MHIS MTN START DATE'] || contact['MTN START DATE'] || null;
+                    const mtnEnd = contact['CMS/MHIS MTN END DATE'] || contact['MTN END DATE'] || null;
+                    const totalRequired = calculateTotalMTNRequired(mtnStart, mtnEnd);
+
+                    // Check if record already exists
+                    const existing = mtnServiceData.find(d => String(d.acct_no || '').trim() === acctNo
+                        || parseInt(d.contact_id, 10) === parseInt(contact.id, 10));
+
+                    if (existing) {
+                        // Update existing record with latest CRM dates
+                        const { error } = await supabaseClient.from('mtn_service_tracking').update({
+                            acct_no: contact['ACCT NO'] || '',
+                            clinic_name: contact['CLINIC NAME'] || '',
+                            mtn_start_date: toSupabaseDate(mtnStart),
+                            mtn_end_date: toSupabaseDate(mtnEnd),
+                            total_mtn_required: totalRequired,
+                            updated_by: currentUser ? currentUser.username : 'system',
+                            last_updated_date: new Date().toISOString()
+                        }).eq('id', existing.id);
+                        if (error) { console.warn('Update error for', acctNo, error.message); skippedCount++; continue; }
+                        updatedCount++;
+                    } else {
+                        // Insert new tracking record
+                        const { error } = await supabaseClient.from('mtn_service_tracking').insert([{
+                            contact_id: parseInt(contact.id, 10),
+                            acct_no: contact['ACCT NO'] || '',
+                            clinic_name: contact['CLINIC NAME'] || '',
+                            mtn_start_date: toSupabaseDate(mtnStart),
+                            mtn_end_date: toSupabaseDate(mtnEnd),
+                            total_mtn_required: totalRequired,
+                            mtn_completed_count: 0,
+                            status: 'pending',
+                            service_by: contact['SUPPORT NAME'] || null,
+                            created_by: currentUser ? currentUser.username : 'system',
+                            updated_by: currentUser ? currentUser.username : 'system'
+                        }]);
+                        if (error) { console.warn('Insert error for', acctNo, error.message); skippedCount++; continue; }
+                        createdCount++;
+                    }
+                }
+
+                logActivity({ module: 'MTN Service', action: 'IMPORT', description: `Import: ${createdCount} created, ${updatedCount} updated, ${skippedCount} skipped` });
+                showToast(`Import complete: ${createdCount} created, ${updatedCount} updated, ${skippedCount} not found/skipped.`, 'success');
+                input.value = '';
+                await loadMTNServiceData();
+                renderMTNServiceKPIs();
+                filterMTNServiceData();
+            } catch (err) {
+                console.error('Import error:', err);
+                showToast('Import failed: ' + err.message, 'error');
+            }
+        }
+
+        function exportMTNServiceExcel() {
+            if (mtnServiceFiltered.length === 0) { showToast('No data to export.', 'warning'); return; }
+            const rows = mtnServiceFiltered.map(d => ({
+                'ACCT NO': d.contact['ACCT NO'] || '',
+                'CLINIC NAME': d.contact['CLINIC NAME'] || '',
+                'MTN START DATE': d.mtn_start_date || '',
+                'MTN END DATE': d.mtn_end_date || '',
+                'REQUIRED MTN': d._totalRequired || 0,
+                'COMPLETED MTN': d.mtn_completed_count || 0,
+                'BALANCE': d._balance || 0,
+                'STATUS': d.status || '',
+                'SERVICE TYPE': d.service_type || '',
+                'SERVICE BY': d.service_by || '',
+                'REMARK': d.remark || '',
+                'LAST UPDATED': d.last_updated_date || ''
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'MTN Service');
+            XLSX.writeFile(wb, `MTN_Service_${new Date().toISOString().split('T')[0]}.xlsx`);
+            logActivity({ module: 'MTN Service', action: 'EXPORT', description: 'Exported MTN Service to Excel' });
+        }
+
         function renderCloudBackupModule() {
             try {
                 // Auto-prompt daily check if not done today
@@ -14410,11 +15658,9 @@ async function exportActivityLog() {
                     terminated++;
                 } else if (status === 'hyb foc') {
                     hybFoc++;
-                } else if (status === 'no-status') {
-                    noStatus++;
                 } else {
-                    console.warn('[Cloud Backup] Unknown derived status:', status, 'for ACCT NO:', r['ACCT NO']);
-                    active++;
+                    // no-status or any unrecognised manual status value
+                    noStatus++;
                 }
                 if (isChecked === 'yes' || isChecked === 'true' || isChecked === '1') {
                     checked++;
@@ -14487,7 +15733,8 @@ async function exportActivityLog() {
                         if (derivedStatus === 'hyb foc') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'no-status') {
-                        if (derivedStatus === 'no-status') return true;
+                        // no-status includes 'no-status' and any unrecognised manual status
+                        if (derivedStatus !== 'active' && derivedStatus !== 'expired' && derivedStatus !== 'terminated' && derivedStatus !== 'hyb foc') return true;
                         return false;
                     } else if (cloudBackupStatusFilter === 'checked') {
                         if (isChecked === 'yes' || isChecked === 'true' || isChecked === '1') return true;
@@ -14763,7 +16010,14 @@ async function exportActivityLog() {
                     html += `<td class="col-checked">${renderCloudBackupCheckButton(r, id)}</td>`;
                     html += `<td class="col-remark" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')">${renderCloudBackupCell(r, id, 'REMARK')}</td>`;
                     html += `<td class="col-support" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'SUPPORT NAME')">${renderCloudBackupCell(r, id, 'SUPPORT NAME')}</td>`;
-                    html += `<td class="col-actions"><button class="btn btn-sm btn-outline" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')" style="padding:3px 8px;font-size:12px;">Edit</button></td>`;
+                    const derivedStatus = getCloudBackupDerivedStatus(r);
+                    const isTerminated = derivedStatus === 'terminated';
+                    const canEdit = hasPermission('crm', 'edit');
+                    html += `<td class="col-actions" style="white-space:nowrap;">
+                        <button class="btn btn-sm btn-outline" onclick="startCloudBackupInlineEdit('${id}', 'REMARK')" style="padding:3px 8px;font-size:12px;margin-right:4px;">Edit</button>
+                        ${canEdit && !isTerminated ? `<button class="btn btn-sm" onclick="terminateCloudBackup('${id}')" style="padding:3px 8px;font-size:12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;">Terminate</button>` : ''}
+                        ${canEdit && isTerminated ? `<button class="btn btn-sm" onclick="reactivateCloudBackup('${id}')" style="padding:3px 8px;font-size:12px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;">Re-activate</button>` : ''}
+                    </td>`;
                     html += `</tr>`;
                 });
             }
@@ -14798,7 +16052,9 @@ async function exportActivityLog() {
                 if (el && el.tagName === activeTag) {
                     el.focus();
                     if (cursorPos !== null && el.setSelectionRange) {
-                        el.setSelectionRange(cursorPos, selectionEnd !== null ? selectionEnd : cursorPos);
+                        try {
+                            el.setSelectionRange(cursorPos, selectionEnd !== null ? selectionEnd : cursorPos);
+                        } catch (_) {}
                     }
                     restored = true;
                 }
@@ -14810,7 +16066,9 @@ async function exportActivityLog() {
                 if (el && el.tagName === last.tagName) {
                     el.focus();
                     if (last.cursorPos !== undefined && el.setSelectionRange) {
-                        el.setSelectionRange(last.cursorPos, last.selectionEnd !== undefined ? last.selectionEnd : last.cursorPos);
+                        try {
+                            el.setSelectionRange(last.cursorPos, last.selectionEnd !== undefined ? last.selectionEnd : last.cursorPos);
+                        } catch (_) {}
                     }
                 }
             }
@@ -14887,6 +16145,47 @@ async function exportActivityLog() {
         function cancelCloudBackupInlineEdit() {
             cloudBackupEditingCell = '';
             renderCloudBackupTable();
+        }
+
+        async function terminateCloudBackup(id) {
+            const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
+            if (!row) return;
+            const name = row['CLINIC NAME'] || id;
+            if (!confirm(`Terminate cloud backup for "${name}"? This will also update the customer STATUS to TERMINATED.`)) return;
+            const today = new Date().toLocaleDateString('en-GB');
+            row['STATUS'] = 'TERMINATED';
+            row['CLOUD TERMINATION DATE'] = today;
+            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+            row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+            try {
+                const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                if (error) { showToast('Terminate failed: ' + error.message, 'error'); return; }
+                logActivity({ module: 'Cloud Backup', action: 'TERMINATE', description: `Terminated cloud backup for ${name} on ${today}` });
+                showToast(`${name} terminated successfully`, 'success');
+                renderCloudBackupModule();
+            } catch (e) {
+                showToast('Terminate failed: ' + e.message, 'error');
+            }
+        }
+
+        async function reactivateCloudBackup(id) {
+            const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
+            if (!row) return;
+            const name = row['CLINIC NAME'] || id;
+            if (!confirm(`Re-activate cloud backup for "${name}"? This will also update the customer STATUS to ACTIVE.`)) return;
+            row['STATUS'] = 'ACTIVE';
+            row['CLOUD TERMINATION DATE'] = '';
+            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+            row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+            try {
+                const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
+                if (error) { showToast('Re-activate failed: ' + error.message, 'error'); return; }
+                logActivity({ module: 'Cloud Backup', action: 'REACTIVATE', description: `Re-activated cloud backup for ${name}` });
+                showToast(`${name} re-activated successfully`, 'success');
+                renderCloudBackupModule();
+            } catch (e) {
+                showToast('Re-activate failed: ' + e.message, 'error');
+            }
         }
 
         async function bulkCloudBackupUpdateStatus() {
