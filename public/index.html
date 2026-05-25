@@ -4018,8 +4018,10 @@
                 <div id="crmData" class="content-section">
                 <div class="section-header">
                     <h2>Customer Records</h2>
-                    <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                    <div style="display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap;">
                         <button class="btn btn-success" onclick="showNewCustomerModal()">+ New Customer</button>
+                        <button class="btn btn-outline" onclick="document.getElementById('eInvWspSstImportInput').click()" title="Import E-Invoice / WhatsApp / SST status from Excel">&#128196; Import E-INV / WSP / SST</button>
+                        <input type="file" id="eInvWspSstImportInput" accept=".xlsx,.xls" style="display:none;" onchange="importEInvWspSstData(this)">
                         <button class="btn btn-secondary" onclick="exportToExcel()">Export to Excel</button>
                         <button class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
                     </div>
@@ -16507,6 +16509,126 @@ async function exportActivityLog() {
 
         // ============================================
         // END CLOUD BACKUP TRACKING
+        // ============================================
+
+        // ============================================
+        // IMPORT E-INV / WSP / SST STATUS FROM EXCEL
+        // ============================================
+        async function importEInvWspSstData(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array', defval: '' });
+
+                // Use the first sheet
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+                if (rows.length < 2) { alert('Excel file is empty.'); input.value = ''; return; }
+
+                // Map header names to column indices
+                const rawHeaders = rows[0].map(h => String(h).trim().toUpperCase());
+                const findCol = (...keywords) => {
+                    for (const kw of keywords) {
+                        const idx = rawHeaders.findIndex(h => h === kw || h.includes(kw));
+                        if (idx !== -1) return idx;
+                    }
+                    return -1;
+                };
+
+                const colAcct   = findCol('ACC NO', 'ACCT NO', 'ACCT', 'ACCOUNT NO', 'ACCOUNT');
+                const colEInv   = findCol('E-INV', 'EINV', 'E INV', 'E-INVOICE');
+                const colWsp    = findCol('WSP', 'WHATSAPP', 'WA');
+                const colSst    = findCol('SST');
+
+                if (colAcct === -1) {
+                    alert('Could not find ACC NO column.\nHeaders found: ' + rawHeaders.join(', '));
+                    input.value = '';
+                    return;
+                }
+
+                if (colEInv === -1 && colWsp === -1 && colSst === -1) {
+                    alert('Could not find E-INV, WSP or SST columns.\nHeaders found: ' + rawHeaders.join(', '));
+                    input.value = '';
+                    return;
+                }
+
+                console.log('[E-INV/WSP/SST Import] Headers:', rawHeaders);
+                console.log('[E-INV/WSP/SST Import] Cols → ACCT:', colAcct, ' E-INV:', colEInv, ' WSP:', colWsp, ' SST:', colSst);
+
+                // Build CRM lookup map (normalise key: uppercase, trim)
+                const crmAcctMap = new Map();
+                crmData.forEach(r => {
+                    const acct = String(r['ACCT NO'] || '').trim().toUpperCase();
+                    if (acct) crmAcctMap.set(acct, r);
+                });
+
+                let matched = 0, updated = 0;
+                const notFound = [];
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.every(c => String(c).trim() === '')) continue;
+
+                    // Normalise account number
+                    let acct = String(row[colAcct] || '').trim().toUpperCase();
+                    if (!acct) continue;
+                    // Remove trailing spaces from values like "M_1237 "
+                    acct = acct.replace(/\s+/g, '');
+
+                    const crmRow = crmAcctMap.get(acct);
+                    if (!crmRow) { notFound.push(acct); continue; }
+                    matched++;
+
+                    // Determine new status values — only set Active if cell has a value
+                    let changed = false;
+                    const applyStatus = (colIdx, fieldName) => {
+                        if (colIdx === -1) return;
+                        const cellVal = String(row[colIdx] || '').trim();
+                        if (!cellVal) return;           // blank → leave unchanged
+                        if (crmRow[fieldName] === 'Active') return; // already Active → no change needed
+                        crmRow[fieldName] = 'Active';
+                        changed = true;
+                    };
+
+                    applyStatus(colEInv, 'E-INVOICE STATUS');
+                    applyStatus(colWsp,  'WHATSAPP STATUS');
+                    applyStatus(colSst,  'SST STATUS');
+
+                    if (changed) {
+                        crmRow['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
+                        crmRow['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
+                        try {
+                            const rowData = { ...crmRow };
+                            delete rowData.id;
+                            delete rowData._rowIndex;
+                            for (const k of Object.keys(rowData)) {
+                                if (k.includes('_EMPTY_') || k.startsWith('__')) delete rowData[k];
+                            }
+                            const { error } = await supabaseClient.from('contacts').update({ data: rowData }).eq('id', crmRow.id);
+                            if (error) throw error;
+                            updated++;
+                        } catch (e) {
+                            console.error('[E-INV/WSP/SST Import] Update failed for', acct, e);
+                        }
+                    }
+                }
+
+                // Refresh table display
+                renderTable();
+                logActivity({ module: 'CRM', action: 'IMPORT', description: `E-INV/WSP/SST import: ${updated} updated, ${matched} matched, ${notFound.length} not found` });
+                alert(`Import complete!\nMatched: ${matched}\nUpdated: ${updated}\nNot found: ${notFound.length}${notFound.length > 0 ? '\n\nFirst 10 not found:\n' + notFound.slice(0, 10).join(', ') : ''}`);
+            } catch (err) {
+                console.error('[E-INV/WSP/SST Import] Error:', err);
+                alert('Import failed: ' + err.message);
+            }
+            input.value = '';
+        }
+        // ============================================
+        // END IMPORT E-INV / WSP / SST
         // ============================================
 
     </script>
