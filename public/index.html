@@ -2796,7 +2796,295 @@
         .report-panel.active {
             display: flex;
         }
-        
+
+        /* ========================
+           PRODUCT REPORT STYLES
+           ======================== */
+
+        /* KPI Cards Row */
+        .product-report-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 900px) {
+            .product-report-kpi-row { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .product-report-kpi-row { grid-template-columns: 1fr; }
+        }
+
+        .product-kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .product-kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .product-kpi-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .product-kpi-icon.green { background: #dcfce7; }
+        .product-kpi-icon.orange { background: #ffedd5; }
+        .product-kpi-icon.red { background: #fee2e2; }
+        .product-kpi-icon.blue { background: #dbeafe; }
+
+        .product-kpi-info { flex: 1; }
+        .product-kpi-label {
+            font-size: 12px; font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .product-kpi-value {
+            font-size: 28px; font-weight: 700;
+            color: #1f2937;
+        }
+        .product-kpi-label.green { color: #16a34a; }
+        .product-kpi-label.orange { color: #ea580c; }
+        .product-kpi-label.red { color: #dc2626; }
+        .product-kpi-label.blue { color: #2563eb; }
+
+        /* Product Cards Row */
+        .product-report-cards-row {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 4px 4px 16px;
+            margin-bottom: 20px;
+            scrollbar-width: thin;
+        }
+        .product-report-cards-row::-webkit-scrollbar { height: 6px; }
+        .product-report-cards-row::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+        .product-report-card {
+            min-width: 180px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+        }
+        .product-report-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .product-report-card.active-card {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+        }
+
+        .product-card-header {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .product-card-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .product-card-title {
+            font-size: 13px; font-weight: 700;
+            color: #1f2937;
+        }
+        .product-card-counts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 12px;
+        }
+        .product-count-item {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .product-count-label {
+            font-size: 11px; color: #6b7280;
+        }
+        .product-count-value {
+            font-size: 14px; font-weight: 700;
+        }
+        .product-count-value.green { color: #16a34a; }
+        .product-count-value.orange { color: #ea580c; }
+        .product-count-value.red { color: #dc2626; }
+        .product-count-value.grey { color: #6b7280; }
+        .product-card-total {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #f1f5f9;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .product-card-total-label { font-size: 12px; font-weight: 600; color: #374151; }
+        .product-card-total-value { font-size: 16px; font-weight: 700; color: #1f2937; }
+
+        /* Charts Row */
+        .product-report-charts-row {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 0.8fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 1200px) {
+            .product-report-charts-row { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .product-report-charts-row { grid-template-columns: 1fr; }
+        }
+
+        .product-report-summary-table-wrapper,
+        .product-report-bar-chart-wrapper,
+        .product-report-pie-chart-wrapper {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+        }
+        .product-report-summary-table-wrapper h3,
+        .product-report-bar-chart-wrapper h3,
+        .product-report-pie-chart-wrapper h3 {
+            font-size: 14px; font-weight: 600;
+            color: #374151;
+            margin: 0 0 12px;
+        }
+
+        .product-report-summary-table {
+            width: 100%; border-collapse: collapse; font-size: 13px;
+        }
+        .product-report-summary-table thead th {
+            background: #1e3a5f;
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .product-report-summary-table thead th:nth-child(2),
+        .product-report-summary-table thead th:nth-child(3),
+        .product-report-summary-table thead th:nth-child(4),
+        .product-report-summary-table thead th:nth-child(5) {
+            text-align: center;
+        }
+        .product-report-summary-table tbody td {
+            padding: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .product-report-summary-table tbody td:nth-child(2),
+        .product-report-summary-table tbody td:nth-child(3),
+        .product-report-summary-table tbody td:nth-child(4),
+        .product-report-summary-table tbody td:nth-child(5) {
+            text-align: center; font-weight: 600;
+        }
+        .product-report-summary-table tbody tr:hover { background: #f8fafc; }
+        .product-report-summary-table tbody tr.total-row {
+            background: #f1f5f9; font-weight: 700;
+        }
+        .product-report-summary-table tbody tr.total-row td {
+            border-top: 2px solid #cbd5e1;
+            font-size: 14px;
+        }
+        .summary-active { color: #16a34a; }
+        .summary-expired { color: #ea580c; }
+        .summary-loss { color: #dc2626; }
+        .summary-total { color: #2563eb; }
+
+        /* Filter Bar */
+        .product-report-filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 14px 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 16px;
+        }
+        .product-report-filter-bar .filter-group {
+            display: flex; align-items: center; gap: 6px;
+        }
+        .product-report-filter-bar .filter-group label {
+            font-size: 12px; font-weight: 500; color: #6b7280;
+        }
+        .product-report-filter-bar .filter-group select {
+            padding: 6px 10px; border: 1px solid #d1d5db;
+            border-radius: 6px; font-size: 13px; background: white;
+        }
+        .product-report-filter-bar .filter-actions {
+            margin-left: auto;
+            display: flex; gap: 8px;
+        }
+
+        /* Detail Section */
+        .product-report-detail-section {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+        }
+        .product-report-detail-header {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .product-report-detail-header h3 {
+            font-size: 15px; font-weight: 700; color: #1f2937; margin: 0;
+        }
+        .product-report-detail-sort {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .product-report-detail-sort label {
+            font-size: 13px; color: #6b7280; font-weight: 500;
+        }
+        .product-report-detail-sort select {
+            padding: 6px 12px; border: 1px solid #d1d5db;
+            border-radius: 6px; font-size: 13px; background: white;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .status-badge.active {
+            background: #dcfce7; color: #16a34a;
+        }
+        .status-badge.expired {
+            background: #ffedd5; color: #ea580c;
+        }
+        .status-badge.loss {
+            background: #fee2e2; color: #dc2626;
+        }
+        .status-badge.nodate {
+            background: #f3f4f6; color: #6b7280;
+        }
+
         /* Reports Header */
         .reports-header {
             margin-bottom: 24px;
@@ -4258,6 +4546,7 @@
                         <button class="report-subtab" id="cloudBackupReportSubTab" onclick="showReportPanel('cloudBackupReport')">&#9729; Cloud Backup Report</button>
                         <button class="report-subtab" id="eInvoiceReportSubTab" onclick="showReportPanel('eInvoiceReport')">&#128196; E-Invoice Report</button>
                         <button class="report-subtab" id="mtnCategorizedReportSubTab" onclick="showReportPanel('mtnCategorizedReport')">&#128200; MTN Categorized</button>
+                        <button class="report-subtab" id="productReportSubTab" onclick="showReportPanel('productReport')">&#128202; Product Report</button>
                     </div>
                     
                     <!-- Available Reports Section -->
@@ -4320,6 +4609,20 @@
                                 </ul>
                                 <button class="report-card-btn" onclick="showReportPanel('mtnCategorizedReport')">View Report &#8250;</button>
                             </div>
+                            <div class="report-card">
+                                <div class="report-card-header">
+                                    <div class="report-card-icon purple">&#128202;</div>
+                                    <div class="report-card-title">Product Report</div>
+                                </div>
+                                <div class="report-card-desc">Sales by product breakdown with active, expired and loss customer analysis.</div>
+                                <ul class="report-card-features">
+                                    <li>11 Product Categories</li>
+                                    <li>Active / Expired / Loss Status</li>
+                                    <li>Charts & Analytics</li>
+                                    <li>Exportable Data</li>
+                                </ul>
+                                <button class="report-card-btn" onclick="showReportPanel('productReport')">View Report &#8250;</button>
+                            </div>
                         </div>
                     </div>
                     
@@ -4353,7 +4656,81 @@
                         <div id="mtnCategorizedSummaryCards" class="mtn-cat-cards-container"></div>
                         <div id="mtnCategorizedDetailContainer" class="mtn-cat-detail-container" style="display: none;"></div>
                     </div>
-                    
+
+                    <!-- Product Report Panel -->
+                    <div id="productReportPanel" class="report-panel">
+                        <!-- KPI Cards Row -->
+                        <div id="productReportKpiCards" class="product-report-kpi-row"></div>
+
+                        <!-- Product Cards Row (11 cards) -->
+                        <div id="productReportCards" class="product-report-cards-row"></div>
+
+                        <!-- Summary Table + Charts Row -->
+                        <div class="product-report-charts-row">
+                            <div class="product-report-summary-table-wrapper">
+                                <h3>Customer Count by Product (Summary)</h3>
+                                <table class="product-report-summary-table" id="productReportSummaryTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Active</th>
+                                            <th>Expired</th>
+                                            <th>Loss</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productReportSummaryTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="product-report-bar-chart-wrapper">
+                                <h3>Customer Count by Product and Status</h3>
+                                <canvas id="productReportBarChart" height="280"></canvas>
+                            </div>
+                            <div class="product-report-pie-chart-wrapper">
+                                <h3>Customer Status Distribution (Overall)</h3>
+                                <canvas id="productReportPieChart" height="280"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Filter Bar -->
+                        <div id="productReportFilterBar" class="product-report-filter-bar"></div>
+
+                        <!-- Detail Listing -->
+                        <div id="productReportDetailSection" class="product-report-detail-section">
+                            <div class="product-report-detail-header">
+                                <h3 id="productReportDetailTitle">Customer Listing Details</h3>
+                                <div class="product-report-detail-sort">
+                                    <label>Sort By:</label>
+                                    <select id="productReportSortSelect" onchange="sortProductReportDetail()">
+                                        <option value="mtnEndDesc">MTN End Date Latest</option>
+                                        <option value="mtnEndAsc">MTN End Date Oldest</option>
+                                        <option value="clinicAsc">Clinic Name A-Z</option>
+                                        <option value="clinicDesc">Clinic Name Z-A</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="report-table-container">
+                                <table class="report-table" id="productReportDetailTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Acct No</th>
+                                            <th>Clinic Name</th>
+                                            <th>Product</th>
+                                            <th>MTN Start Date</th>
+                                            <th>MTN End Date</th>
+                                            <th>Contact Name</th>
+                                            <th>Telephone</th>
+                                            <th>Email</th>
+                                            <th>Status</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productReportDetailTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -6228,12 +6605,14 @@
             document.getElementById('cloudBackupReportPanel').classList.remove('active');
             document.getElementById('eInvoiceReportPanel').classList.remove('active');
             document.getElementById('mtnCategorizedReportPanel').classList.remove('active');
+            document.getElementById('productReportPanel').classList.remove('active');
             
             // Reset tab styles
             document.getElementById('maintenanceReportSubTab').classList.remove('active');
             document.getElementById('cloudBackupReportSubTab').classList.remove('active');
             document.getElementById('eInvoiceReportSubTab').classList.remove('active');
             document.getElementById('mtnCategorizedReportSubTab').classList.remove('active');
+            document.getElementById('productReportSubTab').classList.remove('active');
             
             // Show selected panel
             if (panelId === 'maintenanceReport') {
@@ -6260,6 +6639,13 @@
                     await refreshTableFromSupabase();
                 }
                 renderMTNCategorizedReport();
+            } else if (panelId === 'productReport') {
+                document.getElementById('productReportPanel').classList.add('active');
+                document.getElementById('productReportSubTab').classList.add('active');
+                if (crmData.length === 0) {
+                    await refreshTableFromSupabase();
+                }
+                renderProductReport();
             }
             setTimeout(updateTableContainerOverflow, 100);
         }
@@ -6277,9 +6663,741 @@
             }
             renderMaintenanceReport();
             renderMTNCategorizedReport();
+            renderProductReport();
             populateReportFilters();
         }
         
+        // ============================================================
+        // PRODUCT REPORT
+        // ============================================================
+
+        const PRODUCT_CATEGORIES = [
+            {
+                key: 'clinisys',
+                label: 'Clinisys',
+                icon: '&#127973;',
+                color: '#0ea5e9',
+                type: 'productType',
+                values: ['GP','GP+CHIRO','GP+CLAIMEX','GP+EM2','GP+GYNAE','GP+HW-PC/SERVER/XP PEN/PRINTER','GP+IP','GP+KIOSK','GP+PAED','GP+SMILE','HYBRID+GP','HYBRID+GP+CHIRO','NEW_EYE','NewDental']
+            },
+            {
+                key: 'medexDerm',
+                label: 'Medex Derm',
+                icon: '&#128024;',
+                color: '#10b981',
+                type: 'productType',
+                values: ['DERM','DERM+PHYSIO','HYBRID+DERM','PHYSIO']
+            },
+            {
+                key: 'medexVet',
+                label: 'Medex Vet',
+                icon: '&#128054;',
+                color: '#f59e0b',
+                type: 'productType',
+                values: ['VET']
+            },
+            {
+                key: 'medexDental',
+                label: 'Medex Dental',
+                icon: '&#129463;',
+                color: '#8b5cf6',
+                type: 'productType',
+                values: ['DENTAL']
+            },
+            {
+                key: 'hybrid',
+                label: 'Hybrid',
+                icon: '&#128300;',
+                color: '#ec4899',
+                type: 'productType',
+                values: ['HYBRID+DERM','HYBRID+GP','HYBRID+GP+CHIRO','HYBRID+MHIS']
+            },
+            {
+                key: 'mhis',
+                label: 'MHIS',
+                icon: '&#10084;',
+                color: '#ef4444',
+                type: 'productType',
+                values: ['MHIS','MHIS+CLAIMEX','MHIS+EYE','MHIS GYNAE','HYBRID+MHIS','MHIS+KIOSK']
+            },
+            {
+                key: 'inventoryPortal',
+                label: 'Inventory Portal',
+                icon: '&#128230;',
+                color: '#06b6d4',
+                type: 'statusField',
+                field: 'INVENTORY PORTAL STATUS'
+            },
+            {
+                key: 'mobileApps',
+                label: 'Mobile Apps',
+                icon: '&#128241;',
+                color: '#84cc16',
+                type: 'statusField',
+                field: 'MOBILE APPS STATUS'
+            },
+            {
+                key: 'sst',
+                label: 'SST',
+                icon: '&#128178;',
+                color: '#f97316',
+                type: 'statusField',
+                field: 'SST STATUS'
+            },
+            {
+                key: 'whatsapp',
+                label: 'WhatsApp',
+                icon: '&#128172;',
+                color: '#22c55e',
+                type: 'statusField',
+                field: 'WHATSAPP STATUS'
+            },
+            {
+                key: 'eInvoice',
+                label: 'E-Invoice',
+                icon: '&#128196;',
+                color: '#a855f7',
+                type: 'statusField',
+                field: 'E-INVOICE STATUS'
+            }
+        ];
+
+        let currentProductReportCategory = null;
+        let currentProductReportSort = 'mtnEndDesc';
+
+        function getCustomerStatus(row) {
+            const renewalStatus2 = String(row['RENEWAL STATUS 2'] || '').trim().toLowerCase();
+            if (renewalStatus2.includes('change') && renewalStatus2.includes('provider')) {
+                return 'loss';
+            }
+            const mtnEndDate = parseDateToJs(row['CMS/MHIS MTN END DATE']);
+            if (!mtnEndDate) return 'nodate';
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            if (mtnEndDate < today) return 'expired';
+            return 'active';
+        }
+
+        function customerBelongsToCategory(row, category) {
+            const productType = String(row['PRODUCT TYPE'] || '').trim();
+            if (category.type === 'productType') {
+                return category.values.some(v => productType.toUpperCase() === v.toUpperCase());
+            } else {
+                const status = String(row[category.field] || '').trim().toLowerCase();
+                return ['active','yes','enabled','installed'].includes(status);
+            }
+        }
+
+        function renderProductReport() {
+            renderProductReportKpiCards();
+            renderProductReportCards();
+            renderProductReportSummaryTable();
+            renderProductReportBarChart();
+            renderProductReportPieChart();
+            renderProductReportFilterBar();
+            renderProductReportDetailTable(currentProductReportCategory);
+        }
+
+        function renderProductReportKpiCards() {
+            const container = document.getElementById('productReportKpiCards');
+            if (!container) return;
+
+            let active = 0, expired = 0, loss = 0, nodate = 0;
+            crmData.forEach(row => {
+                const s = getCustomerStatus(row);
+                if (s === 'active') active++;
+                else if (s === 'expired') expired++;
+                else if (s === 'loss') loss++;
+                else nodate++;
+            });
+            const total = crmData.length;
+
+            container.innerHTML = `
+                <div class="product-kpi-card">
+                    <div class="product-kpi-icon green">&#128101;</div>
+                    <div class="product-kpi-info">
+                        <div class="product-kpi-label green">Total Active Customer</div>
+                        <div class="product-kpi-value" style="color:#16a34a">${active.toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="product-kpi-card">
+                    <div class="product-kpi-icon orange">&#128338;</div>
+                    <div class="product-kpi-info">
+                        <div class="product-kpi-label orange">Total Expired Customer</div>
+                        <div class="product-kpi-value" style="color:#ea580c">${expired.toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="product-kpi-card">
+                    <div class="product-kpi-icon red">&#128100;&#10060;</div>
+                    <div class="product-kpi-info">
+                        <div class="product-kpi-label red">Total Loss (Inactive) Customer</div>
+                        <div class="product-kpi-value" style="color:#dc2626">${loss.toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="product-kpi-card">
+                    <div class="product-kpi-icon blue">&#128101;</div>
+                    <div class="product-kpi-info">
+                        <div class="product-kpi-label blue">Total Customer</div>
+                        <div class="product-kpi-value" style="color:#2563eb">${total.toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProductReportCards() {
+            const container = document.getElementById('productReportCards');
+            if (!container) return;
+
+            const stats = PRODUCT_CATEGORIES.map(cat => {
+                const customers = crmData.filter(r => customerBelongsToCategory(r, cat));
+                const counts = { active:0, expired:0, loss:0, nodate:0 };
+                customers.forEach(r => {
+                    const s = getCustomerStatus(r);
+                    counts[s] = (counts[s] || 0) + 1;
+                });
+                return { ...cat, counts, total: customers.length };
+            });
+
+            container.innerHTML = stats.map(s => `
+                <div class="product-report-card ${currentProductReportCategory === s.key ? 'active-card' : ''}"
+                     onclick="selectProductReportCategory('${s.key}')">
+                    <div class="product-card-header">
+                        <div class="product-card-icon" style="background:${s.color}">${s.icon}</div>
+                        <div class="product-card-title">${s.label}</div>
+                    </div>
+                    <div class="product-card-counts">
+                        <div class="product-count-item">
+                            <span class="product-count-label">Active</span>
+                            <span class="product-count-value green">${s.counts.active.toLocaleString()}</span>
+                        </div>
+                        <div class="product-count-item">
+                            <span class="product-count-label">Expired</span>
+                            <span class="product-count-value orange">${s.counts.expired.toLocaleString()}</span>
+                        </div>
+                        <div class="product-count-item">
+                            <span class="product-count-label">Loss</span>
+                            <span class="product-count-value red">${s.counts.loss.toLocaleString()}</span>
+                        </div>
+                        <div class="product-count-item">
+                            <span class="product-count-label">No Date</span>
+                            <span class="product-count-value grey">${s.counts.nodate.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div class="product-card-total">
+                        <span class="product-card-total-label">Total</span>
+                        <span class="product-card-total-value">${s.total.toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderProductReportSummaryTable() {
+            const tbody = document.getElementById('productReportSummaryTableBody');
+            if (!tbody) return;
+
+            const stats = PRODUCT_CATEGORIES.map(cat => {
+                const customers = crmData.filter(r => customerBelongsToCategory(r, cat));
+                const counts = { active:0, expired:0, loss:0 };
+                customers.forEach(r => {
+                    const s = getCustomerStatus(r);
+                    if (counts[s] !== undefined) counts[s]++;
+                });
+                return { label: cat.label, ...counts, total: customers.length };
+            });
+
+            const totals = { active:0, expired:0, loss:0, total:0 };
+            stats.forEach(s => {
+                totals.active += s.active;
+                totals.expired += s.expired;
+                totals.loss += s.loss;
+                totals.total += s.total;
+            });
+
+            tbody.innerHTML = stats.map(s => `
+                <tr>
+                    <td>${escapeHtml(s.label)}</td>
+                    <td class="summary-active">${s.active.toLocaleString()}</td>
+                    <td class="summary-expired">${s.expired.toLocaleString()}</td>
+                    <td class="summary-loss">${s.loss.toLocaleString()}</td>
+                    <td class="summary-total">${s.total.toLocaleString()}</td>
+                </tr>
+            `).join('') + `
+                <tr class="total-row">
+                    <td>TOTAL</td>
+                    <td class="summary-active">${totals.active.toLocaleString()}</td>
+                    <td class="summary-expired">${totals.expired.toLocaleString()}</td>
+                    <td class="summary-loss">${totals.loss.toLocaleString()}</td>
+                    <td class="summary-total">${totals.total.toLocaleString()}</td>
+                </tr>
+            `;
+        }
+
+        function renderProductReportBarChart() {
+            const canvas = document.getElementById('productReportBarChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const stats = PRODUCT_CATEGORIES.map(cat => {
+                const customers = crmData.filter(r => customerBelongsToCategory(r, cat));
+                const counts = { active:0, expired:0, loss:0 };
+                customers.forEach(r => {
+                    const s = getCustomerStatus(r);
+                    if (counts[s] !== undefined) counts[s]++;
+                });
+                return { label: cat.label, ...counts };
+            });
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = (rect.width || 500) * dpr;
+            canvas.height = 280 * dpr;
+            ctx.scale(dpr, dpr);
+
+            const w = canvas.width / dpr;
+            const h = 280;
+            const pad = { top: 20, right: 10, bottom: 80, left: 40 };
+            const cw = w - pad.left - pad.right;
+            const ch = h - pad.top - pad.bottom;
+
+            const maxVal = Math.max(...stats.map(s => s.active + s.expired + s.loss), 1);
+            const barW = cw / stats.length * 0.6;
+            const gap = cw / stats.length * 0.4;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Grid lines
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = pad.top + ch - (i / 4) * ch;
+                ctx.beginPath();
+                ctx.moveTo(pad.left, y);
+                ctx.lineTo(w - pad.right, y);
+                ctx.stroke();
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(maxVal * i / 4).toLocaleString(), pad.left - 6, y + 3);
+            }
+
+            // Bars
+            stats.forEach((s, i) => {
+                const x = pad.left + i * (barW + gap) + gap / 2;
+                const totalH = (s.active + s.expired + s.loss) / maxVal * ch;
+                let y = pad.top + ch - totalH;
+
+                // Active
+                const ah = s.active / maxVal * ch;
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(x, y, barW, ah);
+                y += ah;
+
+                // Expired
+                const eh = s.expired / maxVal * ch;
+                ctx.fillStyle = '#f97316';
+                ctx.fillRect(x, y, barW, eh);
+                y += eh;
+
+                // Loss
+                const lh = s.loss / maxVal * ch;
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(x, y, barW, lh);
+
+                // Value label on top
+                const t = s.active + s.expired + s.loss;
+                if (t > 0) {
+                    ctx.fillStyle = '#1f2937';
+                    ctx.font = 'bold 10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(t.toLocaleString(), x + barW / 2, pad.top + ch - totalH - 4);
+                }
+
+                // X label
+                ctx.save();
+                ctx.translate(x + barW / 2, pad.top + ch + 10);
+                ctx.rotate(-Math.PI / 4);
+                ctx.fillStyle = '#4b5563';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(s.label, 0, 0);
+                ctx.restore();
+            });
+
+            // Legend
+            const legendY = h - 18;
+            const legendItems = [
+                { label: 'Active', color: '#22c55e' },
+                { label: 'Expired', color: '#f97316' },
+                { label: 'Loss', color: '#ef4444' }
+            ];
+            let lx = pad.left;
+            legendItems.forEach(item => {
+                ctx.fillStyle = item.color;
+                ctx.fillRect(lx, legendY, 10, 10);
+                ctx.fillStyle = '#374151';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(item.label, lx + 14, legendY + 9);
+                lx += ctx.measureText(item.label).width + 30;
+            });
+        }
+
+        function renderProductReportPieChart() {
+            const canvas = document.getElementById('productReportPieChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            let active = 0, expired = 0, loss = 0, nodate = 0;
+            crmData.forEach(row => {
+                const s = getCustomerStatus(row);
+                if (s === 'active') active++;
+                else if (s === 'expired') expired++;
+                else if (s === 'loss') loss++;
+                else nodate++;
+            });
+            const total = active + expired + loss + nodate || 1;
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = (rect.width || 300) * dpr;
+            canvas.height = 280 * dpr;
+            ctx.scale(dpr, dpr);
+
+            const w = canvas.width / dpr;
+            const h = 280;
+            const cx = w * 0.4;
+            const cy = h * 0.45;
+            const radius = Math.min(cx, cy) * 0.85;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const slices = [
+                { value: active, color: '#22c55e', label: 'Active' },
+                { value: expired, color: '#f97316', label: 'Expired' },
+                { value: loss, color: '#ef4444', label: 'Loss (Inactive)' },
+                { value: nodate, color: '#9ca3af', label: 'No Date' }
+            ].filter(s => s.value > 0);
+
+            let startAngle = -Math.PI / 2;
+            slices.forEach(slice => {
+                const angle = (slice.value / total) * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius, startAngle, startAngle + angle);
+                ctx.closePath();
+                ctx.fillStyle = slice.color;
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                startAngle += angle;
+            });
+
+            // Center hole
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.5, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+
+            // Center text
+            ctx.fillStyle = '#1f2937';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(total.toLocaleString(), cx, cy - 6);
+            ctx.font = '11px sans-serif';
+            ctx.fillStyle = '#6b7280';
+            ctx.fillText('Total', cx, cy + 10);
+
+            // Legend on right
+            let ly = h * 0.2;
+            const lx = w * 0.72;
+            slices.forEach(slice => {
+                const pct = ((slice.value / total) * 100).toFixed(2);
+                ctx.fillStyle = slice.color;
+                ctx.fillRect(lx, ly, 12, 12);
+                ctx.fillStyle = '#374151';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`${slice.label}`, lx + 18, ly + 6);
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '11px sans-serif';
+                ctx.fillText(`${slice.value.toLocaleString()} (${pct}%)`, lx + 18, ly + 20);
+                ly += 42;
+            });
+        }
+
+        function renderProductReportFilterBar() {
+            const container = document.getElementById('productReportFilterBar');
+            if (!container) return;
+
+            const statusOpts = ['All (Active / Expired / Loss / No Date)', 'Active', 'Expired', 'Loss', 'No Date'];
+            const customerTypes = [...new Set(crmData.map(r => r['CUSTOMER TYPE']).filter(Boolean))].sort();
+            const branches = [...new Set(crmData.map(r => r['State']).filter(Boolean))].sort();
+            const salespeople = [...new Set(crmData.map(r => r['SALES PIC']).filter(Boolean))].sort();
+
+            container.innerHTML = `
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select id="productReportFilterStatus" onchange="filterProductReportDetail()">
+                        ${statusOpts.map(o => `<option value="${o === 'All (Active / Expired / Loss / No Date)' ? '' : o.toLowerCase()}">${o}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Customer Type:</label>
+                    <select id="productReportFilterType" onchange="filterProductReportDetail()">
+                        <option value="">All (Dealer / Direct Customer)</option>
+                        ${customerTypes.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Branch:</label>
+                    <select id="productReportFilterBranch" onchange="filterProductReportDetail()">
+                        <option value="">All</option>
+                        ${branches.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Salesperson:</label>
+                    <select id="productReportFilterSales" onchange="filterProductReportDetail()">
+                        <option value="">All</option>
+                        ${salespeople.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>MTN Start:</label>
+                    <input type="date" id="productReportFilterStart" onchange="filterProductReportDetail()" style="padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                </div>
+                <div class="filter-group">
+                    <label>MTN End:</label>
+                    <input type="date" id="productReportFilterEnd" onchange="filterProductReportDetail()" style="padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                </div>
+                <div class="filter-group">
+                    <input type="text" id="productReportFilterSearch" placeholder="Search Acct No / Clinic Name / Contact / Tel / Email" onkeyup="filterProductReportDetail()"
+                        style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;width:260px;">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-outline btn-sm" onclick="resetProductReportFilters()">Reset</button>
+                    <button class="btn btn-primary btn-sm" onclick="exportProductReportExcel()">Export Excel</button>
+                </div>
+            `;
+        }
+
+        function getProductReportCustomers(categoryKey) {
+            if (!categoryKey) return [...crmData];
+            const cat = PRODUCT_CATEGORIES.find(c => c.key === categoryKey);
+            if (!cat) return [...crmData];
+            return crmData.filter(r => customerBelongsToCategory(r, cat));
+        }
+
+        function renderProductReportDetailTable(categoryKey) {
+            const tbody = document.getElementById('productReportDetailTableBody');
+            const titleEl = document.getElementById('productReportDetailTitle');
+            if (!tbody) return;
+
+            let customers = getProductReportCustomers(categoryKey);
+
+            // Apply filters
+            const statusFilter = document.getElementById('productReportFilterStatus')?.value || '';
+            const typeFilter = document.getElementById('productReportFilterType')?.value || '';
+            const branchFilter = document.getElementById('productReportFilterBranch')?.value || '';
+            const salesFilter = document.getElementById('productReportFilterSales')?.value || '';
+            const startFilter = document.getElementById('productReportFilterStart')?.value || '';
+            const endFilter = document.getElementById('productReportFilterEnd')?.value || '';
+            const searchFilter = document.getElementById('productReportFilterSearch')?.value?.trim().toLowerCase() || '';
+
+            if (statusFilter) {
+                customers = customers.filter(r => getCustomerStatus(r) === statusFilter);
+            }
+            if (typeFilter) {
+                customers = customers.filter(r => String(r['CUSTOMER TYPE'] || '').trim() === typeFilter);
+            }
+            if (branchFilter) {
+                customers = customers.filter(r => String(r['State'] || '').trim() === branchFilter);
+            }
+            if (salesFilter) {
+                customers = customers.filter(r => String(r['SALES PIC'] || '').trim() === salesFilter);
+            }
+            if (startFilter) {
+                const sd = new Date(startFilter);
+                customers = customers.filter(r => {
+                    const d = parseDateToJs(r['CMS/MHIS MTN START DATE']);
+                    return d && d >= sd;
+                });
+            }
+            if (endFilter) {
+                const ed = new Date(endFilter);
+                ed.setHours(23, 59, 59, 999);
+                customers = customers.filter(r => {
+                    const d = parseDateToJs(r['CMS/MHIS MTN END DATE']);
+                    return d && d <= ed;
+                });
+            }
+            if (searchFilter) {
+                customers = customers.filter(r => {
+                    const fields = [
+                        r['ACCT NO'], r['CLINIC NAME'], r['Contact Name'],
+                        r['Contact Tel1'], r['EMAIL ID MAIN']
+                    ];
+                    return fields.some(f => String(f || '').toLowerCase().includes(searchFilter));
+                });
+            }
+
+            // Apply sorting
+            const sortMode = document.getElementById('productReportSortSelect')?.value || 'mtnEndDesc';
+            customers = sortProductReportCustomers(customers, sortMode);
+
+            // Update title
+            const cat = PRODUCT_CATEGORIES.find(c => c.key === categoryKey);
+            const catLabel = cat ? cat.label : 'All Products';
+            if (titleEl) {
+                titleEl.innerHTML = `${escapeHtml(catLabel)} - Customer Listing Details <span style="font-size:13px;color:#6b7280;font-weight:400">(${customers.length.toLocaleString()} records)</span>`;
+            }
+
+            // Render rows
+            if (customers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;">No records found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = customers.map(r => {
+                const status = getCustomerStatus(r);
+                const statusLabel = status === 'active' ? 'Active' : status === 'expired' ? 'Expired' : status === 'loss' ? 'Loss (Inactive)' : 'No Date';
+                const badgeClass = `status-badge ${status}`;
+                const remarks = String(r['RENEWAL STATUS 2'] || r['RENEWAL REMARK'] || '-').trim() || '-';
+
+                return `<tr>
+                    <td>${escapeHtml(String(r['ACCT NO'] || ''))}</td>
+                    <td>${escapeHtml(String(r['CLINIC NAME'] || ''))}</td>
+                    <td>${escapeHtml(String(r['PRODUCT TYPE'] || r['PRODUCT'] || ''))}</td>
+                    <td>${escapeHtml(formatExcelDate(r['CMS/MHIS MTN START DATE']))}</td>
+                    <td>${escapeHtml(formatExcelDate(r['CMS/MHIS MTN END DATE']))}</td>
+                    <td>${escapeHtml(String(r['Contact Name'] || ''))}</td>
+                    <td>${escapeHtml(String(r['Contact Tel1'] || ''))}</td>
+                    <td>${escapeHtml(String(r['EMAIL ID MAIN'] || ''))}</td>
+                    <td><span class="${badgeClass}">${statusLabel}</span></td>
+                    <td>${escapeHtml(remarks)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function sortProductReportCustomers(customers, mode) {
+            const sorted = [...customers];
+            switch (mode) {
+                case 'mtnEndDesc':
+                    sorted.sort((a, b) => {
+                        const da = parseDateToJs(a['CMS/MHIS MTN END DATE']) || new Date(0);
+                        const db = parseDateToJs(b['CMS/MHIS MTN END DATE']) || new Date(0);
+                        return db - da;
+                    });
+                    break;
+                case 'mtnEndAsc':
+                    sorted.sort((a, b) => {
+                        const da = parseDateToJs(a['CMS/MHIS MTN END DATE']) || new Date(8640000000000000);
+                        const db = parseDateToJs(b['CMS/MHIS MTN END DATE']) || new Date(8640000000000000);
+                        return da - db;
+                    });
+                    break;
+                case 'clinicAsc':
+                    sorted.sort((a, b) => String(a['CLINIC NAME'] || '').localeCompare(String(b['CLINIC NAME'] || '')));
+                    break;
+                case 'clinicDesc':
+                    sorted.sort((a, b) => String(b['CLINIC NAME'] || '').localeCompare(String(a['CLINIC NAME'] || '')));
+                    break;
+            }
+            return sorted;
+        }
+
+        function selectProductReportCategory(key) {
+            currentProductReportCategory = currentProductReportCategory === key ? null : key;
+            renderProductReportCards();
+            renderProductReportDetailTable(currentProductReportCategory);
+            const section = document.getElementById('productReportDetailSection');
+            if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function filterProductReportDetail() {
+            renderProductReportDetailTable(currentProductReportCategory);
+        }
+
+        function sortProductReportDetail() {
+            renderProductReportDetailTable(currentProductReportCategory);
+        }
+
+        function resetProductReportFilters() {
+            const ids = ['productReportFilterStatus','productReportFilterType','productReportFilterBranch','productReportFilterSales','productReportFilterStart','productReportFilterEnd','productReportFilterSearch'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            filterProductReportDetail();
+        }
+
+        function exportProductReportExcel() {
+            const customers = getProductReportCustomers(currentProductReportCategory);
+            const statusFilter = document.getElementById('productReportFilterStatus')?.value || '';
+            const typeFilter = document.getElementById('productReportFilterType')?.value || '';
+            const branchFilter = document.getElementById('productReportFilterBranch')?.value || '';
+            const salesFilter = document.getElementById('productReportFilterSales')?.value || '';
+            const startFilter = document.getElementById('productReportFilterStart')?.value || '';
+            const endFilter = document.getElementById('productReportFilterEnd')?.value || '';
+            const searchFilter = document.getElementById('productReportFilterSearch')?.value?.trim().toLowerCase() || '';
+
+            let filtered = [...customers];
+            if (statusFilter) filtered = filtered.filter(r => getCustomerStatus(r) === statusFilter);
+            if (typeFilter) filtered = filtered.filter(r => String(r['CUSTOMER TYPE'] || '').trim() === typeFilter);
+            if (branchFilter) filtered = filtered.filter(r => String(r['State'] || '').trim() === branchFilter);
+            if (salesFilter) filtered = filtered.filter(r => String(r['SALES PIC'] || '').trim() === salesFilter);
+            if (startFilter) {
+                const sd = new Date(startFilter);
+                filtered = filtered.filter(r => {
+                    const d = parseDateToJs(r['CMS/MHIS MTN START DATE']);
+                    return d && d >= sd;
+                });
+            }
+            if (endFilter) {
+                const ed = new Date(endFilter);
+                ed.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(r => {
+                    const d = parseDateToJs(r['CMS/MHIS MTN END DATE']);
+                    return d && d <= ed;
+                });
+            }
+            if (searchFilter) {
+                filtered = filtered.filter(r => {
+                    const fields = [r['ACCT NO'], r['CLINIC NAME'], r['Contact Name'], r['Contact Tel1'], r['EMAIL ID MAIN']];
+                    return fields.some(f => String(f || '').toLowerCase().includes(searchFilter));
+                });
+            }
+
+            const sortMode = document.getElementById('productReportSortSelect')?.value || 'mtnEndDesc';
+            filtered = sortProductReportCustomers(filtered, sortMode);
+
+            const rows = filtered.map(r => ({
+                'Acct No': r['ACCT NO'] || '',
+                'Clinic Name': r['CLINIC NAME'] || '',
+                'Product': r['PRODUCT TYPE'] || r['PRODUCT'] || '',
+                'MTN Start Date': formatExcelDate(r['CMS/MHIS MTN START DATE']),
+                'MTN End Date': formatExcelDate(r['CMS/MHIS MTN END DATE']),
+                'Contact Name': r['Contact Name'] || '',
+                'Telephone': r['Contact Tel1'] || '',
+                'Email': r['EMAIL ID MAIN'] || '',
+                'Status': (() => {
+                    const s = getCustomerStatus(r);
+                    return s === 'active' ? 'Active' : s === 'expired' ? 'Expired' : s === 'loss' ? 'Loss (Inactive)' : 'No Date';
+                })(),
+                'Remarks': r['RENEWAL STATUS 2'] || r['RENEWAL REMARK'] || ''
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Product Report');
+            const cat = PRODUCT_CATEGORIES.find(c => c.key === currentProductReportCategory);
+            const fn = `Product_Report_${cat ? cat.label.replace(/\s+/g,'_') : 'All'}_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fn);
+        }
+
         // Current maintenance detail view type
         let currentMaintenanceDetailType = null;
         let currentCloudDetailType = null;
