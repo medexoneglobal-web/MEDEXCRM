@@ -14138,7 +14138,7 @@ async function exportActivityLog() {
         // MULTI-PRODUCT CUSTOMER REPORT
         // ============================================================
         let mprCurrentPage = 1;
-        let mprPageSize = 20;
+        let mprPageSize = 10;
         let mprExpandedRow = null;
         let mprFilteredData = [];
 
@@ -14269,8 +14269,8 @@ async function exportActivityLog() {
                 <div class="mpr-filter-group">
                     <div class="mpr-filter-label">Show Top</div>
                     <select class="mpr-filter-select" id="mprTopN">
-                        <option value="10">Top 10</option>
-                        <option value="20" selected>Top 20</option>
+                        <option value="10" selected>Top 10</option>
+                        <option value="20">Top 20</option>
                         <option value="50">Top 50</option>
                         <option value="100">Top 100</option>
                         <option value="200">Top 200</option>
