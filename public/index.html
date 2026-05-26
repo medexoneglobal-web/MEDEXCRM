@@ -14671,9 +14671,9 @@ async function exportActivityLog() {
             const csEl = document.getElementById('mprCrossSellCard');
             if (csEl) {
                 const singleProd = crmData.map(row => ({ row, score: mprScoreRow(row), products: MPR_PRODUCTS.filter(p => mprHasProduct(row, p)) }))
-                    .filter(d => d.score === 1).slice(0,5);
+                    .filter(d => d.score === 1 && getCustomerStatus(d.row) === 'active').slice(0,5);
                 csEl.innerHTML = `<div class="mpr-analytics-title">&#128200; Cross-Sell Opportunity <span style="font-size:11px;color:#9ca3af;font-weight:400;">(1 Product Only)</span></div>` +
-                    (singleProd.length === 0 ? `<div style="color:#9ca3af;font-size:13px;">No single-product customers</div>` :
+                    (singleProd.length === 0 ? `<div style="color:#9ca3af;font-size:13px;">No active single-product customers</div>` :
                     singleProd.map(d => `<div class="mpr-crosssell-row">
                         <span class="mpr-crosssell-name">${escapeHtml(String(d.row['CLINIC NAME']||d.row['ACCT NO']||'').slice(0,28))}</span>
                         <span class="mpr-crosssell-prod">${d.products[0]?.label||''}</span>
@@ -14692,7 +14692,7 @@ async function exportActivityLog() {
                 row, score: mprScoreRow(row), mtnStatus: getCustomerStatus(row),
                 cldStatus: mprCloudStatus(row), einvStatus: mprEInvStatus(row),
                 products: MPR_PRODUCTS.filter(p => mprHasProduct(row, p))
-            })).filter(d => d.score === 1);
+            })).filter(d => d.score === 1 && d.mtnStatus === 'active');
             mprRenderTable();
         }
 
