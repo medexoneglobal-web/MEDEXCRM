@@ -738,6 +738,106 @@
         /* Expired date highlight */
         .date-expired-highlight { color: #dc2626; font-weight: 600; }
         /* ===== END CUSTOMER PROFILE REDESIGN ===== */
+
+        /* ===== MULTI-PRODUCT CUSTOMER REPORT ===== */
+        .mpr-panel { padding: 0; }
+        .mpr-header { display:flex; align-items:flex-start; justify-content:space-between; padding:20px 0 16px; flex-wrap:wrap; gap:12px; }
+        .mpr-header-left h2 { font-size:22px; font-weight:700; color:#1a1a2e; margin:0 0 4px; }
+        .mpr-header-left p  { font-size:13px; color:#6b7280; margin:0; }
+        .mpr-header-right { display:flex; gap:10px; flex-wrap:wrap; }
+        .mpr-back-btn { display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;color:#374151;font-weight:500; }
+        .mpr-back-btn:hover { background:#e5e7eb; }
+        .mpr-export-btn { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600; }
+        .mpr-export-excel { background:#16a34a;color:#fff; }
+        .mpr-export-excel:hover { background:#15803d; }
+        /* Filter bar */
+        .mpr-filters { background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end; }
+        .mpr-filter-group { display:flex;flex-direction:column;gap:4px; }
+        .mpr-filter-label { font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px; }
+        .mpr-filter-select, .mpr-filter-input { padding:7px 10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;background:#fff;color:#374151;min-width:120px; }
+        .mpr-filter-input { min-width:200px; }
+        .mpr-filter-select:focus, .mpr-filter-input:focus { outline:none;border-color:#3b82f6; }
+        .mpr-filter-btns { display:flex;gap:8px;align-items:flex-end; }
+        /* Summary cards */
+        .mpr-kpi-grid { display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px; }
+        @media(max-width:1100px){.mpr-kpi-grid{grid-template-columns:repeat(3,1fr);}}
+        @media(max-width:700px){.mpr-kpi-grid{grid-template-columns:repeat(2,1fr);}}
+        .mpr-kpi-card { background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;transition:box-shadow 0.15s,transform 0.15s;cursor:default; }
+        .mpr-kpi-card:hover { box-shadow:0 6px 20px rgba(0,0,0,0.10);transform:translateY(-2px); }
+        .mpr-kpi-top { display:flex;align-items:center;gap:10px; }
+        .mpr-kpi-icon { width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
+        .mpr-kpi-value { font-size:22px;font-weight:700;color:#111827; }
+        .mpr-kpi-label { font-size:12px;font-weight:600;color:#374151; }
+        .mpr-kpi-pct { font-size:11px;color:#9ca3af; }
+        /* Table section */
+        .mpr-table-section { background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:16px; }
+        .mpr-table-header { display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;gap:8px; }
+        .mpr-table-title { font-size:15px;font-weight:700;color:#1a1a2e; }
+        .mpr-table-scroll { overflow-x:auto;max-width:100%; }
+        .mpr-table { width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap; }
+        .mpr-table thead th { background:#1e293b;color:#fff;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;position:sticky;top:0;z-index:2; }
+        .mpr-table thead th:nth-child(1) { position:sticky;left:0;z-index:3;background:#1e293b; }
+        .mpr-table thead th:nth-child(2) { position:sticky;left:50px;z-index:3;background:#1e293b; }
+        .mpr-table thead th:nth-child(3) { position:sticky;left:120px;z-index:3;background:#1e293b; }
+        .mpr-table tbody tr { border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background 0.1s; }
+        .mpr-table tbody tr:hover { background:#f8fafc; }
+        .mpr-table tbody td { padding:10px 12px;vertical-align:middle; }
+        .mpr-table tbody td:nth-child(1) { position:sticky;left:0;z-index:1;background:inherit; }
+        .mpr-table tbody td:nth-child(2) { position:sticky;left:50px;z-index:1;background:inherit; }
+        .mpr-table tbody td:nth-child(3) { position:sticky;left:120px;z-index:1;background:inherit; }
+        .mpr-table tbody tr:nth-child(even) td { background:#fafafa; }
+        .mpr-table tbody tr:hover td { background:#eff6ff!important; }
+        .mpr-rank-badge { display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:12px;font-weight:700; }
+        .mpr-rank-1 { background:#fef3c7;color:#92400e; }
+        .mpr-rank-2 { background:#f1f5f9;color:#475569; }
+        .mpr-rank-3 { background:#fde8d8;color:#9a3412; }
+        .mpr-rank-n { background:#f3f4f6;color:#6b7280; }
+        .mpr-prod-count { display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;padding:0 8px;background:#dbeafe;color:#1d4ed8;border-radius:20px;font-size:12px;font-weight:700; }
+        .mpr-check-active { color:#16a34a;font-size:16px; }
+        .mpr-check-inactive { color:#d1d5db;font-size:16px; }
+        .mpr-status-active { background:#dcfce7;color:#15803d;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        .mpr-status-expired { background:#fee2e2;color:#b91c1c;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        .mpr-status-nodate  { background:#f3f4f6;color:#6b7280;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        .mpr-status-loss    { background:#fef3c7;color:#b45309;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        .mpr-cldstatus-active { background:#dcfce7;color:#15803d;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        .mpr-cldstatus-expired { background:#fee2e2;color:#b91c1c;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        .mpr-cldstatus-none { background:#f3f4f6;color:#9ca3af;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        .mpr-einv-yes { background:#dbeafe;color:#1d4ed8;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        .mpr-einv-no  { background:#f3f4f6;color:#9ca3af;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600; }
+        /* Expand row */
+        .mpr-expand-row td { padding:0!important;background:#f8fafc!important; }
+        .mpr-expand-panel { padding:16px 20px;border-top:2px solid #3b82f6; }
+        .mpr-expand-title { font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:12px; }
+        .mpr-expand-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px; }
+        .mpr-expand-card { background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px; }
+        .mpr-expand-card-name { font-size:12px;font-weight:700;color:#374151;margin-bottom:6px; }
+        .mpr-expand-card-row { display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:3px; }
+        .mpr-expand-card-row span:last-child { color:#111827;font-weight:500; }
+        /* Pagination */
+        .mpr-pagination { display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid #e5e7eb;flex-wrap:wrap;gap:8px; }
+        .mpr-page-info { font-size:13px;color:#6b7280; }
+        .mpr-page-btns { display:flex;gap:4px;align-items:center; }
+        .mpr-page-btn { padding:5px 10px;border:1px solid #d1d5db;background:#fff;border-radius:6px;cursor:pointer;font-size:12px;color:#374151; }
+        .mpr-page-btn:hover { background:#f3f4f6; }
+        .mpr-page-btn.active { background:#3b82f6;color:#fff;border-color:#3b82f6; }
+        .mpr-page-btn:disabled { opacity:0.4;cursor:not-allowed; }
+        /* Analytics */
+        .mpr-analytics-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:4px; }
+        @media(max-width:900px){.mpr-analytics-grid{grid-template-columns:1fr;}}
+        .mpr-analytics-card { background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px; }
+        .mpr-analytics-title { font-size:13px;font-weight:700;color:#374151;margin-bottom:12px;display:flex;align-items:center;gap:6px; }
+        .mpr-progress-row { display:flex;align-items:center;gap:8px;margin-bottom:8px; }
+        .mpr-progress-label { font-size:12px;color:#374151;width:110px;flex-shrink:0; }
+        .mpr-progress-bar-wrap { flex:1;background:#f1f5f9;border-radius:99px;height:8px;overflow:hidden; }
+        .mpr-progress-bar { height:8px;background:#3b82f6;border-radius:99px;transition:width 0.4s; }
+        .mpr-progress-val { font-size:11px;color:#6b7280;width:60px;text-align:right;flex-shrink:0; }
+        .mpr-crosssell-row { display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:12px; }
+        .mpr-crosssell-name { color:#2563eb;font-weight:500;flex:1; }
+        .mpr-crosssell-prod { color:#6b7280;width:80px;text-align:center; }
+        .mpr-crosssell-view { color:#3b82f6;cursor:pointer;text-decoration:underline;font-size:11px; }
+        .mpr-legend { display:flex;gap:14px;font-size:11px;color:#6b7280;flex-wrap:wrap;margin-top:6px; }
+        .mpr-legend-dot { width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px; }
+        /* ===== END MULTI-PRODUCT REPORT ===== */
         
         .btn-sm {
             padding: 6px 12px;
@@ -4865,6 +4965,7 @@
                         <button class="report-subtab" id="eInvoiceReportSubTab" onclick="showReportPanel('eInvoiceReport')">&#128196; E-Invoice Report</button>
                         <button class="report-subtab" id="mtnCategorizedReportSubTab" onclick="showReportPanel('mtnCategorizedReport')">&#128200; MTN Categorized</button>
                         <button class="report-subtab" id="productReportSubTab" onclick="showReportPanel('productReport')">&#128202; Product Report</button>
+                        <button class="report-subtab" id="multiProductReportSubTab" onclick="showReportPanel('multiProductReport')">&#127942; Multi-Product</button>
                     </div>
                     
                     <!-- Available Reports Section -->
@@ -4940,6 +5041,20 @@
                                     <li>Exportable Data</li>
                                 </ul>
                                 <button class="report-card-btn" onclick="showReportPanel('productReport')">View Report &#8250;</button>
+                            </div>
+                            <div class="report-card">
+                                <div class="report-card-header">
+                                    <div class="report-card-icon blue">&#127942;</div>
+                                    <div class="report-card-title">Multi-Product Customer Report</div>
+                                </div>
+                                <div class="report-card-desc">Top customers who applied multiple products/services, ranked by total product count.</div>
+                                <ul class="report-card-features">
+                                    <li>Customer Product Ranking</li>
+                                    <li>Product Coverage Grid</li>
+                                    <li>Cross-Sell Opportunities</li>
+                                    <li>Exportable Data</li>
+                                </ul>
+                                <button class="report-card-btn" onclick="showReportPanel('multiProductReport')">View Report &#8250;</button>
                             </div>
                         </div>
                     </div>
@@ -5034,10 +5149,14 @@
                         </div>
                     </div>
 
+                    <!-- Multi-Product Customer Report Panel -->
+                    <div id="multiProductReportPanel" class="report-panel mpr-panel">
+                        <!-- Rendered entirely by JS -->
+                        <div id="mprContent"></div>
+                    </div>
+
                 </div>
             </div>
-
-<!-- Activity Log Section -->
 <div id="activityLog" class="content-section">
     <div class="section-card">
         <div class="section-header">
@@ -6905,12 +7024,14 @@
             document.getElementById('eInvoiceReportPanel').classList.remove('active');
             document.getElementById('mtnCategorizedReportPanel').classList.remove('active');
             document.getElementById('productReportPanel').classList.remove('active');
+            document.getElementById('multiProductReportPanel').classList.remove('active');
             // Reset tab styles
             document.getElementById('maintenanceReportSubTab').classList.remove('active');
             document.getElementById('cloudBackupReportSubTab').classList.remove('active');
             document.getElementById('eInvoiceReportSubTab').classList.remove('active');
             document.getElementById('mtnCategorizedReportSubTab').classList.remove('active');
             document.getElementById('productReportSubTab').classList.remove('active');
+            document.getElementById('multiProductReportSubTab').classList.remove('active');
             // Show Available Reports section
             const availSection = document.getElementById('availableReportsSection');
             if (availSection) availSection.style.display = 'block';
@@ -6967,6 +7088,13 @@
                     await refreshTableFromSupabase();
                 }
                 renderProductReport();
+            } else if (panelId === 'multiProductReport') {
+                document.getElementById('multiProductReportPanel').classList.add('active');
+                document.getElementById('multiProductReportSubTab').classList.add('active');
+                if (crmData.length === 0) {
+                    await refreshTableFromSupabase();
+                }
+                renderMultiProductReport();
             }
             setTimeout(updateTableContainerOverflow, 100);
         }
@@ -14004,6 +14132,573 @@ async function exportActivityLog() {
                 else if (cat === 'E') result.E++;
             });
             return result;
+        }
+
+        // ============================================================
+        // MULTI-PRODUCT CUSTOMER REPORT
+        // ============================================================
+        let mprCurrentPage = 1;
+        let mprPageSize = 20;
+        let mprExpandedRow = null;
+        let mprFilteredData = [];
+
+        // Product definitions for scoring
+        const MPR_PRODUCTS = [
+            { key:'clinisys',    label:'Clinisys',       icon:'&#127973;', type:'productType',
+              values:['GP','GP+CHIRO','GP+CLAIMEX','GP+EM2','GP+GYNAE','GP+HW-PC/SERVER/XP PEN/PRINTER','GP+IP','GP+KIOSK','GP+PAED','GP+SMILE','HYBRID+GP','HYBRID+GP+CHIRO','NEW_EYE','NewDental'] },
+            { key:'medexDental', label:'Medex Dental',   icon:'&#129461;', type:'productType', values:['DENTAL','DENTAL+PHYSIO','HYBRID+DENTAL'] },
+            { key:'medexDerm',   label:'Medex Derm',     icon:'&#128024;', type:'productType', values:['DERM','DERM+PHYSIO','HYBRID+DERM','PHYSIO'] },
+            { key:'medexVet',    label:'Medex Vet',      icon:'&#128062;', type:'productType', values:['VET','HYBRID+VET'] },
+            { key:'hybrid',      label:'Hybrid',         icon:'&#9881;',   type:'productType', values:['HYBRID','HYBRID+GP','HYBRID+DERM','HYBRID+DENTAL','HYBRID+VET','HYBRID+GP+CHIRO'] },
+            { key:'mhis',        label:'MHIS',           icon:'&#127973;', type:'productType', values:['MHIS','MHIS+GP','MHIS+CMS','CMS'] },
+            { key:'einvoice',    label:'E-Invoice',      icon:'&#128196;', type:'statusField', field:'E-INVOICE STATUS' },
+            { key:'cloud',       label:'Cloud Backup',   icon:'&#9729;',   type:'cloudDate' },
+            { key:'mobileApps',  label:'Mobile Apps',    icon:'&#128241;', type:'statusField', field:'MOBILE APPS STATUS' },
+            { key:'kiosk',       label:'Kiosk',          icon:'&#128433;', type:'kioskDate' },
+            { key:'sst',         label:'SST',            icon:'&#128737;', type:'statusField', field:'SST STATUS' },
+            { key:'whatsapp',    label:'WhatsApp',       icon:'&#128172;', type:'statusField', field:'WHATSAPP STATUS' },
+        ];
+
+        function mprHasProduct(row, prod) {
+            if (prod.type === 'productType') {
+                const pt = String(row['PRODUCT TYPE'] || '').trim().toUpperCase();
+                return prod.values.some(v => pt === v.toUpperCase());
+            } else if (prod.type === 'statusField') {
+                const sv = String(row[prod.field] || '').trim().toLowerCase();
+                return ['active','yes','enabled','installed'].includes(sv);
+            } else if (prod.type === 'cloudDate') {
+                return !!(row['CLOUD START DATE'] || row['CLOUD END DATE']);
+            } else if (prod.type === 'kioskDate') {
+                return !!(row['KIOSK PO DATE']);
+            }
+            return false;
+        }
+
+        function mprScoreRow(row) {
+            return MPR_PRODUCTS.filter(p => mprHasProduct(row, p)).length;
+        }
+
+        function mprCloudStatus(row) {
+            const cld = parseDateToJs(row['CLOUD END DATE']);
+            if (!cld) return 'None';
+            const today = new Date(); today.setHours(0,0,0,0);
+            const diff = Math.round((cld - today) / 86400000);
+            if (diff < 0) return 'Expired';
+            if (diff <= 30) return 'Expiring Soon';
+            return 'Active';
+        }
+
+        function mprEInvStatus(row) {
+            const v = String(row['E-INVOICE STATUS'] || '').trim().toLowerCase();
+            return ['active','yes','enabled','installed'].includes(v) ? 'Active' : (v ? v : 'None');
+        }
+
+        function mprMtnStatusBadge(status) {
+            if (status === 'active')  return `<span class="mpr-status-active">Active</span>`;
+            if (status === 'expired') return `<span class="mpr-status-expired">Expired</span>`;
+            if (status === 'loss')    return `<span class="mpr-status-loss">Loss</span>`;
+            return `<span class="mpr-status-nodate">No Date</span>`;
+        }
+
+        function mprCldBadge(s) {
+            if (s === 'Active') return `<span class="mpr-cldstatus-active">Active</span>`;
+            if (s === 'Expiring Soon') return `<span class="mpr-cldstatus-active" style="background:#fef3c7;color:#b45309;">Expiring</span>`;
+            if (s === 'Expired') return `<span class="mpr-cldstatus-expired">Expired</span>`;
+            return `<span class="mpr-cldstatus-none">None</span>`;
+        }
+
+        function mprEInvBadge(s) {
+            return s === 'Active' ? `<span class="mpr-einv-yes">Active</span>` : `<span class="mpr-einv-no">${escapeHtml(s)}</span>`;
+        }
+
+        function mprCheckMark(has) {
+            return has ? `<span class="mpr-check-active">&#10003;</span>` : `<span class="mpr-check-inactive">&#9711;</span>`;
+        }
+
+        function mprRankBadge(rank) {
+            const cls = rank === 1 ? 'mpr-rank-1' : rank === 2 ? 'mpr-rank-2' : rank === 3 ? 'mpr-rank-3' : 'mpr-rank-n';
+            const medal = rank === 1 ? '&#129351;' : rank === 2 ? '&#129352;' : rank === 3 ? '&#129353;' : rank;
+            return `<span class="mpr-rank-badge ${cls}">${medal}</span>`;
+        }
+
+        function renderMultiProductReport() {
+            mprCurrentPage = 1;
+            mprExpandedRow = null;
+            mprPageSize = 20;
+
+            // Compute scored data
+            const allScored = crmData.map(row => ({
+                row,
+                score: mprScoreRow(row),
+                mtnStatus: getCustomerStatus(row),
+                cldStatus: mprCloudStatus(row),
+                einvStatus: mprEInvStatus(row),
+                products: MPR_PRODUCTS.filter(p => mprHasProduct(row, p))
+            })).sort((a, b) => b.score - a.score);
+
+            mprFilteredData = allScored;
+
+            const total = crmData.length;
+            const cnt1   = allScored.filter(d => d.score === 1).length;
+            const cnt23  = allScored.filter(d => d.score >= 2 && d.score <= 3).length;
+            const cnt45  = allScored.filter(d => d.score >= 4 && d.score <= 5).length;
+            const cnt6p  = allScored.filter(d => d.score >= 6).length;
+            const topCust = allScored[0];
+
+            // Build dealer list for filter
+            const dealers = [...new Set(crmData.map(r => String(r['M1G/ DEALER CASE'] || '').trim()).filter(Boolean))].sort();
+
+            const pct = (n) => total > 0 ? (n/total*100).toFixed(1)+'%' : '0%';
+
+            const container = document.getElementById('mprContent');
+            if (!container) return;
+
+            container.innerHTML = `
+            <div class="mpr-header">
+                <div class="mpr-header-left">
+                    <button class="mpr-back-btn" onclick="backToAvailableReports()">&#8592; Back to Reports</button>
+                    <h2 style="margin-top:12px;">&#127942; Multi-Product Customer Report</h2>
+                    <p>Top customers who applied multiple products/services</p>
+                </div>
+                <div class="mpr-header-right">
+                    <button class="mpr-export-btn mpr-export-excel" onclick="mprExportExcel()">&#128190; Export Excel</button>
+                </div>
+            </div>
+
+            <div class="mpr-filters" id="mprFilters">
+                <div class="mpr-filter-group">
+                    <div class="mpr-filter-label">Show Top</div>
+                    <select class="mpr-filter-select" id="mprTopN">
+                        <option value="10">Top 10</option>
+                        <option value="20" selected>Top 20</option>
+                        <option value="50">Top 50</option>
+                        <option value="100">Top 100</option>
+                        <option value="200">Top 200</option>
+                        <option value="0">All</option>
+                    </select>
+                </div>
+                <div class="mpr-filter-group">
+                    <div class="mpr-filter-label">Search Customer</div>
+                    <input class="mpr-filter-input" id="mprSearch" placeholder="Search by name or acct no...">
+                </div>
+                <div class="mpr-filter-group">
+                    <div class="mpr-filter-label">Min Products</div>
+                    <select class="mpr-filter-select" id="mprMinProd">
+                        <option value="0">Any</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                        <option value="4">4+</option>
+                        <option value="5">5+</option>
+                        <option value="6">6+</option>
+                    </select>
+                </div>
+                <div class="mpr-filter-group">
+                    <div class="mpr-filter-label">Dealer</div>
+                    <select class="mpr-filter-select" id="mprDealer">
+                        <option value="">All Dealers</option>
+                        ${dealers.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="mpr-filter-group">
+                    <div class="mpr-filter-label">MTN Status</div>
+                    <select class="mpr-filter-select" id="mprMtnStatus">
+                        <option value="">All</option>
+                        <option value="active">Active</option>
+                        <option value="expired">Expired</option>
+                        <option value="loss">Loss</option>
+                        <option value="nodate">No Date</option>
+                    </select>
+                </div>
+                <div class="mpr-filter-group">
+                    <div class="mpr-filter-label">Cloud Backup</div>
+                    <select class="mpr-filter-select" id="mprCldStatus">
+                        <option value="">All</option>
+                        <option value="Active">Active</option>
+                        <option value="Expiring Soon">Expiring Soon</option>
+                        <option value="Expired">Expired</option>
+                        <option value="None">None</option>
+                    </select>
+                </div>
+                <div class="mpr-filter-group">
+                    <div class="mpr-filter-label">E-Invoice</div>
+                    <select class="mpr-filter-select" id="mprEInvStatus">
+                        <option value="">All</option>
+                        <option value="Active">Active</option>
+                        <option value="None">None</option>
+                    </select>
+                </div>
+                <div class="mpr-filter-btns">
+                    <button class="btn btn-outline" onclick="mprResetFilters()">Reset</button>
+                    <button class="btn btn-primary" onclick="mprApplyFilters()">Apply Filters</button>
+                </div>
+            </div>
+
+            <div class="mpr-kpi-grid">
+                <div class="mpr-kpi-card">
+                    <div class="mpr-kpi-top">
+                        <div class="mpr-kpi-icon" style="background:#dbeafe;color:#1d4ed8;">&#128101;</div>
+                        <div>
+                            <div class="mpr-kpi-label">Total Customers</div>
+                            <div class="mpr-kpi-value">${total.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="mpr-kpi-pct">100% of Total</div>
+                </div>
+                <div class="mpr-kpi-card">
+                    <div class="mpr-kpi-top">
+                        <div class="mpr-kpi-icon" style="background:#dcfce7;color:#16a34a;">&#128230;</div>
+                        <div>
+                            <div class="mpr-kpi-label">1 Product</div>
+                            <div class="mpr-kpi-value">${cnt1.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="mpr-kpi-pct">${pct(cnt1)} of Total</div>
+                </div>
+                <div class="mpr-kpi-card">
+                    <div class="mpr-kpi-top">
+                        <div class="mpr-kpi-icon" style="background:#fef3c7;color:#d97706;">&#127873;</div>
+                        <div>
+                            <div class="mpr-kpi-label">2–3 Products</div>
+                            <div class="mpr-kpi-value">${cnt23.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="mpr-kpi-pct">${pct(cnt23)} of Total</div>
+                </div>
+                <div class="mpr-kpi-card">
+                    <div class="mpr-kpi-top">
+                        <div class="mpr-kpi-icon" style="background:#ede9fe;color:#7c3aed;">&#127942;</div>
+                        <div>
+                            <div class="mpr-kpi-label">4–5 Products</div>
+                            <div class="mpr-kpi-value">${cnt45.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="mpr-kpi-pct">${pct(cnt45)} of Total</div>
+                </div>
+                <div class="mpr-kpi-card">
+                    <div class="mpr-kpi-top">
+                        <div class="mpr-kpi-icon" style="background:#fce7f3;color:#db2777;">&#11088;</div>
+                        <div>
+                            <div class="mpr-kpi-label">6+ Products</div>
+                            <div class="mpr-kpi-value">${cnt6p.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="mpr-kpi-pct">${pct(cnt6p)} of Total</div>
+                </div>
+                <div class="mpr-kpi-card" style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8);border-color:#1d4ed8;">
+                    <div class="mpr-kpi-top">
+                        <div class="mpr-kpi-icon" style="background:rgba(255,255,255,0.15);color:#fff;">&#129351;</div>
+                        <div>
+                            <div class="mpr-kpi-label" style="color:#bfdbfe;">Highest Product</div>
+                            <div class="mpr-kpi-value" style="color:#fff;font-size:14px;font-weight:700;">${topCust ? escapeHtml(String(topCust.row['CLINIC NAME']||topCust.row['ACCT NO']||'').slice(0,28)) : '-'}</div>
+                        </div>
+                    </div>
+                    <div class="mpr-kpi-pct" style="color:#bfdbfe;">${topCust ? topCust.score + ' Products' : ''}</div>
+                </div>
+            </div>
+
+            <div class="mpr-table-section">
+                <div class="mpr-table-header">
+                    <div>
+                        <span class="mpr-table-title" id="mprTableTitle">Top Customers</span>
+                        <span style="font-size:12px;color:#6b7280;margin-left:10px;" id="mprRecordCount"></span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="mpr-legend">
+                            <span><span class="mpr-legend-dot" style="background:#16a34a;"></span>Active</span>
+                            <span><span class="mpr-legend-dot" style="background:#dc2626;"></span>Expired</span>
+                            <span><span class="mpr-legend-dot" style="background:#d97706;"></span>Loss</span>
+                            <span><span class="mpr-legend-dot" style="background:#9ca3af;"></span>No Date</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mpr-table-scroll">
+                    <table class="mpr-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:50px;">Rank</th>
+                                <th style="min-width:90px;">Acct No</th>
+                                <th style="min-width:200px;">Customer Name</th>
+                                <th style="min-width:130px;">Dealer</th>
+                                <th style="min-width:80px;text-align:center;">Products</th>
+                                <th style="min-width:80px;text-align:center;">Clinisys</th>
+                                <th style="min-width:80px;text-align:center;">Dental</th>
+                                <th style="min-width:80px;text-align:center;">Derm</th>
+                                <th style="min-width:80px;text-align:center;">Vet</th>
+                                <th style="min-width:80px;text-align:center;">Hybrid</th>
+                                <th style="min-width:80px;text-align:center;">MHIS</th>
+                                <th style="min-width:80px;text-align:center;">E-Invoice</th>
+                                <th style="min-width:80px;text-align:center;">Cloud</th>
+                                <th style="min-width:80px;text-align:center;">Mobile Apps</th>
+                                <th style="min-width:80px;text-align:center;">Kiosk</th>
+                                <th style="min-width:80px;text-align:center;">SST</th>
+                                <th style="min-width:80px;text-align:center;">WhatsApp</th>
+                                <th style="min-width:100px;">MTN Status</th>
+                                <th style="min-width:100px;">Cloud Status</th>
+                                <th style="min-width:100px;">Renewal Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mprTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="mpr-pagination" id="mprPagination"></div>
+            </div>
+
+            <div class="mpr-analytics-grid">
+                <div class="mpr-analytics-card" id="mprMvpCard"></div>
+                <div class="mpr-analytics-card" id="mprMostUsedCard"></div>
+                <div class="mpr-analytics-card" id="mprCrossSellCard"></div>
+            </div>
+            `;
+
+            mprApplyFilters();
+        }
+
+        function mprApplyFilters() {
+            mprCurrentPage = 1;
+            mprExpandedRow = null;
+
+            const topN    = parseInt(document.getElementById('mprTopN')?.value || '20');
+            const search  = (document.getElementById('mprSearch')?.value || '').trim().toLowerCase();
+            const minProd = parseInt(document.getElementById('mprMinProd')?.value || '0');
+            const dealer  = (document.getElementById('mprDealer')?.value || '');
+            const mtnF    = (document.getElementById('mprMtnStatus')?.value || '');
+            const cldF    = (document.getElementById('mprCldStatus')?.value || '');
+            const einvF   = (document.getElementById('mprEInvStatus')?.value || '');
+
+            let data = crmData.map(row => ({
+                row,
+                score: mprScoreRow(row),
+                mtnStatus: getCustomerStatus(row),
+                cldStatus: mprCloudStatus(row),
+                einvStatus: mprEInvStatus(row),
+                products: MPR_PRODUCTS.filter(p => mprHasProduct(row, p))
+            })).sort((a,b) => b.score - a.score);
+
+            if (search)  data = data.filter(d => String(d.row['CLINIC NAME']||'').toLowerCase().includes(search) || String(d.row['ACCT NO']||'').toLowerCase().includes(search));
+            if (minProd) data = data.filter(d => d.score >= minProd);
+            if (dealer)  data = data.filter(d => String(d.row['M1G/ DEALER CASE']||'').trim() === dealer);
+            if (mtnF)    data = data.filter(d => d.mtnStatus === mtnF);
+            if (cldF)    data = data.filter(d => d.cldStatus === cldF);
+            if (einvF)   data = data.filter(d => d.einvStatus === einvF);
+            if (topN > 0) data = data.slice(0, topN);
+
+            mprFilteredData = data;
+            mprRenderTable();
+            mprRenderAnalytics();
+        }
+
+        function mprResetFilters() {
+            ['mprTopN','mprMinProd','mprDealer','mprMtnStatus','mprCldStatus','mprEInvStatus'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = id === 'mprTopN' ? '20' : '';
+            });
+            const s = document.getElementById('mprSearch'); if (s) s.value = '';
+            mprApplyFilters();
+        }
+
+        function mprRenderTable() {
+            const tbody = document.getElementById('mprTableBody');
+            const pag   = document.getElementById('mprPagination');
+            const rc    = document.getElementById('mprRecordCount');
+            if (!tbody) return;
+
+            const data = mprFilteredData;
+            const total = data.length;
+            const totalPages = Math.max(1, Math.ceil(total / mprPageSize));
+            if (mprCurrentPage > totalPages) mprCurrentPage = totalPages;
+            const start = (mprCurrentPage - 1) * mprPageSize;
+            const page  = data.slice(start, start + mprPageSize);
+
+            if (rc) rc.textContent = `Total Records: ${total.toLocaleString()}`;
+
+            if (page.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:#9ca3af;">No records found.</td></tr>`;
+                if (pag) pag.innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = page.map((d, i) => {
+                const globalRank = start + i + 1;
+                const r = d.row;
+                const has = key => d.products.some(p => p.key === key);
+                return `
+                <tr onclick="mprToggleExpand(${i + start}, event)" style="cursor:pointer;">
+                    <td>${mprRankBadge(globalRank)}</td>
+                    <td><span style="font-size:12px;color:#6b7280;">${escapeHtml(String(r['ACCT NO']||''))}</span></td>
+                    <td><span style="color:#1d4ed8;font-weight:600;">${escapeHtml(String(r['CLINIC NAME']||r['COMPANY NAME']||''))}</span></td>
+                    <td>${escapeHtml(String(r['M1G/ DEALER CASE']||''))}</td>
+                    <td style="text-align:center;"><span class="mpr-prod-count">${d.score}</span></td>
+                    <td style="text-align:center;">${mprCheckMark(has('clinisys'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('medexDental'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('medexDerm'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('medexVet'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('hybrid'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('mhis'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('einvoice'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('cloud'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('mobileApps'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('kiosk'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('sst'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('whatsapp'))}</td>
+                    <td>${mprMtnStatusBadge(d.mtnStatus)}</td>
+                    <td>${mprCldBadge(d.cldStatus)}</td>
+                    <td style="font-size:12px;">${escapeHtml(formatExcelDate(r['CMS/MHIS MTN END DATE'])||'-')}</td>
+                </tr>
+                ${mprExpandedRow === (i + start) ? mprExpandRowHTML(d) : ''}
+                `;
+            }).join('');
+
+            // Pagination
+            if (pag) {
+                const showingEnd = Math.min(start + mprPageSize, total);
+                let pageHTML = `<span class="mpr-page-info">Showing ${(start+1).toLocaleString()} to ${showingEnd.toLocaleString()} of ${total.toLocaleString()} entries</span>`;
+                pageHTML += `<div class="mpr-page-btns">`;
+                pageHTML += `<button class="mpr-page-btn" ${mprCurrentPage===1?'disabled':''} onclick="mprGoPage(1)">&#171;</button>`;
+                pageHTML += `<button class="mpr-page-btn" ${mprCurrentPage===1?'disabled':''} onclick="mprGoPage(${mprCurrentPage-1})">&#8249;</button>`;
+                const pRange = [];
+                for (let p=Math.max(1,mprCurrentPage-2); p<=Math.min(totalPages,mprCurrentPage+2); p++) pRange.push(p);
+                pRange.forEach(p => { pageHTML += `<button class="mpr-page-btn ${p===mprCurrentPage?'active':''}" onclick="mprGoPage(${p})">${p}</button>`; });
+                pageHTML += `<button class="mpr-page-btn" ${mprCurrentPage===totalPages?'disabled':''} onclick="mprGoPage(${mprCurrentPage+1})">&#8250;</button>`;
+                pageHTML += `<button class="mpr-page-btn" ${mprCurrentPage===totalPages?'disabled':''} onclick="mprGoPage(${totalPages})">&#187;</button>`;
+                pageHTML += `<select class="mpr-filter-select" style="margin-left:8px;min-width:80px;" onchange="mprChangePageSize(this.value)">`;
+                [10,20,50,100].forEach(n => { pageHTML += `<option value="${n}" ${n===mprPageSize?'selected':''}>${n} / page</option>`; });
+                pageHTML += `</select></div>`;
+                pag.innerHTML = pageHTML;
+            }
+        }
+
+        function mprGoPage(p) {
+            mprCurrentPage = p;
+            mprExpandedRow = null;
+            mprRenderTable();
+        }
+
+        function mprChangePageSize(n) {
+            mprPageSize = parseInt(n);
+            mprCurrentPage = 1;
+            mprExpandedRow = null;
+            mprRenderTable();
+        }
+
+        function mprExpandRowHTML(d) {
+            const r = d.row;
+            const cards = d.products.map(p => {
+                let startDate = '-', endDate = '-', nextRenewal = '-', remarks = '-';
+                if (p.key === 'cloud') {
+                    startDate   = formatExcelDate(r['CLOUD START DATE']) || '-';
+                    endDate     = formatExcelDate(r['CLOUD END DATE']) || '-';
+                } else if (p.key === 'kiosk') {
+                    startDate = formatExcelDate(r['KIOSK PO DATE']) || '-';
+                } else {
+                    startDate = formatExcelDate(r['CMS/MHIS MTN START DATE']) || '-';
+                    endDate   = formatExcelDate(r['CMS/MHIS MTN END DATE']) || '-';
+                    nextRenewal = endDate;
+                }
+                remarks = String(r['RENEWAL STATUS 2'] || r['REMARK'] || '-').trim() || '-';
+                const statusLabel = d.mtnStatus === 'active' ? 'Active' : d.mtnStatus === 'expired' ? 'Expired' : d.mtnStatus === 'loss' ? 'Loss' : 'No Date';
+                const statusCls   = d.mtnStatus === 'active' ? 'mpr-status-active' : d.mtnStatus === 'expired' ? 'mpr-status-expired' : d.mtnStatus === 'loss' ? 'mpr-status-loss' : 'mpr-status-nodate';
+                return `<div class="mpr-expand-card">
+                    <div class="mpr-expand-card-name">${p.icon} ${escapeHtml(p.label)}</div>
+                    <div class="mpr-expand-card-row"><span>Status</span><span class="${statusCls}" style="border-radius:12px;padding:1px 6px;font-size:10px;">${statusLabel}</span></div>
+                    <div class="mpr-expand-card-row"><span>Start</span><span>${escapeHtml(startDate)}</span></div>
+                    <div class="mpr-expand-card-row"><span>End/Expiry</span><span>${escapeHtml(endDate)}</span></div>
+                    <div class="mpr-expand-card-row"><span>Next Renewal</span><span>${escapeHtml(nextRenewal)}</span></div>
+                    <div class="mpr-expand-card-row"><span>Remarks</span><span title="${escapeHtml(remarks)}">${escapeHtml(remarks.slice(0,30))}${remarks.length>30?'...':''}</span></div>
+                </div>`;
+            }).join('');
+            return `<tr class="mpr-expand-row"><td colspan="20">
+                <div class="mpr-expand-panel">
+                    <div class="mpr-expand-title">&#128230; Product Details for ${escapeHtml(String(r['CLINIC NAME']||r['ACCT NO']||''))}</div>
+                    <div class="mpr-expand-grid">${cards}</div>
+                </div>
+            </td></tr>`;
+        }
+
+        function mprToggleExpand(idx, e) {
+            mprExpandedRow = (mprExpandedRow === idx) ? null : idx;
+            mprRenderTable();
+        }
+
+        function mprRenderAnalytics() {
+            // MVP Card
+            const mvpEl = document.getElementById('mprMvpCard');
+            const top = mprFilteredData[0];
+            if (mvpEl) {
+                if (top) {
+                    const r = top.row;
+                    const since = r['CMS INSTALL DATE/LIVE DATE'] ? new Date(r['CMS INSTALL DATE/LIVE DATE']).getFullYear() : '';
+                    mvpEl.innerHTML = `<div class="mpr-analytics-title">&#129351; Most Valuable Customer</div>
+                        <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:8px;">${escapeHtml(String(r['CLINIC NAME']||r['ACCT NO']||''))}</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <span style="background:#dbeafe;color:#1d4ed8;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;">${top.score} Products</span>
+                            <span style="background:#f3f4f6;color:#374151;border-radius:20px;padding:4px 12px;font-size:12px;">${escapeHtml(String(r['ACCT NO']||''))}</span>
+                            ${since ? `<span style="background:#f3f4f6;color:#374151;border-radius:20px;padding:4px 12px;font-size:12px;">Since ${since}</span>` : ''}
+                        </div>
+                        <div style="margin-top:12px;font-size:12px;color:#6b7280;">Products: ${top.products.map(p => p.label).join(', ')}</div>`;
+                } else {
+                    mvpEl.innerHTML = `<div class="mpr-analytics-title">&#129351; Most Valuable Customer</div><div style="color:#9ca3af;font-size:13px;">No data</div>`;
+                }
+            }
+
+            // Most Used Products
+            const muEl = document.getElementById('mprMostUsedCard');
+            if (muEl) {
+                const prodCounts = MPR_PRODUCTS.map(p => ({
+                    label: p.label,
+                    icon: p.icon,
+                    count: crmData.filter(row => mprHasProduct(row, p)).length
+                })).sort((a,b) => b.count - a.count);
+                const maxCnt = prodCounts[0]?.count || 1;
+                muEl.innerHTML = `<div class="mpr-analytics-title">&#128202; Most Used Products <span style="font-size:11px;color:#9ca3af;font-weight:400;">(By Customers)</span></div>` +
+                    prodCounts.slice(0,6).map((p,i) => `
+                    <div class="mpr-progress-row">
+                        <div class="mpr-progress-label">${p.icon} ${escapeHtml(p.label)}</div>
+                        <div class="mpr-progress-bar-wrap"><div class="mpr-progress-bar" style="width:${Math.round(p.count/maxCnt*100)}%;"></div></div>
+                        <div class="mpr-progress-val">${p.count.toLocaleString()} (${crmData.length>0?(p.count/crmData.length*100).toFixed(1):0}%)</div>
+                    </div>`).join('');
+            }
+
+            // Cross-Sell
+            const csEl = document.getElementById('mprCrossSellCard');
+            if (csEl) {
+                const singleProd = crmData.map(row => ({ row, score: mprScoreRow(row), products: MPR_PRODUCTS.filter(p => mprHasProduct(row, p)) }))
+                    .filter(d => d.score === 1).slice(0,5);
+                csEl.innerHTML = `<div class="mpr-analytics-title">&#128200; Cross-Sell Opportunity <span style="font-size:11px;color:#9ca3af;font-weight:400;">(1 Product Only)</span></div>` +
+                    (singleProd.length === 0 ? `<div style="color:#9ca3af;font-size:13px;">No single-product customers</div>` :
+                    singleProd.map(d => `<div class="mpr-crosssell-row">
+                        <span class="mpr-crosssell-name">${escapeHtml(String(d.row['CLINIC NAME']||d.row['ACCT NO']||'').slice(0,28))}</span>
+                        <span class="mpr-crosssell-prod">${d.products[0]?.label||''}</span>
+                        <span class="mpr-crosssell-view" onclick="viewRowDetails('${d.row.id}')">View</span>
+                    </div>`).join('')) +
+                    `<div style="margin-top:10px;"><button class="btn btn-outline" style="font-size:12px;" onclick="mprShowAllSingle()">View All Single-Product</button></div>`;
+            }
+        }
+
+        function mprShowAllSingle() {
+            const el = document.getElementById('mprMinProd'); if (el) el.value = '0';
+            const topEl = document.getElementById('mprTopN'); if (topEl) topEl.value = '0';
+            // Manually set filter to score=1 only by temp override
+            mprCurrentPage = 1;
+            mprFilteredData = crmData.map(row => ({
+                row, score: mprScoreRow(row), mtnStatus: getCustomerStatus(row),
+                cldStatus: mprCloudStatus(row), einvStatus: mprEInvStatus(row),
+                products: MPR_PRODUCTS.filter(p => mprHasProduct(row, p))
+            })).filter(d => d.score === 1);
+            mprRenderTable();
+        }
+
+        function mprExportExcel() {
+            const headers = ['Rank','Acct No','Customer Name','Dealer','Total Products',...MPR_PRODUCTS.map(p=>p.label),'MTN Status','Cloud Status','Renewal Date'];
+            const rows = mprFilteredData.map((d,i) => {
+                const r = d.row;
+                return [i+1, r['ACCT NO']||'', r['CLINIC NAME']||'', r['M1G/ DEALER CASE']||'', d.score,
+                    ...MPR_PRODUCTS.map(p => mprHasProduct(r,p) ? 'Yes' : 'No'),
+                    d.mtnStatus, d.cldStatus, formatExcelDate(r['CMS/MHIS MTN END DATE'])||''];
+            });
+            let csv = headers.join(',') + '\n' + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], {type:'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href=url; a.download='multi_product_report.csv'; a.click();
+            URL.revokeObjectURL(url);
         }
 
         function renderMTNCategorizedReport() {
