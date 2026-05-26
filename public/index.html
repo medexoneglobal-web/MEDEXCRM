@@ -7208,6 +7208,14 @@
                 color: '#a855f7',
                 type: 'statusField',
                 field: 'E-INVOICE STATUS'
+            },
+            {
+                key: 'claimex',
+                label: 'ClaimEX',
+                icon: '&#128179;',
+                color: '#0284c7',
+                type: 'productType',
+                values: ['GP+CLAIMEX','MHIS+CLAIMEX','CLAIMEX']
             }
         ];
 
@@ -14157,6 +14165,7 @@ async function exportActivityLog() {
             { key:'kiosk',       label:'Kiosk',          icon:'&#128433;', type:'kioskDate' },
             { key:'sst',         label:'SST',            icon:'&#128737;', type:'statusField', field:'SST STATUS' },
             { key:'whatsapp',    label:'WhatsApp',       icon:'&#128172;', type:'statusField', field:'WHATSAPP STATUS' },
+            { key:'claimex',     label:'ClaimEX',        icon:'&#128179;', type:'productType', values:['GP+CLAIMEX','MHIS+CLAIMEX','CLAIMEX'] },
         ];
 
         function mprHasProduct(row, prod) {
