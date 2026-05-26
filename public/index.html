@@ -479,6 +479,265 @@
             justify-content: flex-end;
             gap: 12px;
         }
+
+        /* ===== CUSTOMER PROFILE REDESIGN ===== */
+        .cp-modal {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 920px;
+            max-height: 92vh;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            overflow: hidden;
+        }
+        .cp-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 18px 24px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .cp-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            flex: 1;
+        }
+        .cp-header .cp-close-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 4px 8px;
+            border-radius: 6px;
+            line-height: 1;
+        }
+        .cp-header .cp-close-btn:hover { background: #f3f4f6; color: #111; }
+        .cp-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 24px 24px;
+        }
+        .cp-footer {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            border-top: 1px solid #e5e7eb;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        /* Summary Bar */
+        .cp-summary-bar {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+        .cp-summary-card {
+            flex: 1;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-right: 1px solid #e5e7eb;
+        }
+        .cp-summary-card:last-child { border-right: none; }
+        .cp-summary-card.cp-summary-main {
+            flex: 1.6;
+            background: #fff;
+        }
+        .cp-summary-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .cp-summary-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .cp-summary-sub {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        /* Services Grid */
+        .cp-services-section {
+            margin-bottom: 18px;
+        }
+        .cp-services-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cp-services-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        @media (max-width: 700px) {
+            .cp-services-grid { grid-template-columns: repeat(2, 1fr); }
+            .cp-summary-bar { flex-direction: column; }
+            .cp-summary-card { border-right: none; border-bottom: 1px solid #e5e7eb; }
+        }
+        .cp-service-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: box-shadow 0.15s, transform 0.15s;
+            cursor: default;
+        }
+        .cp-service-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+            transform: translateY(-2px);
+        }
+        .cp-service-card-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cp-service-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .cp-service-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .cp-service-detail {
+            font-size: 11px;
+            color: #6b7280;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .cp-service-detail-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+        }
+        .cp-service-detail-row span:first-child { color: #9ca3af; }
+        .cp-service-detail-row span:last-child { font-weight: 500; color: #374151; text-align: right; }
+        /* Accordion */
+        .cp-accordion {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .cp-accordion-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            background: #f8fafc;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+        .cp-accordion-header:hover { background: #f1f5f9; }
+        .cp-acc-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+        .cp-acc-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .cp-acc-sub {
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: 400;
+        }
+        .cp-acc-chevron {
+            font-size: 12px;
+            color: #9ca3af;
+            transition: transform 0.2s;
+        }
+        .cp-acc-chevron.open { transform: rotate(180deg); }
+        .cp-accordion-body {
+            padding: 16px 18px;
+            background: #fff;
+        }
+        .cp-field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px 20px;
+        }
+        @media (max-width: 600px) {
+            .cp-field-grid { grid-template-columns: 1fr; }
+        }
+        .cp-field-full {
+            grid-column: 1 / -1;
+        }
+        .cp-field-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        /* Service card color themes */
+        .svc-mhis  { background: #eff6ff; }  .svc-mhis  .cp-service-icon { background: #dbeafe; color: #2563eb; }
+        .svc-einv  { background: #fffbeb; }  .svc-einv  .cp-service-icon { background: #fef3c7; color: #d97706; }
+        .svc-cloud { background: #f0fdf4; }  .svc-cloud .cp-service-icon { background: #dcfce7; color: #16a34a; }
+        .svc-sst   { background: #fef2f2; }  .svc-sst   .cp-service-icon { background: #fee2e2; color: #dc2626; }
+        .svc-kiosk { background: #f5f3ff; }  .svc-kiosk .cp-service-icon { background: #ede9fe; color: #7c3aed; }
+        .svc-apps  { background: #fff0f9; }  .svc-apps  .cp-service-icon { background: #fce7f3; color: #db2777; }
+        .svc-wa    { background: #f0fdf4; }  .svc-wa    .cp-service-icon { background: #dcfce7; color: #15803d; }
+        .svc-portal{ background: #f0f9ff; }  .svc-portal .cp-service-icon { background: #e0f2fe; color: #0369a1; }
+        /* Status badge extensions for cp */
+        .badge-active   { background: #dcfce7; color: #15803d; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+        .badge-expiring { background: #fef3c7; color: #b45309; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+        .badge-expired  { background: #fee2e2; color: #b91c1c; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+        .badge-inactive { background: #f3f4f6; color: #6b7280; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+        .badge-terminated { background: #fee2e2; color: #b91c1c; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+        /* Expired date highlight */
+        .date-expired-highlight { color: #dc2626; font-weight: 600; }
+        /* ===== END CUSTOMER PROFILE REDESIGN ===== */
         
         .btn-sm {
             padding: 6px 12px;
@@ -8780,12 +9039,13 @@
 
         // Field groups for organizing the form
         const FIELD_GROUPS = {
-            'Basic Info': ['ACCT NO', 'CLINIC NAME', 'PHONE', 'Contact Name', 'Contact Tel1', 'State', 'COMPANY NAME', 'CO. REG & BRN', 'Customer ID- Certificate No.'],
-            'Product Info': ['PRODUCT', 'PRODUCT TYPE', 'GROUP', 'M1G/ DEALER CASE', 'PC TOTAL'],
-            'Maintenance Dates': ['CMS/MHIS MTN START DATE', 'CMS/MHIS MTN END DATE', 'CLOUD START DATE', 'CLOUD END DATE', 'CMS INSTALL DATE/LIVE DATE'],
-            'MTN Renewal Tracking': ['CUSTOMER TYPE', 'EXCLUDE FROM MTN TRACKING', 'RENEWAL STATUS 2', 'COMPLETED DATE', 'LAST UPDATED BY', 'LAST UPDATED AT'],
-            'E-Invoice': ['E-INV PO RCVD DATE', 'EINV PO RCVD DATE', 'E-INV START', 'E-INV END', 'E-INV LIVE DATE', 'E-INV TRACKING STATUS'],
-            'Portal & Apps': ['MOBILE APPS LIVE DATE', 'MOBILE APPS STATUS', 'INVENTORY PORTAL LIVE DATE', 'INVENTORY PORTAL STATUS', 'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS']
+            'Customer Profile': ['ACCT NO','CLINIC NAME','COMPANY NAME','Contact Name','PHONE','Contact Tel1','State','CO. REG & BRN','Customer ID- Certificate No.','EMAIL ID MAIN','EMAIL ID 2','SUPPORT NAME','Account Manager'],
+            'Product & License Info': ['PRODUCT','PRODUCT TYPE','GROUP','M1G/ DEALER CASE','PC TOTAL','PRODUCT VERSION','DB VERSION','CUSTOMER TYPE','RENEWAL STATUS 2','INVOICE NO'],
+            'Maintenance & Subscription': ['CMS/MHIS MTN START DATE','CMS/MHIS MTN END DATE','CLOUD START DATE','CLOUD END DATE','CLOUD TERMINATION DATE','CMS INSTALL DATE/LIVE DATE','CHECKED','DATE CHECKED','LAST UPDATED BY','LAST UPDATED AT'],
+            'Cloud / E-Invoice / Portal': ['E-INVOICE STATUS','EINV PO RCVD DATE','E-INV PO RCVD DATE','E-INV LHDN SUBMIT DATE','MOBILE APPS STATUS','MOBILE APPS LIVE DATE','INVENTORY PORTAL STATUS','INVENTORY PORTAL LIVE DATE','WHATSAPP STATUS','SST STATUS'],
+            'Address Information': ['ADDRESS1','ADDRESS2','ADDRESS3','ADDRESS4','LKEY LINE 1','LKEY LINE 2','LKEY LINE 3','LKEY LINE 4','LKEY LINE 5'],
+            'Technical & System Info': ['HYB LIVE DATE','WSPP LIVE DATE','KIOSK PO DATE','KIOSK SURVEY FORM','365 ACCOUNT NO','PASSWORD/PASSPHRASE','MDO DB LAST ACTUAL BACKUP DATE','MDO SERVER LAST ACTUAL BACKUP DATE','EXCLUDE FROM MTN TRACKING','COMPLETED DATE'],
+            'Remarks & Internal Notes': ['REMARK','REMARKS FOLLOW UP','MTN IMPORTANT NOTE','MTN IMPORTANT NOTE 1','MTN IMPORTANT NOTE 2','MN/CLD/EINV RENEWAL RATE','REMARK RATE ADDITIONAL PC','INFO']
         };
 
         // Group colors for visual separation
@@ -8857,41 +9117,238 @@
                 `;
             }
 
-            // Build form HTML
-            let formHTML = '';
-            Object.keys(FIELD_GROUPS).forEach(groupName => {
-                formHTML += renderCard(groupName, FIELD_GROUPS[groupName]);
-            });
-            const otherFields = headers.filter(h => !groupedHeaders.has(h));
-            if (otherFields.length > 0) {
-                formHTML += renderCard('Status & Other', otherFields);
+            // Build accordion form sections
+            function renderAccordion(groupName, fields, icon, bgColor, open) {
+                const cardFields = fields.filter(h => headers.includes(h));
+                if (cardFields.length === 0) return '';
+                const id = 'cpAcc_' + groupName.replace(/[^a-zA-Z0-9]/g, '_');
+                const subtitles = {
+                    'Customer Profile': 'Basic customer information, contact details and account management',
+                    'Product & License Info': 'Product details, license information and account configuration',
+                    'Maintenance & Subscription': 'Maintenance dates, renewal tracking and subscription details',
+                    'Cloud / E-Invoice / Portal': 'Cloud services, e-invoice, portals and application status',
+                    'Address Information': 'Clinic address and communication details',
+                    'Technical & System Info': 'System settings, technical details and backup information',
+                    'Remarks & Internal Notes': 'Internal notes, remarks and important information'
+                };
+                let fieldsHTML = '';
+                cardFields.forEach(headerName => {
+                    const colIdx = headers.indexOf(headerName);
+                    const isRemarksField = ['REMARK','REMARKS FOLLOW UP','MTN IMPORTANT NOTE','MTN IMPORTANT NOTE 1','MTN IMPORTANT NOTE 2','INFO'].includes(headerName);
+                    const isMtnEndDate = headerName === 'CMS/MHIS MTN END DATE';
+                    const val = row[headerName] || '';
+                    let highlight = '';
+                    if (isMtnEndDate && val) {
+                        const d = parseDateToJs(val);
+                        if (d && d < new Date()) highlight = 'date-expired-highlight';
+                    }
+                    fieldsHTML += `<div class="${isRemarksField ? 'cp-field-full' : ''}"><div class="cp-field-label">${escapeHtml(headerName)}</div><div class="${highlight}">${renderFormField(headerName, val, colIdx, hasEdit)}</div></div>`;
+                });
+                return `
+                <div class="cp-accordion" id="cpAccWrap_${id}">
+                    <div class="cp-accordion-header" onclick="toggleCpAccordion('${id}')">
+                        <div class="cp-acc-icon" style="background:${bgColor}20;color:${bgColor}">${icon}</div>
+                        <div style="flex:1">
+                            <div class="cp-acc-title">${escapeHtml(groupName)}</div>
+                            <div class="cp-acc-sub">${subtitles[groupName] || ''}</div>
+                        </div>
+                        <span class="cp-acc-chevron ${open ? 'open' : ''}" id="cpChev_${id}">&#9660;</span>
+                    </div>
+                    <div class="cp-accordion-body" id="${id}" style="display:${open ? 'block' : 'none'}">
+                        <div class="cp-field-grid">
+                            ${fieldsHTML}
+                        </div>
+                    </div>
+                </div>`;
             }
 
-            // Build modal with tabs
+            const accDefs = [
+                { name:'Customer Profile',         fields: FIELD_GROUPS['Customer Profile'],         icon:'&#128100;', color:'#3b82f6', open: true },
+                { name:'Product & License Info',    fields: FIELD_GROUPS['Product & License Info'],    icon:'&#128230;', color:'#8b5cf6', open: false },
+                { name:'Maintenance & Subscription',fields: FIELD_GROUPS['Maintenance & Subscription'],icon:'&#128197;', color:'#10b981', open: false },
+                { name:'Cloud / E-Invoice / Portal',fields: FIELD_GROUPS['Cloud / E-Invoice / Portal'],icon:'&#9729;',   color:'#06b6d4', open: false },
+                { name:'Address Information',       fields: FIELD_GROUPS['Address Information'],       icon:'&#128205;', color:'#f59e0b', open: false },
+                { name:'Technical & System Info',   fields: FIELD_GROUPS['Technical & System Info'],   icon:'&#9881;',   color:'#64748b', open: false },
+                { name:'Remarks & Internal Notes',  fields: FIELD_GROUPS['Remarks & Internal Notes'],  icon:'&#128203;', color:'#ec4899', open: false }
+            ];
+            // Also show any ungrouped fields in a catch-all accordion
+            const allGroupedFields = new Set(Object.values(FIELD_GROUPS).flat());
+            const otherFields = headers.filter(h => !allGroupedFields.has(h));
+
+            let accordionHTML = accDefs.map(a => renderAccordion(a.name, a.fields, a.icon, a.color, a.open)).join('');
+            if (otherFields.length > 0) {
+                accordionHTML += renderAccordion('Status & Other', otherFields, '&#128736;', '#6b7280', false);
+            }
+
+            // Build Products & Services cards
+            function svcBadge(status) {
+                const cls = status === 'Active' ? 'badge-active' : status === 'Expiring Soon' ? 'badge-expiring' : status === 'Expired' || status === 'Terminated' ? 'badge-expired' : 'badge-inactive';
+                return `<span class="${cls}">${escapeHtml(status)}</span>`;
+            }
+            function svcRow(label, val) {
+                return val ? `<div class="cp-service-detail-row"><span>${label}</span><span>${escapeHtml(String(val))}</span></div>` : '';
+            }
+            let serviceCardsHTML = '';
+            // MHIS/CMS card
+            const prodType = String(row['PRODUCT TYPE'] || row['PRODUCT'] || '').toUpperCase();
+            if (prodType.includes('MHIS') || prodType.includes('CMS') || prodType.includes('GP') || prodType.includes('HYBRID') || prodType) {
+                const renewalStatus = row['RENEWAL STATUS 2'] || '-';
+                const mtnEnd = formatExcelDate(row['CMS/MHIS MTN END DATE']) || '-';
+                const prodLabel = row['PRODUCT TYPE'] || row['PRODUCT'] || 'System';
+                serviceCardsHTML += `<div class="cp-service-card svc-mhis">
+                    <div class="cp-service-card-top"><div class="cp-service-icon">&#128230;</div><div><div class="cp-service-name">MHIS / CMS</div>${svcBadge(status.label === 'Active' ? 'Active' : status.label)}</div></div>
+                    <div class="cp-service-detail">
+                        ${svcRow('Product', prodLabel)}
+                        ${svcRow('Renewal', renewalStatus)}
+                        ${svcRow('MTN End', mtnEnd)}
+                    </div></div>`;
+            }
+            // E-Invoice card
+            if (row['E-INVOICE STATUS'] || row['EINV PO RCVD DATE'] || row['E-INV PO RCVD DATE']) {
+                const einvStatus = row['E-INVOICE STATUS'] || 'Active';
+                const poDate = formatExcelDate(row['EINV PO RCVD DATE'] || row['E-INV PO RCVD DATE']) || '-';
+                const submitDate = formatExcelDate(row['E-INV LHDN SUBMIT DATE']) || '-';
+                serviceCardsHTML += `<div class="cp-service-card svc-einv">
+                    <div class="cp-service-card-top"><div class="cp-service-icon">&#128196;</div><div><div class="cp-service-name">E-Invoice</div>${svcBadge(einvStatus === 'Active' ? 'Active' : einvStatus || 'Active')}</div></div>
+                    <div class="cp-service-detail">
+                        ${svcRow('Status', einvStatus)}
+                        ${svcRow('PO Received', poDate)}
+                        ${svcRow('LHDN Submit', submitDate)}
+                    </div></div>`;
+            }
+            // Cloud Backup card
+            if (row['CLOUD START DATE'] || row['CLOUD END DATE']) {
+                const today2 = new Date(); today2.setHours(0,0,0,0);
+                const cldEnd = parseDateToJs(row['CLOUD END DATE']);
+                const termDate = row['CLOUD TERMINATION DATE'];
+                let cldStatus = 'Inactive';
+                if (termDate) { cldStatus = 'Terminated'; }
+                else if (cldEnd) {
+                    const diff = Math.round((cldEnd - today2)/(24*3600*1000));
+                    cldStatus = diff < 0 ? 'Expired' : diff <= 30 ? 'Expiring Soon' : 'Active';
+                }
+                serviceCardsHTML += `<div class="cp-service-card svc-cloud">
+                    <div class="cp-service-card-top"><div class="cp-service-icon">&#9729;</div><div><div class="cp-service-name">Cloud Backup</div>${svcBadge(cldStatus)}</div></div>
+                    <div class="cp-service-detail">
+                        ${svcRow('Cloud End', formatExcelDate(row['CLOUD END DATE']) || '-')}
+                        ${svcRow('Start', formatExcelDate(row['CLOUD START DATE']) || '-')}
+                        ${termDate ? svcRow('Terminated', formatExcelDate(termDate)) : ''}
+                    </div></div>`;
+            }
+            // SST card
+            if (row['SST STATUS']) {
+                serviceCardsHTML += `<div class="cp-service-card svc-sst">
+                    <div class="cp-service-card-top"><div class="cp-service-icon">&#128737;</div><div><div class="cp-service-name">SST</div>${svcBadge(row['SST STATUS'])}</div></div>
+                    <div class="cp-service-detail">
+                        ${svcRow('SST Status', row['SST STATUS'])}
+                    </div></div>`;
+            }
+            // Kiosk card
+            if (row['KIOSK PO DATE']) {
+                serviceCardsHTML += `<div class="cp-service-card svc-kiosk">
+                    <div class="cp-service-card-top"><div class="cp-service-icon">&#128433;</div><div><div class="cp-service-name">Kiosk</div>${svcBadge('Active')}</div></div>
+                    <div class="cp-service-detail">
+                        ${svcRow('Kiosk PO Date', formatExcelDate(row['KIOSK PO DATE']))}
+                        ${svcRow('Survey Form', row['KIOSK SURVEY FORM'] || '-')}
+                    </div></div>`;
+            }
+            // Mobile Apps card
+            if (row['MOBILE APPS STATUS'] || row['MOBILE APPS LIVE DATE']) {
+                const appsStatus = row['MOBILE APPS STATUS'] || 'Active';
+                serviceCardsHTML += `<div class="cp-service-card svc-apps">
+                    <div class="cp-service-card-top"><div class="cp-service-icon">&#128241;</div><div><div class="cp-service-name">Mobile Apps</div>${svcBadge(appsStatus)}</div></div>
+                    <div class="cp-service-detail">
+                        ${svcRow('Status', appsStatus)}
+                        ${svcRow('Live Date', formatExcelDate(row['MOBILE APPS LIVE DATE']) || '-')}
+                    </div></div>`;
+            }
+            // WhatsApp card
+            if (row['WHATSAPP STATUS']) {
+                serviceCardsHTML += `<div class="cp-service-card svc-wa">
+                    <div class="cp-service-card-top"><div class="cp-service-icon">&#128172;</div><div><div class="cp-service-name">WhatsApp</div>${svcBadge(row['WHATSAPP STATUS'])}</div></div>
+                    <div class="cp-service-detail">
+                        ${svcRow('Status', row['WHATSAPP STATUS'])}
+                    </div></div>`;
+            }
+            // Inventory Portal card
+            if (row['INVENTORY PORTAL STATUS'] || row['INVENTORY PORTAL LIVE DATE']) {
+                const portalStatus = row['INVENTORY PORTAL STATUS'] || 'Active';
+                serviceCardsHTML += `<div class="cp-service-card svc-portal">
+                    <div class="cp-service-card-top"><div class="cp-service-icon">&#128202;</div><div><div class="cp-service-name">Inventory Portal</div>${svcBadge(portalStatus)}</div></div>
+                    <div class="cp-service-detail">
+                        ${svcRow('Status', portalStatus)}
+                        ${svcRow('Live Date', formatExcelDate(row['INVENTORY PORTAL LIVE DATE']) || '-')}
+                    </div></div>`;
+            }
+
+            // Summary bar values
+            const mtnEndDisplay = formatExcelDate(row['CMS/MHIS MTN END DATE']) || '-';
+            const acctMgr = row['Account Manager'] || row['ACCOUNT MANAGER'] || '-';
+            const stateVal = row['State'] || row['STATE'] || '-';
+
+            // Build modal
             const modal = document.createElement('div');
             modal.id = 'viewDetailsModal';
             modal.className = 'modal active';
             modal.innerHTML = `
-                <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
-                    <div class="modal-header" style="flex-shrink: 0;">
-                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <h2 style="margin: 0;">${escapeHtml(titleText)}</h2>
-                            <span class="status-badge ${status.class}" style="font-size: 12px; padding: 4px 10px;">${status.label}</span>
-                        </div>
-                        <button class="close-btn" onclick="closeViewDetailsModal()">&times;</button>
+                <div class="cp-modal">
+                    <!-- Sticky Header -->
+                    <div class="cp-header">
+                        <h2>${escapeHtml(titleText)}</h2>
+                        <span class="status-badge ${status.class}" style="font-size:12px;padding:4px 10px;">${status.label}</span>
+                        <button class="cp-close-btn" onclick="closeViewDetailsModal()">&times;</button>
                     </div>
-                    <div class="modal-tabs" style="flex-shrink: 0;">
+                    <!-- Tabs -->
+                    <div class="modal-tabs" style="flex-shrink:0;border-bottom:1px solid #e5e7eb;">
                         <div class="modal-tab active" data-tab="details" onclick="switchModalTab('details')">Details</div>
                         <div class="modal-tab" data-tab="pipeline" onclick="switchModalTab('pipeline')">Pipeline</div>
                         <div class="modal-tab" data-tab="tasks" onclick="switchModalTab('tasks')">Tasks</div>
                         <div class="modal-tab" data-tab="activity" onclick="switchModalTab('activity')">Activity</div>
                         <div class="modal-tab" data-tab="ispChecklist" onclick="switchModalTab('ispChecklist');loadCustomerISPChecklist('${row.id}')">ISP Checklist</div>
                     </div>
-                    <div style="flex: 1; overflow-y: auto; padding: 0 24px 20px;">
-                        <div id="tab-details" class="modal-tab-content" style="display: block;">
-                            ${formHTML}
+                    <!-- Scrollable Body -->
+                    <div class="cp-body">
+                        <!-- Tab: Details -->
+                        <div id="tab-details" class="modal-tab-content" style="display:block;">
+                            <!-- Customer Summary Bar -->
+                            <div class="cp-summary-bar">
+                                <div class="cp-summary-card cp-summary-main">
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <div style="width:42px;height:42px;background:#eff6ff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">&#127973;</div>
+                                        <div>
+                                            <div style="font-size:15px;font-weight:700;color:#111827;">${escapeHtml(clinicName || acctNo)}</div>
+                                            <div style="font-size:12px;color:#6b7280;">Acct No: ${escapeHtml(acctNo)}</div>
+                                            <span class="status-badge ${status.class}" style="font-size:11px;padding:2px 8px;margin-top:4px;display:inline-block;">${status.label}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="cp-summary-card">
+                                    <div class="cp-summary-label">MTN End Date</div>
+                                    <div class="cp-summary-value ${status.class === 'status-expired' ? 'date-expired-highlight' : ''}">${escapeHtml(mtnEndDisplay)}</div>
+                                </div>
+                                <div class="cp-summary-card">
+                                    <div class="cp-summary-label">Account Manager</div>
+                                    <div class="cp-summary-value">${escapeHtml(acctMgr)}</div>
+                                </div>
+                                <div class="cp-summary-card">
+                                    <div class="cp-summary-label">State</div>
+                                    <div class="cp-summary-value">${escapeHtml(stateVal)}</div>
+                                </div>
+                            </div>
+
+                            <!-- Products & Services Overview -->
+                            ${serviceCardsHTML ? `
+                            <div class="cp-services-section">
+                                <div class="cp-services-title">&#128230; Products &amp; Services Overview</div>
+                                <div class="cp-services-grid">${serviceCardsHTML}</div>
+                            </div>` : ''}
+
+                            <!-- Accordion Sections -->
+                            ${accordionHTML}
                         </div>
-                        <div id="tab-pipeline" class="modal-tab-content" style="display: none;">
+
+                        <!-- Tab: Pipeline -->
+                        <div id="tab-pipeline" class="modal-tab-content" style="display:none;">
                             <div class="pipeline-stepper" id="modalPipelineStepper">
                                 <div class="pipeline-stage" data-stage="Lead" onclick="updatePipelineStage('${row.id}', 'Lead')">Lead</div>
                                 <div class="pipeline-stage" data-stage="Contacted" onclick="updatePipelineStage('${row.id}', 'Contacted')">Contacted</div>
@@ -8901,14 +9358,18 @@
                                 <div class="pipeline-stage" data-stage="Lost" onclick="updatePipelineStage('${row.id}', 'Lost')">Lost</div>
                             </div>
                         </div>
-                        <div id="tab-tasks" class="modal-tab-content" style="display: none;">
+
+                        <!-- Tab: Tasks -->
+                        <div id="tab-tasks" class="modal-tab-content" style="display:none;">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                                 <h3 style="font-size:15px;font-weight:600;color:#1a1a2e;margin:0;">Customer Tasks</h3>
                                 <button class="btn btn-primary btn-sm" onclick="openCreateTaskModalForCustomer('${row.id}')">+ New Task</button>
                             </div>
                             <div id="customerTasksList" class="task-list-container"></div>
                         </div>
-                        <div id="tab-activity" class="modal-tab-content" style="display: none;">
+
+                        <!-- Tab: Activity -->
+                        <div id="tab-activity" class="modal-tab-content" style="display:none;">
                             <div class="activity-timeline" id="activityTimeline"></div>
                             <div class="add-activity-bar">
                                 <select id="activityType">
@@ -8921,15 +9382,19 @@
                                 <button class="btn btn-primary btn-sm" onclick="addActivity()">Add</button>
                             </div>
                         </div>
-                        <div id="tab-ispChecklist" class="modal-tab-content" style="display: none;">
-                            <div id="customerISPChecklistContent" style="padding: 16px 0;">
+
+                        <!-- Tab: ISP Checklist -->
+                        <div id="tab-ispChecklist" class="modal-tab-content" style="display:none;">
+                            <div id="customerISPChecklistContent" style="padding:16px 0;">
                                 <p style="color:#9ca3af;text-align:center;">Loading ISP checklist...</p>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer-sticky">
+
+                    <!-- Sticky Footer -->
+                    <div class="cp-footer">
                         <button type="button" class="btn btn-secondary" onclick="closeViewDetailsModal()">Close</button>
-                        ${hasEdit ? '<button type="button" class="btn btn-primary" onclick="saveViewDetails()">Save Changes</button>' : ''}
+                        ${hasEdit ? '<button type="button" class="btn btn-primary" onclick="saveViewDetails()">&#128190; Save Changes</button>' : ''}
                     </div>
                 </div>
             `;
@@ -8937,6 +9402,15 @@
             loadPipelineStage(row.id).then(stage => renderPipelineStepper(stage));
             loadCustomerTasks(row.id);
             loadActivities(row.id);
+        }
+
+        function toggleCpAccordion(id) {
+            const body = document.getElementById(id);
+            const chev = document.getElementById('cpChev_' + id);
+            if (!body) return;
+            const isOpen = body.style.display !== 'none';
+            body.style.display = isOpen ? 'none' : 'block';
+            if (chev) chev.classList.toggle('open', !isOpen);
         }
 
         // Helper function to render a form field
