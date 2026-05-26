@@ -4724,24 +4724,6 @@
                         <!-- Product Cards Row (11 cards) -->
                         <div id="productReportCards" class="product-report-cards-row"></div>
 
-                        <!-- Summary Table -->
-                        <div class="product-report-summary-table-wrapper">
-                            <h3>Customer Count by Product (Summary)</h3>
-                            <table class="product-report-summary-table" id="productReportSummaryTable">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th>Active</th>
-                                        <th>Expired</th>
-                                        <th>Loss</th>
-                                        <th>No Date</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="productReportSummaryTableBody"></tbody>
-                            </table>
-                        </div>
-
                         <!-- Filter Bar -->
                         <div id="productReportFilterBar" class="product-report-filter-bar"></div>
 
@@ -6852,7 +6834,6 @@
             currentProductReportPage = 1;
             renderProductReportKpiCards();
             renderProductReportCards();
-            renderProductReportSummaryTable();
             renderProductReportFilterBar();
             renderProductReportDetailTable(currentProductReportCategory);
         }
@@ -6948,50 +6929,6 @@
                     </div>
                 </div>
             `).join('');
-        }
-
-        function renderProductReportSummaryTable() {
-            const tbody = document.getElementById('productReportSummaryTableBody');
-            if (!tbody) return;
-
-            const stats = PRODUCT_CATEGORIES.map(cat => {
-                const customers = crmData.filter(r => customerBelongsToCategory(r, cat));
-                const counts = { active:0, expired:0, loss:0, nodate:0 };
-                customers.forEach(r => {
-                    const s = getCustomerStatus(r);
-                    if (counts[s] !== undefined) counts[s]++;
-                });
-                return { label: cat.label, ...counts, total: customers.length };
-            });
-
-            const totals = { active:0, expired:0, loss:0, nodate:0, total:0 };
-            stats.forEach(s => {
-                totals.active += s.active;
-                totals.expired += s.expired;
-                totals.loss += s.loss;
-                totals.nodate += s.nodate;
-                totals.total += s.total;
-            });
-
-            tbody.innerHTML = stats.map(s => `
-                <tr style="cursor:pointer;" onclick="selectProductReportCategory('${PRODUCT_CATEGORIES.find(c => c.label === s.label).key}')">
-                    <td>${escapeHtml(s.label)}</td>
-                    <td class="summary-active">${s.active.toLocaleString()}</td>
-                    <td class="summary-expired">${s.expired.toLocaleString()}</td>
-                    <td class="summary-loss">${s.loss.toLocaleString()}</td>
-                    <td class="summary-nodate">${s.nodate.toLocaleString()}</td>
-                    <td class="summary-total">${s.total.toLocaleString()}</td>
-                </tr>
-            `).join('') + `
-                <tr class="total-row">
-                    <td>TOTAL</td>
-                    <td class="summary-active">${totals.active.toLocaleString()}</td>
-                    <td class="summary-expired">${totals.expired.toLocaleString()}</td>
-                    <td class="summary-loss">${totals.loss.toLocaleString()}</td>
-                    <td class="summary-nodate">${totals.nodate.toLocaleString()}</td>
-                    <td class="summary-total">${totals.total.toLocaleString()}</td>
-                </tr>
-            `;
         }
 
         function renderProductReportFilterBar() {
@@ -7117,11 +7054,17 @@
                 const statusLabel = status === 'active' ? 'Active' : status === 'expired' ? 'Expired' : status === 'loss' ? 'Loss (Inactive)' : 'No Date';
                 const badgeClass = `status-badge ${status}`;
                 const remarks = String(r['RENEWAL STATUS 2'] || r['RENEWAL REMARK'] || '-').trim() || '-';
+                // Show category label (e.g. Clinisys, Mobile Apps) not raw PRODUCT TYPE
+                let productLabel = catLabel;
+                if (!categoryKey) {
+                    const matchedCat = PRODUCT_CATEGORIES.find(c => customerBelongsToCategory(r, c));
+                    productLabel = matchedCat ? matchedCat.label : (String(r['PRODUCT TYPE'] || r['PRODUCT'] || ''));
+                }
 
                 return `<tr>
                     <td>${escapeHtml(String(r['ACCT NO'] || ''))}</td>
                     <td>${escapeHtml(String(r['CLINIC NAME'] || ''))}</td>
-                    <td>${escapeHtml(String(r['PRODUCT TYPE'] || r['PRODUCT'] || ''))}</td>
+                    <td>${escapeHtml(productLabel)}</td>
                     <td>${escapeHtml(formatExcelDate(r['CMS/MHIS MTN START DATE']))}</td>
                     <td>${escapeHtml(formatExcelDate(r['CMS/MHIS MTN END DATE']))}</td>
                     <td>${escapeHtml(String(r['Contact Name'] || ''))}</td>
