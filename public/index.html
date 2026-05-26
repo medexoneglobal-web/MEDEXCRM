@@ -14276,7 +14276,7 @@ async function exportActivityLog() {
             <div class="mpr-filters" id="mprFilters">
                 <div class="mpr-filter-group">
                     <div class="mpr-filter-label">Show Top</div>
-                    <select class="mpr-filter-select" id="mprTopN">
+                    <select class="mpr-filter-select" id="mprTopN" onchange="mprApplyFilters()">
                         <option value="10" selected>Top 10</option>
                         <option value="20">Top 20</option>
                         <option value="50">Top 50</option>
@@ -14287,11 +14287,11 @@ async function exportActivityLog() {
                 </div>
                 <div class="mpr-filter-group">
                     <div class="mpr-filter-label">Search Customer</div>
-                    <input class="mpr-filter-input" id="mprSearch" placeholder="Search by name or acct no...">
+                    <input class="mpr-filter-input" id="mprSearch" placeholder="Search by name or acct no..." onkeypress="if(event.key==='Enter')mprApplyFilters()">
                 </div>
                 <div class="mpr-filter-group">
                     <div class="mpr-filter-label">Min Products</div>
-                    <select class="mpr-filter-select" id="mprMinProd">
+                    <select class="mpr-filter-select" id="mprMinProd" onchange="mprApplyFilters()">
                         <option value="0">Any</option>
                         <option value="2">2+</option>
                         <option value="3">3+</option>
@@ -14302,14 +14302,14 @@ async function exportActivityLog() {
                 </div>
                 <div class="mpr-filter-group">
                     <div class="mpr-filter-label">Dealer</div>
-                    <select class="mpr-filter-select" id="mprDealer">
+                    <select class="mpr-filter-select" id="mprDealer" onchange="mprApplyFilters()">
                         <option value="">All Dealers</option>
                         ${dealers.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="mpr-filter-group">
                     <div class="mpr-filter-label">MTN Status</div>
-                    <select class="mpr-filter-select" id="mprMtnStatus">
+                    <select class="mpr-filter-select" id="mprMtnStatus" onchange="mprApplyFilters()">
                         <option value="">All</option>
                         <option value="active">Active</option>
                         <option value="expired">Expired</option>
@@ -14319,7 +14319,7 @@ async function exportActivityLog() {
                 </div>
                 <div class="mpr-filter-group">
                     <div class="mpr-filter-label">Cloud Backup</div>
-                    <select class="mpr-filter-select" id="mprCldStatus">
+                    <select class="mpr-filter-select" id="mprCldStatus" onchange="mprApplyFilters()">
                         <option value="">All</option>
                         <option value="Active">Active</option>
                         <option value="Expiring Soon">Expiring Soon</option>
@@ -14329,7 +14329,7 @@ async function exportActivityLog() {
                 </div>
                 <div class="mpr-filter-group">
                     <div class="mpr-filter-label">E-Invoice</div>
-                    <select class="mpr-filter-select" id="mprEInvStatus">
+                    <select class="mpr-filter-select" id="mprEInvStatus" onchange="mprApplyFilters()">
                         <option value="">All</option>
                         <option value="Active">Active</option>
                         <option value="None">None</option>
@@ -14498,7 +14498,7 @@ async function exportActivityLog() {
 
         function mprResetFilters() {
             ['mprTopN','mprMinProd','mprDealer','mprMtnStatus','mprCldStatus','mprEInvStatus'].forEach(id => {
-                const el = document.getElementById(id); if (el) el.value = id === 'mprTopN' ? '20' : '';
+                const el = document.getElementById(id); if (el) el.value = id === 'mprTopN' ? '10' : '';
             });
             const s = document.getElementById('mprSearch'); if (s) s.value = '';
             mprApplyFilters();
