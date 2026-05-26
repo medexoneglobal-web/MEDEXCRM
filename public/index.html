@@ -9142,7 +9142,8 @@
                         const d = parseDateToJs(val);
                         if (d && d < new Date()) highlight = 'date-expired-highlight';
                     }
-                    fieldsHTML += `<div class="${isRemarksField ? 'cp-field-full' : ''}"><div class="cp-field-label">${escapeHtml(headerName)}</div><div class="${highlight}">${renderFormField(headerName, val, colIdx, hasEdit)}</div></div>`;
+                    // renderFormField already includes its own <label> — just wrap for grid/highlight
+                    fieldsHTML += `<div class="${isRemarksField ? 'cp-field-full' : ''} ${highlight}">${renderFormField(headerName, val, colIdx, hasEdit)}</div>`;
                 });
                 return `
                 <div class="cp-accordion" id="cpAccWrap_${id}">
