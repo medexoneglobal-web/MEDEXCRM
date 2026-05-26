@@ -4686,7 +4686,7 @@
                     </div>
                     
                     <!-- Maintenance Report Panel -->
-                    <div id="maintenanceReportPanel" class="report-panel active">
+                    <div id="maintenanceReportPanel" class="report-panel">
                         <!-- 4 Main Summary Cards -->
                         <div id="maintenanceSummaryCards" class="maintenance-cards-container">
                             <!-- Cards will be rendered by JavaScript -->
@@ -4718,6 +4718,10 @@
 
                     <!-- Product Report Panel -->
                     <div id="productReportPanel" class="report-panel">
+                        <!-- Back Button -->
+                        <div style="margin-bottom:16px;">
+                            <button onclick="backToAvailableReports()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:14px;color:#374151;font-weight:500;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">&#8592; Back to Reports</button>
+                        </div>
                         <!-- KPI Cards Row -->
                         <div id="productReportKpiCards" class="product-report-kpi-row"></div>
 
@@ -6635,6 +6639,24 @@
             setTimeout(updateTableContainerOverflow, 100);
         }
 
+        function backToAvailableReports() {
+            // Hide all report panels
+            document.getElementById('maintenanceReportPanel').classList.remove('active');
+            document.getElementById('cloudBackupReportPanel').classList.remove('active');
+            document.getElementById('eInvoiceReportPanel').classList.remove('active');
+            document.getElementById('mtnCategorizedReportPanel').classList.remove('active');
+            document.getElementById('productReportPanel').classList.remove('active');
+            // Reset tab styles
+            document.getElementById('maintenanceReportSubTab').classList.remove('active');
+            document.getElementById('cloudBackupReportSubTab').classList.remove('active');
+            document.getElementById('eInvoiceReportSubTab').classList.remove('active');
+            document.getElementById('mtnCategorizedReportSubTab').classList.remove('active');
+            document.getElementById('productReportSubTab').classList.remove('active');
+            // Show Available Reports section
+            const availSection = document.getElementById('availableReportsSection');
+            if (availSection) availSection.style.display = 'block';
+        }
+
         // Report Panel Switching
         async function showReportPanel(panelId) {
             const availSection = document.getElementById('availableReportsSection');
@@ -6703,7 +6725,7 @@
             }
             renderMaintenanceReport();
             renderMTNCategorizedReport();
-            renderProductReport();
+            // renderProductReport() is called on-demand when user clicks View Report
             populateReportFilters();
         }
         
