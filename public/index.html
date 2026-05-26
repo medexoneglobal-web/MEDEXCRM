@@ -14441,6 +14441,7 @@ async function exportActivityLog() {
                                 <th style="min-width:80px;text-align:center;">Kiosk</th>
                                 <th style="min-width:80px;text-align:center;">SST</th>
                                 <th style="min-width:80px;text-align:center;">WhatsApp</th>
+                                <th style="min-width:80px;text-align:center;">ClaimEX</th>
                                 <th style="min-width:100px;">MTN Status</th>
                                 <th style="min-width:100px;">Cloud Status</th>
                                 <th style="min-width:100px;">Renewal Date</th>
@@ -14520,7 +14521,7 @@ async function exportActivityLog() {
             if (rc) rc.textContent = `Total Records: ${total.toLocaleString()}`;
 
             if (page.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:#9ca3af;">No records found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="21" style="text-align:center;padding:40px;color:#9ca3af;">No records found.</td></tr>`
                 if (pag) pag.innerHTML = '';
                 return;
             }
@@ -14548,6 +14549,7 @@ async function exportActivityLog() {
                     <td style="text-align:center;">${mprCheckMark(has('kiosk'))}</td>
                     <td style="text-align:center;">${mprCheckMark(has('sst'))}</td>
                     <td style="text-align:center;">${mprCheckMark(has('whatsapp'))}</td>
+                    <td style="text-align:center;">${mprCheckMark(has('claimex'))}</td>
                     <td>${mprMtnStatusBadge(d.mtnStatus)}</td>
                     <td>${mprCldBadge(d.cldStatus)}</td>
                     <td style="font-size:12px;">${escapeHtml(formatExcelDate(r['CMS/MHIS MTN END DATE'])||'-')}</td>
