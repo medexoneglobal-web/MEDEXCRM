@@ -16205,11 +16205,17 @@ async function exportActivityLog() {
                 }
             });
 
-            // KPIs always use the full real list
-            renderISPChecklistKPIs(allMerged);
+            // Filter to M1G only (exclude regular dealer cases)
+            const m1gOnly = allMerged.filter(ic => {
+                const dealer = String(ic.contact['M1G/ DEALER CASE'] || '').toUpperCase();
+                return dealer.includes('M1G');
+            });
+
+            // KPIs always use the M1G-only list
+            renderISPChecklistKPIs(m1gOnly);
 
             // Apply filters for the table
-            let filtered = allMerged.slice();
+            let filtered = m1gOnly.slice();
             if (ispChecklistStatusFilter) {
                 filtered = filtered.filter(ic => ic.status === ispChecklistStatusFilter);
             }
