@@ -14809,8 +14809,23 @@ async function exportActivityLog() {
                     return 0;
                 });
             }
+            // Preserve focus before re-render
+            const activeEl = document.activeElement;
+            const activeId = activeEl ? activeEl.id : null;
+            const cursorStart = activeEl && activeEl.selectionStart !== undefined ? activeEl.selectionStart : null;
+            const cursorEnd = activeEl && activeEl.selectionEnd !== undefined ? activeEl.selectionEnd : null;
             renderMTNCatTable();
             renderMTNCatCards(data, data.X);
+            // Restore focus after re-render
+            if (activeId) {
+                const restored = document.getElementById(activeId);
+                if (restored) {
+                    restored.focus();
+                    if (cursorStart !== null && cursorEnd !== null && restored.setSelectionRange) {
+                        restored.setSelectionRange(cursorStart, cursorEnd);
+                    }
+                }
+            }
         }
 
         function debounceFilterMTNCat() {
