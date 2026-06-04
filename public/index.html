@@ -17280,8 +17280,12 @@ async function exportActivityLog() {
             const container = document.getElementById('mtnServiceKpiCards');
             if (!container) return;
 
-            // KPIs count only real DB records (not virtual)
-            const realData = mtnServiceData;
+            // KPIs count only paid customers (same filter as table)
+            const realData = mtnServiceData.filter(d => {
+                const contactId = parseInt(d.contact_id, 10);
+                const contact = crmData.find(c => parseInt(c.id, 10) === contactId) || {};
+                return !!contact['MTN PAID DATE'];
+            });
             const pending = realData.filter(d => d.status === 'pending').length;
             const completed = realData.filter(d => d.status === 'completed').length;
             const postponed = realData.filter(d => d.status === 'postponed').length;
