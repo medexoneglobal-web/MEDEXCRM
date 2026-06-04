@@ -14903,13 +14903,9 @@ async function exportActivityLog() {
 
             let rowsHtml = '';
             if (pageData.length === 0) {
-                rowsHtml = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#9ca3af">No records found.</td></tr>';
+                rowsHtml = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#9ca3af">No records found.</td></tr>';
             } else {
                 rowsHtml = pageData.map(row => {
-                    const catColors = { A: 'green', B: 'orange', C: 'gray', D: 'purple', E: 'red' };
-                    const catColor = catColors[row._category] || 'na';
-                    const catLabels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', E: 'Switched / Closed' };
-                    const catLabel = catLabels[row._category] || '-';
                     return `
                         <tr>
                             <td>${escapeHtml(row['ACCT NO'] || '')}</td>
@@ -14918,9 +14914,8 @@ async function exportActivityLog() {
                             <td><span class="mtn-cat-status ${row._mtnStatus.class}">${row._mtnStatus.label}</span></td>
                             <td>${fmt(row._mtnEndDate)}</td>
                             <td>${escapeHtml(row['RENEWAL STATUS 2'] || '-')}</td>
-                            <td><span class="mtn-cat-status ${catColor}">${catLabel}</span></td>
-                            <td>${escapeHtml(row['M1G/ DEALER CASE'] || row['Contact Name'] || '')}</td>
-                            <td>${escapeHtml(row['REMARKS - FOLLOW UP'] || row['REMARKS'] || '')}</td>
+                            <td style="white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row['M1G/ DEALER CASE'] || row['Contact Name'] || '')}</td>
+                            <td>${escapeHtml(row['REMARK'] || row['REMARKS'] || row['REMARKS - FOLLOW UP'] || '')}</td>
                         </tr>
                     `;
                 }).join('');
@@ -14984,8 +14979,7 @@ async function exportActivityLog() {
                                 <th>MTN Status</th>
                                 <th onclick="sortMTNCatTable('_mtnEndDate')">Expiry Date${sortArrow('_mtnEndDate')}</th>
                                 <th>Renewal Status</th>
-                                <th>Category</th>
-                                <th>PIC</th>
+                                <th style="width:120px;white-space:nowrap;">PIC</th>
                                 <th>Remarks</th>
                             </tr>
                         </thead>
