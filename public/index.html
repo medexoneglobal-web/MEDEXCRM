@@ -15468,7 +15468,7 @@ async function exportActivityLog() {
                             <div class="mtn-renewal-actions">
                                 <button class="mtn-renewal-action-btn renew" onclick="renewMTN(${row.id})" title="Renew MTN">Renew</button>
                                 <button class="mtn-renewal-action-btn complete" onclick="completeMTN(${row.id})" title="Complete Task" ${row._renewalStatus === 'Completed' ? 'disabled' : ''}>Complete</button>
-                                <button class="mtn-renewal-action-btn" onclick="markMTNPaid(${row.id})" title="Mark as Paid" style="background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;${row._paidDate ? 'opacity:0.6;' : ''}">${row._paidDate ? '&#10003; Paid' : 'Paid'}</button>
+                                <button class="mtn-renewal-action-btn" onclick="markMTNPaid(${row.id})" title="${row._paidDate ? 'Undo Paid' : 'Mark as Paid'}" style="background:${row._paidDate ? '#dc2626' : '#16a34a'};color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;">${row._paidDate ? '&#10005; Undo Paid' : 'Paid'}</button>
                                 <button class="mtn-renewal-action-btn history" onclick="viewMTNHistory(${row.id})" title="View History">History</button>
                             </div>
                         </td>
@@ -15753,7 +15753,28 @@ async function exportActivityLog() {
             const row = crmData[rowIdx];
             const alreadyPaid = row['MTN PAID DATE'];
             if (alreadyPaid) {
-                if (!confirm(`This customer already has Paid Date: ${alreadyPaid}. Update to today?`)) return;
+                if (!confirm(`Undo paid status? Current Paid Date: ${alreadyPaid}`)) return;
+                row['MTN PAID DATE'] = '';
+                const now = new Date();
+                row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
+                row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                try {
+                    await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
+                    logActivity({ module: 'MTN Renewal', action: 'UNDO PAID', description: `Undo paid: ${row['ACCT NO']}` });
+                } catch (err) { console.error(err); showToast('Failed to update', 'error'); return; }
+                try {
+                    await supabaseClient.from('mtn_renewal_audit').insert([{
+                        contacts_id: rowId,
+                        old_end_date: row['CMS/MHIS MTN END DATE'] || '',
+                        new_end_date: row['CMS/MHIS MTN END DATE'] || '',
+                        edited_by: currentUser?.username || 'Unknown',
+                        action: 'UNDO PAID',
+                        remarks: `Undo paid status (was ${alreadyPaid})`
+                    }]);
+                } catch (err) { console.warn('Audit insert failed:', err.message); }
+                showToast('Paid status removed', 'success');
+                renderMTNRenewalModule();
+                return;
             }
             const now = new Date();
             const paidFmt = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
