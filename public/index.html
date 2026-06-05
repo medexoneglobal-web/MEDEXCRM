@@ -10742,6 +10742,29 @@
                 container.innerHTML += fieldHTML;
             });
             
+            // Add Customer Address section
+            container.innerHTML += `
+                <div style="grid-column: 1 / -1; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text);">Customer Address</h3>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Address 1</label>
+                    <input type="text" id="newAddress1" name="Address1" placeholder="Enter Address 1" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Address 2</label>
+                    <input type="text" id="newAddress2" name="Address2" placeholder="Enter Address 2" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Address 3</label>
+                    <input type="text" id="newAddress3" name="Address3" placeholder="Enter Address 3" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">Address 4</label>
+                    <input type="text" id="newAddress4" name="Address4" placeholder="Enter Address 4" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+                </div>
+            `;
+
             // Add License Key Information section (mapped to CRM fields)
             container.innerHTML += `
                 <div style="grid-column: 1 / -1; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
@@ -10894,6 +10917,16 @@
                 }
             });
             
+            // Save Customer Address fields
+            const addr1 = document.getElementById('newAddress1');
+            const addr2 = document.getElementById('newAddress2');
+            const addr3 = document.getElementById('newAddress3');
+            const addr4 = document.getElementById('newAddress4');
+            if (addr1) newCustomer['Address1'] = addr1.value.trim();
+            if (addr2) newCustomer['Address2'] = addr2.value.trim();
+            if (addr3) newCustomer['Address3'] = addr3.value.trim();
+            if (addr4) newCustomer['Address4'] = addr4.value.trim();
+
             // Save License Key fields
             const lkeyLine1 = document.getElementById('newLkeyLine1');
             const lkeyLine2 = document.getElementById('newLkeyLine2');
