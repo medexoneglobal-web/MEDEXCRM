@@ -17526,8 +17526,8 @@ async function exportActivityLog() {
                     const actions = `<button class="btn btn-sm btn-primary" onclick="openMTNServiceUpdateModal(${d.contact_id})" style="padding:4px 10px;font-size:12px;margin-right:4px;">Update</button>${canDelete ? `<button class="btn btn-sm" onclick="deleteMTNServiceTracking(${d.id})" style="padding:4px 10px;font-size:12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;">Remove</button>` : ''}`;
 
                     html += `<tr>
-                        <td>${escapeHtml(c['ACCT NO'] || '')}</td>
-                        <td>${escapeHtml(c['CLINIC NAME'] || '')}</td>
+                        <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${d.contact_id}')">${escapeHtml(c['ACCT NO'] || '')}</span></td>
+                        <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${d.contact_id}')">${escapeHtml(c['CLINIC NAME'] || '')}</span></td>
                         <td>${escapeHtml(mtnPeriod)}</td>
                         <td>${d._totalRequired || 0}</td>
                         <td>${d.mtn_completed_count || 0}</td>
