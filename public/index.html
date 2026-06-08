@@ -9181,7 +9181,7 @@
             'Customer Profile': ['ACCT NO','CLINIC NAME','COMPANY NAME','Contact Name','PHONE','Contact Tel1','State','CO. REG & BRN','Customer ID- Certificate No.','EMAIL ID MAIN','EMAIL ID 2','SUPPORT NAME','Account Manager','Address1','Address2','Address3','Address4'],
             'Product & License Info': ['PRODUCT','PRODUCT TYPE','GROUP','M1G/ DEALER CASE','PC TOTAL','PRODUCT VERSION','DB VERSION','CUSTOMER TYPE','RENEWAL STATUS 2','INVOICE NO'],
             'Maintenance & Subscription': ['CMS/MHIS MTN START DATE','CMS/MHIS MTN END DATE','CLOUD START DATE','CLOUD END DATE','CLOUD TERMINATION DATE','CMS INSTALL DATE/LIVE DATE','CHECKED','DATE CHECKED','LAST UPDATED BY','LAST UPDATED AT'],
-            'Cloud / E-Invoice / Portal': ['E-INVOICE STATUS','EINV PO RCVD DATE','E-INV PO RCVD DATE','E-INV LHDN SUBMIT DATE','MOBILE APPS STATUS','MOBILE APPS LIVE DATE','INVENTORY PORTAL STATUS','INVENTORY PORTAL LIVE DATE','WHATSAPP STATUS','SST STATUS'],
+            'Cloud / E-Invoice / Portal': ['E-INVOICE STATUS','EINV PO RCVD DATE','E-INV PO RCVD DATE','E-INV LHDN SUBMIT DATE','MOBILE APPS STATUS','MOBILE APPS LIVE DATE','INVENTORY PORTAL STATUS','INVENTORY PORTAL LIVE DATE','WHATSAPP STATUS','WHATSAPP LIVE DATE','SST STATUS'],
             'Address Information': ['LKEY LINE 1','LKEY LINE 2','LKEY LINE 3','LKEY LINE 4','LKEY LINE 5'],
             'Technical & System Info': ['HYB LIVE DATE','WSPP LIVE DATE','KIOSK PO DATE','KIOSK SURVEY FORM','365 ACCOUNT NO','PASSWORD/PASSPHRASE','MDO DB LAST ACTUAL BACKUP DATE','MDO SERVER LAST ACTUAL BACKUP DATE','EXCLUDE FROM MTN TRACKING','COMPLETED DATE'],
             'Remarks & Internal Notes': ['REMARK','REMARKS FOLLOW UP','MTN IMPORTANT NOTE','MTN IMPORTANT NOTE 1','MTN IMPORTANT NOTE 2','MN/CLD/EINV RENEWAL RATE','REMARK RATE ADDITIONAL PC','INFO']
@@ -9201,7 +9201,7 @@
         const PORTAL_APPS_FIELDS = [
             'MOBILE APPS LIVE DATE', 'MOBILE APPS STATUS',
             'INVENTORY PORTAL LIVE DATE', 'INVENTORY PORTAL STATUS',
-            'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS'
+            'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS', 'WHATSAPP LIVE DATE'
         ];
 
         function viewRowDetails(rowId) {
@@ -9408,6 +9408,7 @@
                     <div class="cp-service-card-top"><div class="cp-service-icon">&#128172;</div><div><div class="cp-service-name">WhatsApp</div>${svcBadge(row['WHATSAPP STATUS'])}</div></div>
                     <div class="cp-service-detail">
                         ${svcRow('Status', row['WHATSAPP STATUS'])}
+                        ${svcRow('Live Date', formatExcelDate(row['WHATSAPP LIVE DATE']) || '-')}
                     </div></div>`;
             }
             // Inventory Portal card
@@ -10841,6 +10842,10 @@
                         <option value="Inactive">Inactive</option>
                     </select>
                 </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block;">WhatsApp Live Date</label>
+                    <input type="date" id="newWhatsappLiveDate" name="WHATSAPP LIVE DATE" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit;">
+                </div>
                 <div style="grid-column: 1 / -1; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
                     <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text);">ISP Checklist Items</h3>
                     <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Select items the customer has taken. Support will use this to prepare for installation.</p>
@@ -10958,6 +10963,8 @@
             if (sstStatus && sstStatus.value) newCustomer['SST STATUS'] = sstStatus.value;
             if (eInvoiceStatus && eInvoiceStatus.value) newCustomer['E-INVOICE STATUS'] = eInvoiceStatus.value;
             if (whatsappStatus && whatsappStatus.value) newCustomer['WHATSAPP STATUS'] = whatsappStatus.value;
+            const whatsappLiveDate = document.getElementById('newWhatsappLiveDate');
+            if (whatsappLiveDate && whatsappLiveDate.value) newCustomer['WHATSAPP LIVE DATE'] = fromInputDate(whatsappLiveDate.value);
 
             // Check for duplicate ACCT NO
             const acctNo = newCustomer['ACCT NO'];
