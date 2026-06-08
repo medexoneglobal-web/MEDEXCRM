@@ -14963,8 +14963,8 @@ async function exportActivityLog() {
                 rowsHtml = pageData.map(row => {
                     return `
                         <tr>
-                            <td>${escapeHtml(row['ACCT NO'] || '')}</td>
-                            <td>${escapeHtml(row['CLINIC NAME'] || '')}</td>
+                            <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${row.id}')">${escapeHtml(row['ACCT NO'] || '')}</span></td>
+                            <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${row.id}')">${escapeHtml(row['CLINIC NAME'] || '')}</span></td>
                             <td>${escapeHtml(row['PRODUCT TYPE'] || '')}</td>
                             <td><span class="mtn-cat-status ${row._mtnStatus.class}">${row._mtnStatus.label}</span></td>
                             <td>${fmt(row._mtnEndDate)}</td>
@@ -15518,8 +15518,8 @@ async function exportActivityLog() {
                     const mtnEnd = row._mtnEndDate;
                     return `<tr class="${isSelected ? 'selected' : ''}">
                         <td><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleMTNRenewalSelect(${row.id}, this.checked)"></td>
-                        <td>${escapeHtml(row['ACCT NO'] || '')}</td>
-                        <td>${escapeHtml(row['CLINIC NAME'] || '')}</td>
+                        <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${row.id}')">${escapeHtml(row['ACCT NO'] || '')}</span></td>
+                        <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${row.id}')">${escapeHtml(row['CLINIC NAME'] || '')}</span></td>
                         <td>${escapeHtml(row['PRODUCT TYPE'] || '-')}</td>
                         <td><span class="mtn-renewal-date-cell" onclick="startInlineEdit(${row.id}, 'start')">${mtnStart ? mtnRenewalFmt(mtnStart) : '-'}<span class="edit-icon">&#9998;</span></span></td>
                         <td><span class="mtn-renewal-date-cell" onclick="startInlineEdit(${row.id}, 'end')">${mtnEnd ? mtnRenewalFmt(mtnEnd) : '-'}<span class="edit-icon">&#9998;</span></span></td>
@@ -16440,8 +16440,8 @@ async function exportActivityLog() {
                     }
 
                     html += `<tr>
-                        <td>${escapeHtml(c['ACCT NO'] || '')}</td>
-                        <td>${escapeHtml(c['CLINIC NAME'] || '')}</td>
+                        <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${ic.contact_id}')">${escapeHtml(c['ACCT NO'] || '')}</span></td>
+                        <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${ic.contact_id}')">${escapeHtml(c['CLINIC NAME'] || '')}</span></td>
                         <td>${items || '-'}</td>
                         <td>${escapeHtml(ic.schedule_date || '-')}</td>
                         <td>${escapeHtml(ic.assigned_staff || '-')}</td>
@@ -18269,8 +18269,8 @@ async function exportActivityLog() {
                     const isSelected = cloudBackupSelectedIds.has(id);
                     html += `<tr data-row-id="${id}">`;
                     html += `<td class="col-checkbox"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleCloudBackupRow('${id}')"></td>`;
-                    html += `<td class="col-acct">${escapeHtml(r['ACCT NO'] || '')}</td>`;
-                    html += `<td class="col-clinic">${escapeHtml(r['CLINIC NAME'] || '')}</td>`;
+                    html += `<td class="col-acct"><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${r.id}')">${escapeHtml(r['ACCT NO'] || '')}</span></td>`;
+                    html += `<td class="col-clinic"><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${r.id}')">${escapeHtml(r['CLINIC NAME'] || '')}</span></td>`;
                     html += `<td class="col-product" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'PRODUCT TYPE')">${renderCloudBackupCell(r, id, 'PRODUCT TYPE')}</td>`;
                     html += `<td class="col-date" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'CLOUD START DATE')">${renderCloudBackupCell(r, id, 'CLOUD START DATE')}</td>`;
                     html += `<td class="col-date" style="cursor:pointer;" onclick="startCloudBackupInlineEdit('${id}', 'CLOUD END DATE')">${renderCloudBackupCell(r, id, 'CLOUD END DATE')}</td>`;
