@@ -17447,7 +17447,25 @@ async function exportActivityLog() {
                 });
             }
             mtnServiceFiltered = merged;
+
+            // Preserve focus before re-render
+            const activeEl = document.activeElement;
+            const activeId = activeEl ? activeEl.id : null;
+            const cursorStart = activeEl && activeEl.selectionStart !== undefined ? activeEl.selectionStart : null;
+            const cursorEnd = activeEl && activeEl.selectionEnd !== undefined ? activeEl.selectionEnd : null;
+
             renderMTNServiceTable();
+
+            // Restore focus after re-render
+            if (activeId) {
+                const restored = document.getElementById(activeId);
+                if (restored) {
+                    restored.focus();
+                    if (cursorStart !== null && cursorEnd !== null && restored.setSelectionRange) {
+                        restored.setSelectionRange(cursorStart, cursorEnd);
+                    }
+                }
+            }
         }
 
         function renderMTNServiceTable() {
