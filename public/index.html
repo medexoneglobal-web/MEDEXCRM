@@ -14970,7 +14970,7 @@ async function exportActivityLog() {
                             <td>${fmt(row._mtnEndDate)}</td>
                             <td>${escapeHtml(row['RENEWAL STATUS 2'] || '-')}</td>
                             <td style="white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row['M1G/ DEALER CASE'] || row['Contact Name'] || '')}</td>
-                            <td>${escapeHtml(row['REMARK'] || row['REMARKS'] || row['REMARKS - FOLLOW UP'] || '')}</td>
+                            <td style="white-space:normal;word-break:break-word;max-width:400px;min-width:200px;line-height:1.5;">${escapeHtml(row['REMARK'] || row['REMARKS'] || row['REMARKS - FOLLOW UP'] || '')}</td>
                         </tr>
                     `;
                 }).join('');
