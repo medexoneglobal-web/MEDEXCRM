@@ -17536,7 +17536,7 @@ async function exportActivityLog() {
                         <td>${statusBadge}</td>
                         <td>${escapeHtml(d.service_type || '-')}</td>
                         <td>${escapeHtml(d.service_by || '-')}</td>
-                        <td style="text-align:center;">${d.remark ? `<span style="cursor:pointer;font-size:18px;color:#2563eb;" onclick="viewMTNServiceRemarks(${d.contact_id})" title="View Remarks">&#128196;</span>` : `<span style="font-size:18px;color:#d1d5db;" title="No Remarks">&#128196;</span>`}</td>
+                        <td style="text-align:center;">${d.remark ? `<span style="cursor:pointer;font-size:18px;color:#2563eb;" onclick="viewMTNServiceRemarks(${d.contact_id})" title="View Remarks">&#128196;</span>` : ''}</td>
                         <td>${actions}</td>
                     </tr>`;
                 });
