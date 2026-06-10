@@ -17508,13 +17508,14 @@ async function exportActivityLog() {
                             <th>Status</th>
                             <th>Service Type</th>
                             <th>Service By</th>
+                            <th>Remarks</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>`;
 
             if (pageData.length === 0) {
-                html += `<tr><td colspan="10" style="text-align:center;padding:40px;color:#64748b;">No customers found.</td></tr>`;
+                html += `<tr><td colspan="11" style="text-align:center;padding:40px;color:#64748b;">No customers found.</td></tr>`;
             } else {
                 pageData.forEach(d => {
                     const c = d.contact;
@@ -17535,6 +17536,7 @@ async function exportActivityLog() {
                         <td>${statusBadge}</td>
                         <td>${escapeHtml(d.service_type || '-')}</td>
                         <td>${escapeHtml(d.service_by || '-')}</td>
+                        <td style="white-space:normal;word-break:break-word;max-width:300px;min-width:150px;line-height:1.5;">${escapeHtml(d.remark || '-')}</td>
                         <td>${actions}</td>
                     </tr>`;
                 });
