@@ -17508,7 +17508,7 @@ async function exportActivityLog() {
                             <th>Status</th>
                             <th>Service Type</th>
                             <th>Service By</th>
-                            <th>Remarks</th>
+                            <th>Notes</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -17536,7 +17536,7 @@ async function exportActivityLog() {
                         <td>${statusBadge}</td>
                         <td>${escapeHtml(d.service_type || '-')}</td>
                         <td>${escapeHtml(d.service_by || '-')}</td>
-                        <td style="white-space:normal;word-break:break-word;max-width:300px;min-width:150px;line-height:1.5;">${escapeHtml(d.remark || '-')}</td>
+                        <td style="text-align:center;">${d.remark ? `<span style="cursor:pointer;font-size:18px;color:#2563eb;" onclick="viewMTNServiceRemarks(${d.contact_id})" title="View Remarks">&#128196;</span>` : `<span style="font-size:18px;color:#d1d5db;" title="No Remarks">&#128196;</span>`}</td>
                         <td>${actions}</td>
                     </tr>`;
                 });
@@ -17771,6 +17771,49 @@ async function exportActivityLog() {
                 console.error('Delete MTN service error:', err);
                 showToast('Failed to remove: ' + err.message, 'error');
             }
+        }
+
+        function viewMTNServiceRemarks(contactId) {
+            const contact = crmData.find(c => parseInt(c.id, 10) === parseInt(contactId, 10));
+            const tracking = mtnServiceData.find(d => parseInt(d.contact_id, 10) === parseInt(contactId, 10));
+            if (!tracking) return;
+
+            const acctNo = contact ? contact['ACCT NO'] : tracking.acct_no || '';
+            const clinicName = contact ? contact['CLINIC NAME'] : tracking.clinic_name || '';
+            const mtnStart = contact ? contact['CMS/MHIS MTN START DATE'] : '';
+            const mtnEnd = contact ? contact['CMS/MHIS MTN END DATE'] : '';
+            const mtnPeriod = (mtnStart && mtnEnd) ? `${mtnRenewalFmt(parseDateToJs(mtnStart))} - ${mtnRenewalFmt(parseDateToJs(mtnEnd))}` : '-';
+            const remark = tracking.remark || 'No remarks available.';
+
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'mtnServiceRemarksModal';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:500px;">
+                    <div class="modal-header">
+                        <h2>Maintenance Remarks</h2>
+                        <button class="close-btn" onclick="document.getElementById('mtnServiceRemarksModal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">MTN No.</div>
+                            <div style="font-size:15px;font-weight:600;color:#1f2937;">${escapeHtml(acctNo)}</div>
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">MTN Period</div>
+                            <div style="font-size:15px;font-weight:600;color:#1f2937;">${escapeHtml(mtnPeriod)}</div>
+                        </div>
+                        <div style="background:#f9fafb;border-radius:8px;padding:16px;border:1px solid #e5e7eb;">
+                            <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">Remarks</div>
+                            <div style="font-size:14px;color:#374151;line-height:1.6;white-space:pre-wrap;word-break:break-word;">${escapeHtml(remark)}</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="document.getElementById('mtnServiceRemarksModal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
 
         async function importMTNServiceData(input) {
