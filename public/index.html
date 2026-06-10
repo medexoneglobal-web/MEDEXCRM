@@ -14115,6 +14115,7 @@ async function exportActivityLog() {
         let mtnCatDateFrom = null; // Date object or null
         let mtnCatDateTo = null;   // Date object or null
         let mtnCatDealerFilter = ''; // M1G/Dealer filter
+        let mtnCatDateDebounceTimer = null;
 
         function isUsingCMSMHIS(row) {
             const product = String(row['PRODUCT'] || '').toUpperCase();
@@ -14876,7 +14877,7 @@ async function exportActivityLog() {
                 const restored = document.getElementById(activeId);
                 if (restored) {
                     restored.focus();
-                    if (cursorStart !== null && cursorEnd !== null && restored.setSelectionRange) {
+                    if (cursorStart !== null && cursorEnd !== null && restored.setSelectionRange && restored.type !== 'date') {
                         restored.setSelectionRange(cursorStart, cursorEnd);
                     }
                 }
@@ -14906,12 +14907,15 @@ async function exportActivityLog() {
         }
 
         function applyMTNCatDatePickerFilter() {
-            const fromVal = document.getElementById('mtnCatDateFrom')?.value;
-            const toVal = document.getElementById('mtnCatDateTo')?.value;
-            mtnCatDateFrom = fromVal ? new Date(fromVal + 'T00:00:00') : null;
-            mtnCatDateTo = toVal ? new Date(toVal + 'T00:00:00') : null;
-            mtnCatCurrentPage = 1;
-            filterMTNCatData();
+            if (mtnCatDateDebounceTimer) clearTimeout(mtnCatDateDebounceTimer);
+            mtnCatDateDebounceTimer = setTimeout(() => {
+                const fromVal = document.getElementById('mtnCatDateFrom')?.value;
+                const toVal = document.getElementById('mtnCatDateTo')?.value;
+                mtnCatDateFrom = fromVal ? new Date(fromVal + 'T00:00:00') : null;
+                mtnCatDateTo = toVal ? new Date(toVal + 'T00:00:00') : null;
+                mtnCatCurrentPage = 1;
+                filterMTNCatData();
+            }, 600);
         }
 
         function setMTNCatDealerFilter(value) {
@@ -15017,9 +15021,9 @@ async function exportActivityLog() {
                         </select>
                         <button class="btn btn-outline btn-sm ${mtnCatDateFrom && mtnCatDateTo && mtnCatDateFrom.getDate() === 1 && mtnCatDateTo.getDate() === new Date(mtnCatDateTo.getFullYear(), mtnCatDateTo.getMonth() + 1, 0).getDate() && mtnCatDateFrom.getMonth() === new Date().getMonth() ? 'active' : ''}" onclick="setMTNCatDateQuickFilter('currentMonth')" style="font-size:12px;padding:4px 10px;">Current Month</button>
                         <button class="btn btn-outline btn-sm ${mtnCatDateFrom && mtnCatDateTo && mtnCatDateFrom.getMonth() === 0 && mtnCatDateFrom.getDate() === 1 && mtnCatDateTo.getMonth() === 11 && mtnCatDateTo.getDate() === 31 && mtnCatDateFrom.getFullYear() === new Date().getFullYear() ? 'active' : ''}" onclick="setMTNCatDateQuickFilter('currentYear')" style="font-size:12px;padding:4px 10px;">Current Year</button>
-                        <input type="date" id="mtnCatDateFrom" value="${mtnCatDateFrom ? `${mtnCatDateFrom.getFullYear()}-${String(mtnCatDateFrom.getMonth()+1).padStart(2,'0')}-${String(mtnCatDateFrom.getDate()).padStart(2,'0')}` : ''}" onchange="applyMTNCatDatePickerFilter()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;">
+                        <input type="date" id="mtnCatDateFrom" value="${(document.activeElement && document.activeElement.id === 'mtnCatDateFrom' && document.getElementById('mtnCatDateFrom') ? document.getElementById('mtnCatDateFrom').value : '') || (mtnCatDateFrom ? `${mtnCatDateFrom.getFullYear()}-${String(mtnCatDateFrom.getMonth()+1).padStart(2,'0')}-${String(mtnCatDateFrom.getDate()).padStart(2,'0')}` : '')}" onchange="applyMTNCatDatePickerFilter()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;">
                         <span style="font-size:12px;color:#6b7280;">to</span>
-                        <input type="date" id="mtnCatDateTo" value="${mtnCatDateTo ? `${mtnCatDateTo.getFullYear()}-${String(mtnCatDateTo.getMonth()+1).padStart(2,'0')}-${String(mtnCatDateTo.getDate()).padStart(2,'0')}` : ''}" onchange="applyMTNCatDatePickerFilter()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;">
+                        <input type="date" id="mtnCatDateTo" value="${(document.activeElement && document.activeElement.id === 'mtnCatDateTo' && document.getElementById('mtnCatDateTo') ? document.getElementById('mtnCatDateTo').value : '') || (mtnCatDateTo ? `${mtnCatDateTo.getFullYear()}-${String(mtnCatDateTo.getMonth()+1).padStart(2,'0')}-${String(mtnCatDateTo.getDate()).padStart(2,'0')}` : '')}" onchange="applyMTNCatDatePickerFilter()" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;">
                         ${(mtnCatDateFrom || mtnCatDateTo || mtnCatDealerFilter) ? `<button class="btn btn-outline btn-sm" onclick="clearMTNCatAllFilters()" style="font-size:12px;padding:4px 10px;color:#ef4444;border-color:#ef4444;">Clear Filters</button>` : ''}
                     </div>
                     <span class="mtn-cat-total">${total.toLocaleString()} records</span>
