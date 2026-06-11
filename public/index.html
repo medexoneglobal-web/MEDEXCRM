@@ -5937,6 +5937,7 @@
             'CMS INSTALL DATE/LIVE DATE',
             'E-INV PO RCVD DATE',
             'EINV PO RCVD DATE',
+            'E-INV LHDN SUBMIT DATE',
             'MOBILE APPS LIVE DATE',
             'INVENTORY PORTAL LIVE DATE',
             'WHATSAPP LIVE DATE'
@@ -8566,8 +8567,8 @@
                     break;
             }
             
-            const columns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
-            const displayColumns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
+            const columns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'E-INV LHDN SUBMIT DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
+            const displayColumns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'E-INV LHDN SUBMIT DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
             
             // Get unique products for filter
             const products = [...new Set(data.map(row => row['PRODUCT TYPE']).filter(Boolean))].sort();
@@ -8634,6 +8635,12 @@
                     if (col.includes('DATE')) {
                         val = formatExcelDate(val);
                     }
+                    if (col === 'ACCT NO') {
+                        return '<td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails(\'' + row.id + '\')">' + escapeHtml(String(val)) + '</span></td>';
+                    }
+                    if (col === 'CLINIC NAME') {
+                        return '<td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails(\'' + row.id + '\')">' + escapeHtml(String(val)) + '</span></td>';
+                    }
                     return '<td>' + escapeHtml(String(val)) + '</td>';
                 }).join('') + '<td>' + statusHtml + '</td></tr>';
             }).join('');
@@ -8679,7 +8686,7 @@
                 data = data.filter(row => row['PRODUCT TYPE'] === productFilter);
             }
             
-            const columns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
+            const columns = ['ACCT NO', 'CLINIC NAME', 'E-INV PO RCVD DATE', 'E-INV LHDN SUBMIT DATE', 'PRODUCT', 'PRODUCT TYPE', 'Contact Name', 'Contact Tel1', 'State'];
             const tbody = document.getElementById('eInvoiceDetailTableBody');
             if (tbody) {
                 tbody.innerHTML = renderEInvoiceDetailRows(data, columns);
