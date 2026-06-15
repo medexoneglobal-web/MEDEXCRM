@@ -4129,6 +4129,8 @@
         .mtn-cat-card.gray.active::before { background: #a3a3a3; }
         .mtn-cat-card.purple.active { background: #faf5ff; border-color: #e9d5ff; }
         .mtn-cat-card.purple.active::before { background: #a855f7; }
+        .mtn-cat-card.teal.active { background: #f0fdfa; border-color: #99f6e4; }
+        .mtn-cat-card.teal.active::before { background: #14b8a6; }
         .mtn-cat-card.red.active { background: #fefafa; border-color: #fecaca; }
         .mtn-cat-card.red.active::before { background: #ef4444; }
 
@@ -4143,6 +4145,7 @@
         .mtn-cat-card-icon.orange { background: #fff7ed; color: #ea580c; }
         .mtn-cat-card-icon.gray { background: #f5f5f5; color: #737373; }
         .mtn-cat-card-icon.purple { background: #faf5ff; color: #9333ea; }
+        .mtn-cat-card-icon.teal { background: #f0fdfa; color: #0d9488; }
         .mtn-cat-card-icon.red { background: #fef2f2; color: #dc2626; }
 
         .mtn-cat-card-value {
@@ -4166,6 +4169,7 @@
         .mtn-cat-card-pct.orange { background: #fff7ed; color: #ea580c; }
         .mtn-cat-card-pct.gray { background: #f5f5f5; color: #737373; }
         .mtn-cat-card-pct.purple { background: #faf5ff; color: #9333ea; }
+        .mtn-cat-card-pct.teal { background: #f0fdfa; color: #0d9488; }
         .mtn-cat-card-pct.red { background: #fef2f2; color: #dc2626; }
 
         /* Detail Container */
@@ -14165,8 +14169,10 @@ async function exportActivityLog() {
                 return 'B'; // No MTN end date = expired
             }
 
-            const hasClaimEX = productType.includes('CLAIMEX') || productType.includes('GFLEX') ||
-                               productType.includes('EM2') || productType.includes('GEN');
+            // GFLEX Only (without CMS/MHIS)
+            if (productType.includes('GFLEX') && !usingCMSMHIS) return 'F';
+
+            const hasClaimEX = productType.includes('CLAIMEX') || productType.includes('EM2') || productType.includes('GEN');
             if (hasClaimEX && !usingCMSMHIS) return 'D';
             if (usingCMSMHIS && mtnEndDate) {
                 return mtnEndDate >= today ? 'A' : 'B';
@@ -14186,7 +14192,7 @@ async function exportActivityLog() {
         }
 
         function computeMTNCatData() {
-            const result = { X: 0, A: 0, B: 0, C: 0, D: 0, E: 0, all: [] };
+            const result = { X: 0, A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, all: [] };
             if (!crmData || crmData.length === 0) return result;
             crmData.forEach(row => {
                 const cat = getMTNCategory(row);
@@ -14200,6 +14206,7 @@ async function exportActivityLog() {
                 else if (cat === 'C') result.C++;
                 else if (cat === 'D') result.D++;
                 else if (cat === 'E') result.E++;
+                else if (cat === 'F') result.F++;
             });
             return result;
         }
@@ -14793,6 +14800,7 @@ async function exportActivityLog() {
                 { key: 'B', title: 'Expired but Still Using', desc: 'Using CMS/MHIS, MTN expired', icon: '&#9888;&#65039;', color: 'orange' },
                 { key: 'C', title: 'Refused Renewal', desc: 'Choose not to renew MTN', icon: '&#128683;', color: 'gray' },
                 { key: 'D', title: 'ClaimEX Only', desc: 'Subscribe to ClaimEX only', icon: '&#128196;', color: 'purple' },
+                { key: 'F', title: 'GFLEX Only', desc: 'Subscribe to GFLEX only', icon: '&#128208;', color: 'teal' },
                 { key: 'E', title: 'Switched / Closed', desc: 'Changed provider or closed', icon: '&#10060;', color: 'red' }
             ];
             container.innerHTML = cards.map(c => {
@@ -15033,6 +15041,7 @@ async function exportActivityLog() {
                             <option value="B" ${mtnCatCurrentFilter === 'B' ? 'selected' : ''}>Expired but Still Using</option>
                             <option value="C" ${mtnCatCurrentFilter === 'C' ? 'selected' : ''}>Refused Renewal</option>
                             <option value="D" ${mtnCatCurrentFilter === 'D' ? 'selected' : ''}>ClaimEX Only</option>
+                            <option value="F" ${mtnCatCurrentFilter === 'F' ? 'selected' : ''}>GFLEX Only</option>
                             <option value="E" ${mtnCatCurrentFilter === 'E' ? 'selected' : ''}>Switched / Closed</option>
                         </select>
                         <button class="btn btn-outline btn-sm" onclick="exportMTNCatExcel()">Export Excel</button>
@@ -15093,7 +15102,7 @@ async function exportActivityLog() {
         }
 
         function getMTNCatFilterLabel(cat) {
-            const labels = { X: 'Total Customer Base', A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', E: 'Switched / Closed' };
+            const labels = { X: 'Total Customer Base', A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Switched / Closed' };
             return labels[cat] || 'All Customers';
         }
 
@@ -15112,7 +15121,7 @@ async function exportActivityLog() {
             if (mtnCatFilteredData.length === 0) { alert('No data to export.'); return; }
             const rows = mtnCatFilteredData.map(r => {
                 const fmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '';
-                const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', E: 'Switched / Closed' };
+                const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Switched / Closed' };
                 return {
                     'Customer Code': r['ACCT NO'] || '', 'Customer Name': r['CLINIC NAME'] || '',
                     'Product Type': r['PRODUCT TYPE'] || '', 'MTN Status': r._mtnStatus.label,
@@ -15133,7 +15142,7 @@ async function exportActivityLog() {
             if (mtnCatFilteredData.length === 0) { alert('No data to export.'); return; }
 
             const fmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '-';
-            const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', E: 'Switched / Closed' };
+            const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Switched / Closed' };
 
             const data = mtnCatFilteredData.map(r => ({
                 'ACCT NO': r['ACCT NO'] || '',
