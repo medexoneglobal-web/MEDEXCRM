@@ -1556,18 +1556,28 @@
         }
 
         /* E-Invoice indicator */
-        .saas-einvoice-yes {
+        .saas-einvoice-yes,
+        .saas-einvoice-no {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 24px;
             height: 24px;
             border-radius: 6px;
+        }
+
+        .saas-einvoice-yes {
             background: #dcfce7;
             color: #16a34a;
         }
 
-        .saas-einvoice-yes svg {
+        .saas-einvoice-no {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .saas-einvoice-yes svg,
+        .saas-einvoice-no svg {
             width: 14px;
             height: 14px;
         }
@@ -3157,6 +3167,399 @@
         }
 
         /* ========================
+           CLINIC PERFORMANCE REPORT STYLES
+           ======================== */
+        .cpr-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .cpr-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .cpr-page-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 4px 0;
+        }
+
+        .cpr-page-header .cpr-subtitle {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .cpr-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #475569;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .cpr-back-btn:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .cpr-region-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 1200px) {
+            .cpr-region-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .cpr-region-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .cpr-region-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cpr-region-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        .cpr-region-card.active {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+        }
+
+        .cpr-region-card .cpr-region-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .cpr-region-card .cpr-region-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cpr-region-card .cpr-region-name {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .cpr-region-card .cpr-region-count {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1;
+        }
+
+        .cpr-region-card .cpr-region-arrow {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .cpr-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .cpr-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 160px;
+            flex: 1;
+        }
+
+        .cpr-filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .cpr-filter-select,
+        .cpr-filter-input {
+            padding: 9px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+            min-width: 140px;
+            color: #334155;
+        }
+
+        .cpr-filter-select:focus,
+        .cpr-filter-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .cpr-multiselect {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .cpr-multiselect-trigger {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .cpr-multiselect.open .cpr-multiselect-trigger {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .cpr-multiselect-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 100;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .cpr-multiselect.open .cpr-multiselect-menu {
+            display: block;
+        }
+
+        .cpr-multiselect-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .cpr-multiselect-item:hover {
+            background: #f1f5f9;
+        }
+
+        .cpr-multiselect-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .cpr-export-btn {
+            padding: 9px 16px;
+            border-radius: 8px;
+            border: 1px solid #3b82f6;
+            background: #3b82f6;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .cpr-export-btn:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .cpr-table-section {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .cpr-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .cpr-table-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .cpr-table-scroll {
+            overflow-x: auto;
+            max-height: 520px;
+            overflow-y: auto;
+        }
+
+        .cpr-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .cpr-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f8fafc;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .cpr-table tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.15s;
+        }
+
+        .cpr-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .cpr-table tbody td {
+            padding: 12px 16px;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        .cpr-region-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #eef2ff;
+            color: #4338ca;
+            white-space: nowrap;
+        }
+
+        .cpr-clinic-link {
+            color: #2563eb;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .cpr-clinic-link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .cpr-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            border-top: 1px solid #e2e8f0;
+            background: #fff;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .cpr-page-info {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .cpr-page-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .cpr-page-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #475569;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+
+        .cpr-page-btn:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .cpr-page-btn.active {
+            background: #3b82f6;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+
+        .cpr-page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ========================
            PRODUCT REPORT STYLES
            ======================== */
 
@@ -4079,28 +4482,30 @@
            ============================================ */
         .mtn-cat-cards-container {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 20px;
-            margin-bottom: 28px;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
-        @media (max-width: 1200px) {
-            .mtn-cat-cards-container { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 1400px) {
+            .mtn-cat-cards-container { grid-template-columns: repeat(4, 1fr); }
         }
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .mtn-cat-cards-container { grid-template-columns: repeat(2, 1fr); }
         }
         .mtn-cat-card {
             background: #fff;
-            border-radius: 16px;
-            padding: 24px 20px;
+            border-radius: 10px;
+            padding: 8px 10px;
             border: 1px solid #e5e7eb;
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
             position: relative;
             overflow: hidden;
+            min-width: 0;
         }
         .mtn-cat-card::before {
             content: '';
@@ -4133,12 +4538,15 @@
         .mtn-cat-card.teal.active::before { background: #14b8a6; }
         .mtn-cat-card.red.active { background: #fefafa; border-color: #fecaca; }
         .mtn-cat-card.red.active::before { background: #ef4444; }
+        .mtn-cat-card.rose.active { background: #fff1f2; border-color: #fecdd3; }
+        .mtn-cat-card.rose.active::before { background: #f43f5e; }
 
         .mtn-cat-card-icon {
-            width: 44px; height: 44px;
-            border-radius: 12px;
+            width: 32px; height: 32px;
+            border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
+            font-size: 16px;
+            flex-shrink: 0;
         }
         .mtn-cat-card-icon.blue { background: #eff6ff; color: #2563eb; }
         .mtn-cat-card-icon.green { background: #f0fdf4; color: #16a34a; }
@@ -4147,22 +4555,23 @@
         .mtn-cat-card-icon.purple { background: #faf5ff; color: #9333ea; }
         .mtn-cat-card-icon.teal { background: #f0fdfa; color: #0d9488; }
         .mtn-cat-card-icon.red { background: #fef2f2; color: #dc2626; }
+        .mtn-cat-card-icon.rose { background: #fff1f2; color: #f43f5e; }
 
         .mtn-cat-card-value {
-            font-size: 32px; font-weight: 700; color: #111827;
-            line-height: 1.1; letter-spacing: -0.5px;
+            font-size: 18px; font-weight: 700; color: #111827;
+            line-height: 1.1; letter-spacing: -0.5px; white-space: nowrap; min-width: 0;
         }
         .mtn-cat-card-title {
-            font-size: 13px; font-weight: 600; color: #4b5563;
+            font-size: 11px; font-weight: 600; color: #4b5563; white-space: normal; word-break: break-word; line-height: 1.3;
         }
         .mtn-cat-card-desc {
-            font-size: 12px; color: #9ca3af; line-height: 1.4;
+            display: none;
         }
         .mtn-cat-card-pct {
-            font-size: 12px; font-weight: 600;
-            padding: 4px 10px; border-radius: 20px;
+            font-size: 10px; font-weight: 600;
+            padding: 2px 5px; border-radius: 20px;
             display: inline-block; align-self: flex-start;
-            margin-top: 4px;
+            white-space: nowrap; flex-shrink: 0;
         }
         .mtn-cat-card-pct.blue { background: #eff6ff; color: #2563eb; }
         .mtn-cat-card-pct.green { background: #f0fdf4; color: #16a34a; }
@@ -4171,6 +4580,7 @@
         .mtn-cat-card-pct.purple { background: #faf5ff; color: #9333ea; }
         .mtn-cat-card-pct.teal { background: #f0fdfa; color: #0d9488; }
         .mtn-cat-card-pct.red { background: #fef2f2; color: #dc2626; }
+        .mtn-cat-card-pct.rose { background: #fff1f2; color: #f43f5e; }
 
         /* Detail Container */
         .mtn-cat-detail-container {
@@ -4297,6 +4707,7 @@
         .mtn-renewal-kpi-card.green .kpi-bar { background: #10b981; }
         .mtn-renewal-kpi-card.grey .kpi-bar { background: #9ca3af; }
         .mtn-renewal-kpi-card.purple .kpi-bar { background: #8b5cf6; }
+        .mtn-renewal-kpi-card.teal .kpi-bar { background: #14b8a6; }
 
         /* ===== SEND REMINDER MODAL ===== */
         .send-reminder-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; }
@@ -4408,6 +4819,7 @@
         .mtn-renewal-badge.switchedclosed { background: #fef2f2; color: #991b1b; }
         .mtn-renewal-badge.upcoming { background: #fffbeb; color: #d97706; }
         .mtn-renewal-badge.active { background: #f0fdf4; color: #16a34a; }
+        .mtn-renewal-badge.renew { background: #f0fdfa; color: #0d9488; }
         .mtn-renewal-badge.completed { background: #f0fdf4; color: #059669; }
         .mtn-renewal-badge.excluded { background: #f3f4f6; color: #9ca3af; }
         .mtn-renewal-badge.dealer { background: #eff6ff; color: #2563eb; }
@@ -4969,6 +5381,7 @@
                         <button class="report-subtab" id="mtnCategorizedReportSubTab" onclick="showReportPanel('mtnCategorizedReport')">&#128200; MTN Categorized</button>
                         <button class="report-subtab" id="productReportSubTab" onclick="showReportPanel('productReport')">&#128202; Product Report</button>
                         <button class="report-subtab" id="multiProductReportSubTab" onclick="showReportPanel('multiProductReport')">&#127942; Multi-Product</button>
+                        <button class="report-subtab" id="clinicPerformanceReportSubTab" onclick="showReportPanel('clinicPerformanceReport')">&#127760; Clinic by Region</button>
                     </div>
                     
                     <!-- Available Reports Section -->
@@ -5058,6 +5471,20 @@
                                     <li>Exportable Data</li>
                                 </ul>
                                 <button class="report-card-btn" onclick="showReportPanel('multiProductReport')">View Report &#8250;</button>
+                            </div>
+                            <div class="report-card">
+                                <div class="report-card-header">
+                                    <div class="report-card-icon green">&#127760;</div>
+                                    <div class="report-card-title">Clinic Performance Report by Region</div>
+                                </div>
+                                <div class="report-card-desc">Clinic distribution grouped by state and region with summary totals.</div>
+                                <ul class="report-card-features">
+                                    <li>5 Region Groups</li>
+                                    <li>State Breakdown</li>
+                                    <li>Clinic Listing</li>
+                                    <li>Exportable Data</li>
+                                </ul>
+                                <button class="report-card-btn" onclick="showReportPanel('clinicPerformanceReport')">View Report &#8250;</button>
                             </div>
                         </div>
                     </div>
@@ -5156,6 +5583,12 @@
                     <div id="multiProductReportPanel" class="report-panel mpr-panel">
                         <!-- Rendered entirely by JS -->
                         <div id="mprContent"></div>
+                    </div>
+
+                    <!-- Clinic Performance Report by Region Panel -->
+                    <div id="clinicPerformanceReportPanel" class="report-panel cpr-panel">
+                        <!-- Rendered entirely by JS -->
+                        <div id="cprContent"></div>
                     </div>
 
                 </div>
@@ -5944,7 +6377,8 @@
             'E-INV LHDN SUBMIT DATE',
             'MOBILE APPS LIVE DATE',
             'INVENTORY PORTAL LIVE DATE',
-            'WHATSAPP LIVE DATE'
+            'WHATSAPP LIVE DATE',
+            'HYBRID END DATE'
         ];
 
         // Convert date from data format (M/D/YYYY or DD/MM/YYYY) to YYYY-MM-DD for input
@@ -6214,6 +6648,18 @@
             }
         }
 
+        function renderEInvoiceCell(row, colClass) {
+            const status = String(row['E-INVOICE STATUS'] || '').trim();
+            const eInvDate = row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE'] || '';
+            const formattedDate = formatExcelDate(eInvDate);
+            if (status.toLowerCase() === 'active') {
+                return `<td class="${colClass}"><span class="saas-einvoice-yes" title="E-Invoice Active${formattedDate ? ' - ' + formattedDate : ''}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></td>`;
+            } else if (status.toLowerCase() === 'inactive') {
+                return `<td class="${colClass}"><span class="saas-einvoice-no" title="E-Invoice Inactive${formattedDate ? ' - PO ' + formattedDate : ''}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>`;
+            }
+            return `<td class="${colClass}"></td>`;
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadInitialData();
@@ -6387,7 +6833,8 @@
                     // Verify M_1805 and M_3071 are loaded
                     const m1805 = crmData.find(r => r['ACCT NO'] === 'M_1805');
                     const m3071 = crmData.find(r => r['ACCT NO'] === 'M_3071');
-                    console.log(`[CRM v2026-05-12c] Verification - M_1805: ${m1805 ? 'FOUND' : 'MISSING'}, M_3071: ${m3071 ? 'FOUND' : 'MISSING'}`);
+                    const m1906 = crmData.find(r => r['ACCT NO'] === 'M_1906');
+                    console.log(`[CRM v2026-05-12c] Verification - M_1805: ${m1805 ? 'FOUND' : 'MISSING'}, M_3071: ${m3071 ? 'FOUND' : 'MISSING'}, M_1906: ${m1906 ? 'FOUND' : 'MISSING'}`);
                     
                     // Initialize visible columns from VISIBLE_COLUMN_NAMES
                     visibleColumns = [];
@@ -7034,6 +7481,7 @@
             document.getElementById('mtnCategorizedReportPanel').classList.remove('active');
             document.getElementById('productReportPanel').classList.remove('active');
             document.getElementById('multiProductReportPanel').classList.remove('active');
+            document.getElementById('clinicPerformanceReportPanel').classList.remove('active');
             // Reset tab styles
             document.getElementById('maintenanceReportSubTab').classList.remove('active');
             document.getElementById('cloudBackupReportSubTab').classList.remove('active');
@@ -7041,6 +7489,7 @@
             document.getElementById('mtnCategorizedReportSubTab').classList.remove('active');
             document.getElementById('productReportSubTab').classList.remove('active');
             document.getElementById('multiProductReportSubTab').classList.remove('active');
+            document.getElementById('clinicPerformanceReportSubTab').classList.remove('active');
             // Show Available Reports section
             const availSection = document.getElementById('availableReportsSection');
             if (availSection) availSection.style.display = 'block';
@@ -7057,6 +7506,7 @@
             document.getElementById('eInvoiceReportPanel').classList.remove('active');
             document.getElementById('mtnCategorizedReportPanel').classList.remove('active');
             document.getElementById('productReportPanel').classList.remove('active');
+            document.getElementById('clinicPerformanceReportPanel').classList.remove('active');
             
             // Reset tab styles
             document.getElementById('maintenanceReportSubTab').classList.remove('active');
@@ -7064,6 +7514,7 @@
             document.getElementById('eInvoiceReportSubTab').classList.remove('active');
             document.getElementById('mtnCategorizedReportSubTab').classList.remove('active');
             document.getElementById('productReportSubTab').classList.remove('active');
+            document.getElementById('clinicPerformanceReportSubTab').classList.remove('active');
             
             // Show selected panel
             if (panelId === 'maintenanceReport') {
@@ -7104,6 +7555,13 @@
                     await refreshTableFromSupabase();
                 }
                 renderMultiProductReport();
+            } else if (panelId === 'clinicPerformanceReport') {
+                document.getElementById('clinicPerformanceReportPanel').classList.add('active');
+                document.getElementById('clinicPerformanceReportSubTab').classList.add('active');
+                if (crmData.length === 0) {
+                    await refreshTableFromSupabase();
+                }
+                renderClinicPerformanceReport();
             }
             setTimeout(updateTableContainerOverflow, 100);
         }
@@ -7508,6 +7966,7 @@
         function renderProductReportPagination(totalRecords, totalPages) {
             const container = document.getElementById('productReportPagination');
             if (!container) return;
+            container.dataset.totalRecords = totalRecords;
             if (totalPages <= 1) {
                 container.innerHTML = `<span class="product-report-page-info">Showing ${totalRecords} records</span>`;
                 return;
@@ -7518,17 +7977,17 @@
 
             let html = `<span class="product-report-page-info">Showing ${startIdx} to ${endIdx} of ${totalRecords} entries</span>`;
 
-            html += `<button onclick="goProductReportPage(${currentProductReportPage - 1})" ${currentProductReportPage === 1 ? 'disabled' : ''}>Previous</button>`;
+            html += `<button type="button" class="product-report-page-btn" data-page="prev" ${currentProductReportPage === 1 ? 'disabled' : ''}>Previous</button>`;
 
             for (let i = 1; i <= totalPages; i++) {
                 if (i === 1 || i === totalPages || (i >= currentProductReportPage - 1 && i <= currentProductReportPage + 1)) {
-                    html += `<button class="${i === currentProductReportPage ? 'active-page' : ''}" onclick="goProductReportPage(${i})">${i}</button>`;
+                    html += `<button type="button" class="product-report-page-btn ${i === currentProductReportPage ? 'active-page' : ''}" data-page="${i}">${i}</button>`;
                 } else if (i === currentProductReportPage - 2 || i === currentProductReportPage + 2) {
                     html += `<span style="color:#9ca3af;padding:0 4px;">...</span>`;
                 }
             }
 
-            html += `<button onclick="goProductReportPage(${currentProductReportPage + 1})" ${currentProductReportPage === totalPages ? 'disabled' : ''}>Next</button>`;
+            html += `<button type="button" class="product-report-page-btn" data-page="next" ${currentProductReportPage === totalPages ? 'disabled' : ''}>Next</button>`;
             container.innerHTML = html;
         }
 
@@ -9001,14 +9460,7 @@
                         const saasStatusClass = status.class.replace('status-', 'saas-status-');
                         bodyHTML += `<td class="${colClass}"><span class="saas-status-badge ${saasStatusClass}"><span class="saas-status-dot"></span>${status.label}</span></td>`;
                     } else if (col.key === 'E-INV PO RCVD DATE') {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE'] || '';
-                        const hasEInvoice = eInvDate && String(eInvDate).trim() !== '' && String(eInvDate).trim() !== '0';
-                        if (hasEInvoice) {
-                            const formattedDate = formatExcelDate(eInvDate);
-                            bodyHTML += `<td class="${colClass}"><span class="saas-einvoice-yes" title="E-Invoice Available - ${formattedDate}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></td>`;
-                        } else {
-                            bodyHTML += `<td class="${colClass}"></td>`;
-                        }
+                        bodyHTML += renderEInvoiceCell(row, colClass);
                     } else if (col.key === 'CLOUD END DATE') {
                         const cloudEndDate = row['CLOUD END DATE'] || '';
                         if (cloudEndDate && String(cloudEndDate).trim() !== '' && String(cloudEndDate).trim() !== '0') {
@@ -9058,7 +9510,7 @@
             info.textContent = `Showing ${start} to ${end} of ${totalCount} entries`;
             
             let html = '';
-            html += `<button class="page-btn" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>&#8249;</button>`;
+            html += `<button type="button" class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>&#8249;</button>`;
             
             // Show page numbers
             const maxVisible = 5;
@@ -9069,20 +9521,20 @@
             }
             
             if (startPage > 1) {
-                html += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+                html += `<button type="button" class="page-btn" data-page="1">1</button>`;
                 if (startPage > 2) html += `<span style="padding:0 4px;">...</span>`;
             }
             
             for (let i = startPage; i <= endPage; i++) {
-                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                html += `<button type="button" class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
             }
             
             if (endPage < totalPages) {
                 if (endPage < totalPages - 1) html += `<span style="padding:0 4px;">...</span>`;
-                html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+                html += `<button type="button" class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
             }
             
-            html += `<button class="page-btn" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>&#8250;</button>`;
+            html += `<button type="button" class="page-btn" data-page="next" ${currentPage === totalPages ? 'disabled' : ''}>&#8250;</button>`;
             controls.innerHTML = html;
         }
 
@@ -9192,7 +9644,7 @@
         const FIELD_GROUPS = {
             'Customer Profile': ['ACCT NO','CLINIC NAME','COMPANY NAME','Contact Name','PHONE','Contact Tel1','State','CO. REG & BRN','Customer ID- Certificate No.','EMAIL ID MAIN','EMAIL ID 2','SUPPORT NAME','Account Manager','Address1','Address2','Address3','Address4'],
             'Product & License Info': ['PRODUCT','PRODUCT TYPE','GROUP','M1G/ DEALER CASE','PC TOTAL','PRODUCT VERSION','DB VERSION','CUSTOMER TYPE','RENEWAL STATUS 2','INVOICE NO'],
-            'Maintenance & Subscription': ['CMS/MHIS MTN START DATE','CMS/MHIS MTN END DATE','CLOUD START DATE','CLOUD END DATE','CLOUD TERMINATION DATE','CMS INSTALL DATE/LIVE DATE','CHECKED','DATE CHECKED','LAST UPDATED BY','LAST UPDATED AT'],
+            'Maintenance & Subscription': ['CMS/MHIS MTN START DATE','CMS/MHIS MTN END DATE','HYBRID END DATE','MTN RENEW DATE','MTN PAID DATE','CLOUD START DATE','CLOUD END DATE','CLOUD TERMINATION DATE','CMS INSTALL DATE/LIVE DATE','CHECKED','DATE CHECKED','LAST UPDATED BY','LAST UPDATED AT'],
             'Cloud / E-Invoice / Portal': ['E-INVOICE STATUS','EINV PO RCVD DATE','E-INV PO RCVD DATE','E-INV LHDN SUBMIT DATE','MOBILE APPS STATUS','MOBILE APPS LIVE DATE','INVENTORY PORTAL STATUS','INVENTORY PORTAL LIVE DATE','WHATSAPP STATUS','WHATSAPP LIVE DATE','SST STATUS'],
             'Address Information': ['LKEY LINE 1','LKEY LINE 2','LKEY LINE 3','LKEY LINE 4','LKEY LINE 5'],
             'Technical & System Info': ['HYB LIVE DATE','WSPP LIVE DATE','KIOSK PO DATE','KIOSK SURVEY FORM','365 ACCOUNT NO','PASSWORD/PASSPHRASE','MDO DB LAST ACTUAL BACKUP DATE','MDO SERVER LAST ACTUAL BACKUP DATE','EXCLUDE FROM MTN TRACKING','COMPLETED DATE'],
@@ -9236,6 +9688,17 @@
                     row[field] = '';
                 }
             });
+
+            // Ensure HYBRID END DATE field exists for hybrid product date tracking
+            if (!headers.includes('HYBRID END DATE')) {
+                headers.push('HYBRID END DATE');
+            }
+            if (row['HYBRID END DATE'] === undefined) {
+                row['HYBRID END DATE'] = '';
+            }
+
+            // Determine whether the current product is a Hybrid product (controls HYBRID END DATE field visibility)
+            const isHybridProduct = String(row['PRODUCT TYPE'] || row['PRODUCT'] || '').toUpperCase().includes('HYBRID');
 
             // Get customer identifier for title
             const acctNo = row['ACCT NO'] || '';
@@ -9286,15 +9749,19 @@
                 cardFields.forEach(headerName => {
                     const colIdx = headers.indexOf(headerName);
                     const isRemarksField = ['REMARK','REMARKS FOLLOW UP','MTN IMPORTANT NOTE','MTN IMPORTANT NOTE 1','MTN IMPORTANT NOTE 2','INFO'].includes(headerName);
-                    const isMtnEndDate = headerName === 'CMS/MHIS MTN END DATE';
+                    const isMtnEndDate = headerName === 'CMS/MHIS MTN END DATE' || headerName === 'HYBRID END DATE';
+                    const isHybridDateField = headerName === 'HYBRID END DATE';
                     const val = row[headerName] || '';
                     let highlight = '';
                     if (isMtnEndDate && val) {
                         const d = parseDateToJs(val);
                         if (d && d < new Date()) highlight = 'date-expired-highlight';
                     }
+                    // Hide the Hybrid End Date field unless the selected product is a Hybrid product
+                    const hybridFieldStyle = (isHybridDateField && !isHybridProduct) ? 'display:none;' : '';
+                    const hybridFieldId = isHybridDateField ? ' id="hybridDateFieldWrap"' : '';
                     // renderFormField already includes its own <label> — just wrap for grid/highlight
-                    fieldsHTML += `<div class="${isRemarksField ? 'cp-field-full' : ''} ${highlight}">${renderFormField(headerName, val, colIdx, hasEdit)}</div>`;
+                    fieldsHTML += `<div class="${isRemarksField ? 'cp-field-full' : ''} ${highlight}" style="${hybridFieldStyle}"${hybridFieldId}>${renderFormField(headerName, val, colIdx, hasEdit)}</div>`;
                 });
                 return `
                 <div class="cp-accordion" id="cpAccWrap_${id}">
@@ -9353,6 +9820,7 @@
                         ${svcRow('Product', prodLabel)}
                         ${svcRow('Renewal', renewalStatus)}
                         ${svcRow('MTN End', mtnEnd)}
+                        ${prodType.includes('HYBRID') ? svcRow('Hybrid End', formatExcelDate(row['HYBRID END DATE']) || '-') : ''}
                     </div></div>`;
             }
             // E-Invoice card
@@ -9566,6 +10034,14 @@
             if (chev) chev.classList.toggle('open', !isOpen);
         }
 
+        // Show/hide the Hybrid End Date field when the selected product is a Hybrid product
+        function handleProductSelectionChange(selectEl) {
+            const wrap = document.getElementById('hybridDateFieldWrap');
+            if (!wrap) return;
+            const isHybrid = String(selectEl.value || '').toUpperCase().includes('HYBRID');
+            wrap.style.display = isHybrid ? '' : 'none';
+        }
+
         // Helper function to render a form field
         function renderFormField(headerName, value, colIdx, hasEdit) {
             const isDate = isDateColumn(headerName);
@@ -9575,6 +10051,8 @@
             const isDropdownField = ['PRODUCT', 'PRODUCT TYPE', 'M1G/ DEALER CASE', 'RENEWAL STATUS 2', 'CUSTOMER TYPE'].includes(headerName);
             const isStatusField = ['MOBILE APPS STATUS', 'INVENTORY PORTAL STATUS', 'SST STATUS', 'E-INVOICE STATUS', 'WHATSAPP STATUS'].includes(headerName);
             const isCheckboxField = headerName === 'EXCLUDE FROM MTN TRACKING';
+            const isProductSelector = headerName === 'PRODUCT' || headerName === 'PRODUCT TYPE';
+            const productChangeAttr = isProductSelector ? ' onchange="handleProductSelectionChange(this)"' : '';
             
             let inputHTML = '';
             
@@ -9590,7 +10068,7 @@
                     predefined.forEach(v => { if (!uniqueValues.includes(v)) uniqueValues.push(v); });
                     uniqueValues.sort();
                 }
-                inputHTML = `<select id="${inputId}" ${disabledAttr} style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; background: ${hasEdit ? 'white' : '#f3f4f6'};">`;
+                inputHTML = `<select id="${inputId}" ${disabledAttr}${productChangeAttr} style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; background: ${hasEdit ? 'white' : '#f3f4f6'};">`;
                 inputHTML += `<option value="">-- Select --</option>`;
                 uniqueValues.forEach(opt => {
                     const selected = opt === value ? 'selected' : '';
@@ -11568,9 +12046,12 @@
 
                 const filtered = crmData.filter(row => {
                     if (searchTerm) {
-                        const acctNo = String(row['ACCT NO'] || '').toLowerCase();
-                        const clinicName = String(row['CLINIC NAME'] || '').toLowerCase();
-                        if (!acctNo.includes(searchTerm) && !clinicName.includes(searchTerm)) {
+                        const acctNo = String(row['ACCT NO'] || '').toLowerCase().trim();
+                        const clinicName = String(row['CLINIC NAME'] || '').toLowerCase().trim();
+                        // Also normalize underscores/spaces for flexible matching (M_1906 matches "m 1906" etc)
+                        const acctNoNorm = acctNo.replace(/[_\s-]/g, '');
+                        const searchNorm = searchTerm.replace(/[_\s-]/g, '');
+                        if (!acctNo.includes(searchTerm) && !clinicName.includes(searchTerm) && !acctNoNorm.includes(searchNorm)) {
                             return false;
                         }
                     }
@@ -11650,14 +12131,7 @@
                         const saasStatusClass = status.class.replace('status-', 'saas-status-');
                         bodyHTML += `<td class="${colClass}"><span class="saas-status-badge ${saasStatusClass}"><span class="saas-status-dot"></span>${status.label}</span></td>`;
                     } else if (col.key === 'E-INV PO RCVD DATE') {
-                        const eInvDate = row['E-INV PO RCVD DATE'] || row['EINV PO RCVD DATE'] || '';
-                        const hasEInvoice = eInvDate && String(eInvDate).trim() !== '' && String(eInvDate).trim() !== '0';
-                        if (hasEInvoice) {
-                            const formattedDate = formatExcelDate(eInvDate);
-                            bodyHTML += `<td class="${colClass}"><span class="saas-einvoice-yes" title="E-Invoice Available - ${formattedDate}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></td>`;
-                        } else {
-                            bodyHTML += `<td class="${colClass}"></td>`;
-                        }
+                        bodyHTML += renderEInvoiceCell(row, colClass);
                     } else if (col.key === 'CLOUD END DATE') {
                         const cloudEndDate = row['CLOUD END DATE'] || '';
                         if (cloudEndDate && String(cloudEndDate).trim() !== '' && String(cloudEndDate).trim() !== '0') {
@@ -12083,7 +12557,7 @@
             info.textContent = `Showing ${start} to ${end} of ${lkTotalRecords} entries`;
             
             let html = '';
-            html += `<button class="page-btn" onclick="changeLkPage(-1)" ${lkCurrentPage === 1 ? 'disabled' : ''}>&#8249;</button>`;
+            html += `<button type="button" class="page-btn" data-page="prev" ${lkCurrentPage === 1 ? 'disabled' : ''}>&#8249;</button>`;
             
             const maxVisible = 5;
             let startPage = Math.max(1, lkCurrentPage - Math.floor(maxVisible / 2));
@@ -12093,20 +12567,20 @@
             }
             
             if (startPage > 1) {
-                html += `<button class="page-btn" onclick="goToLkPage(1)">1</button>`;
+                html += `<button type="button" class="page-btn" data-page="1">1</button>`;
                 if (startPage > 2) html += `<span style="padding:0 4px;">...</span>`;
             }
             
             for (let i = startPage; i <= endPage; i++) {
-                html += `<button class="page-btn ${i === lkCurrentPage ? 'active' : ''}" onclick="goToLkPage(${i})">${i}</button>`;
+                html += `<button type="button" class="page-btn ${i === lkCurrentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
             }
             
             if (endPage < totalPages) {
                 if (endPage < totalPages - 1) html += `<span style="padding:0 4px;">...</span>`;
-                html += `<button class="page-btn" onclick="goToLkPage(${totalPages})">${totalPages}</button>`;
+                html += `<button type="button" class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
             }
             
-            html += `<button class="page-btn" onclick="changeLkPage(1)" ${lkCurrentPage === totalPages ? 'disabled' : ''}>&#8250;</button>`;
+            html += `<button type="button" class="page-btn" data-page="next" ${lkCurrentPage === totalPages ? 'disabled' : ''}>&#8250;</button>`;
             controls.innerHTML = html;
         }
         
@@ -13940,15 +14414,15 @@ function renderActivityPagination(totalCount) {
     let html = '<div style="display: flex; justify-content: center; gap: 4px; flex-wrap: wrap;">';
 
     if (activityLogPage > 1) {
-        html += `<button class="btn btn-outline btn-sm" onclick="goToActivityPage(${activityLogPage - 1})">&lsaquo;</button>`;
+        html += `<button type="button" class="btn btn-outline btn-sm" data-page="prev">&lsaquo;</button>`;
     }
 
     for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= activityLogPage - 2 && i <= activityLogPage + 2)) {
             if (i === activityLogPage) {
-                html += `<button class="btn btn-primary btn-sm" style="min-width: 36px;">${i}</button>`;
+                html += `<button type="button" class="btn btn-primary btn-sm" style="min-width: 36px;" data-page="${i}">${i}</button>`;
             } else {
-                html += `<button class="btn btn-outline btn-sm" style="min-width: 36px;" onclick="goToActivityPage(${i})">${i}</button>`;
+                html += `<button type="button" class="btn btn-outline btn-sm" style="min-width: 36px;" data-page="${i}">${i}</button>`;
             }
         } else if (i === activityLogPage - 3 || i === activityLogPage + 3) {
             html += '<span style="padding: 4px 8px;">...</span>';
@@ -13956,7 +14430,7 @@ function renderActivityPagination(totalCount) {
     }
 
     if (activityLogPage < totalPages) {
-        html += `<button class="btn btn-outline btn-sm" onclick="goToActivityPage(${activityLogPage + 1})">&rsaquo;</button>`;
+        html += `<button type="button" class="btn btn-outline btn-sm" data-page="next">&rsaquo;</button>`;
     }
 
     html += '</div>';
@@ -14157,8 +14631,10 @@ async function exportActivityLog() {
             today.setHours(0, 0, 0, 0);
             const usingCMSMHIS = isUsingCMSMHIS(row);
 
-            const eStatuses = ['cancelled purchase', 'change service provider', 'closed down', 'terminated'];
-            if (eStatuses.includes(renewalStatus2)) return 'E';
+            const closedStatuses = ['closed down', 'cancelled purchase', 'terminated'];
+            const changedStatuses = ['change service provider'];
+            if (closedStatuses.includes(renewalStatus2)) return 'E';
+            if (changedStatuses.includes(renewalStatus2)) return 'G';
             if (renewalStatus2 === 'refuse to renew') return 'C';
 
             // GP+EM2 customers: categorize by maintenance validity, never as ClaimEX Only
@@ -14192,7 +14668,7 @@ async function exportActivityLog() {
         }
 
         function computeMTNCatData() {
-            const result = { X: 0, A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, all: [] };
+            const result = { X: 0, A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, G: 0, all: [] };
             if (!crmData || crmData.length === 0) return result;
             crmData.forEach(row => {
                 const cat = getMTNCategory(row);
@@ -14207,6 +14683,7 @@ async function exportActivityLog() {
                 else if (cat === 'D') result.D++;
                 else if (cat === 'E') result.E++;
                 else if (cat === 'F') result.F++;
+                else if (cat === 'G') result.G++;
             });
             return result;
         }
@@ -14297,6 +14774,550 @@ async function exportActivityLog() {
             const cls = rank === 1 ? 'mpr-rank-1' : rank === 2 ? 'mpr-rank-2' : rank === 3 ? 'mpr-rank-3' : 'mpr-rank-n';
             const medal = rank === 1 ? '&#129351;' : rank === 2 ? '&#129352;' : rank === 3 ? '&#129353;' : rank;
             return `<span class="mpr-rank-badge ${cls}">${medal}</span>`;
+        }
+
+        // ============================================================
+        // CLINIC PERFORMANCE REPORT BY REGION
+        // ============================================================
+
+        const CPR_STATE_ALIASES = {
+            // JOHOR
+            'JOHOR': 'JOHOR', 'JOHOR DARUL TAKZIM': 'JOHOR', 'JOHOR BAHRU STATE': 'JOHOR',
+            'JHR': 'JOHOR', 'JH': 'JOHOR',
+            'JOHOR BAHRU': 'JOHOR', 'JB': 'JOHOR', 'BATU PAHAT': 'JOHOR', 'MUAR': 'JOHOR',
+            'KLUANG': 'JOHOR', 'KULAI': 'JOHOR', 'PONTIAN': 'JOHOR', 'SEGAMAT': 'JOHOR',
+            'KOTA TINGGI': 'JOHOR', 'MERSING': 'JOHOR', 'TANGKAK': 'JOHOR',
+            // KEDAH
+            'KEDAH': 'KEDAH', 'KDH': 'KEDAH',
+            'ALOR SETAR': 'KEDAH', 'SUNGAI PETANI': 'KEDAH', 'KULIM': 'KEDAH', 'LANGKAWI': 'KEDAH',
+            'JITRA': 'KEDAH', 'BALING': 'KEDAH', 'PENDANG': 'KEDAH', 'YAN': 'KEDAH',
+            // KELANTAN
+            'KELANTAN': 'KELANTAN', 'KTN': 'KELANTAN',
+            'KOTA BHARU': 'KELANTAN', 'PASIR MAS': 'KELANTAN', 'TANAH MERAH': 'KELANTAN',
+            'MACHANG': 'KELANTAN', 'TUMPAT': 'KELANTAN', 'BACHOK': 'KELANTAN',
+            'KUALA KRAI': 'KELANTAN', 'GUA MUSANG': 'KELANTAN',
+            // MELAKA
+            'MELAKA': 'MELAKA', 'MALACCA': 'MELAKA', 'MLK': 'MELAKA',
+            'MELAKA CITY': 'MELAKA', 'BANDAR MELAKA': 'MELAKA', 'ALOR GAJAH': 'MELAKA',
+            'JASIN': 'MELAKA', 'MASJID TANAH': 'MELAKA',
+            // NEGERI SEMBILAN
+            'NEGERI SEMBILAN': 'NEGERI SEMBILAN', 'N9': 'NEGERI SEMBILAN', 'NS': 'NEGERI SEMBILAN',
+            'N. SEMBILAN': 'NEGERI SEMBILAN', 'NEGERI9': 'NEGERI SEMBILAN',
+            'SEREMBAN': 'NEGERI SEMBILAN', 'PORT DICKSON': 'NEGERI SEMBILAN', 'NILAI': 'NEGERI SEMBILAN',
+            'KUALA PILAH': 'NEGERI SEMBILAN', 'REMBAU': 'NEGERI SEMBILAN', 'TAMPIN': 'NEGERI SEMBILAN',
+            'JELEBU': 'NEGERI SEMBILAN',
+            // PAHANG
+            'PAHANG': 'PAHANG', 'PHG': 'PAHANG',
+            'KUANTAN': 'PAHANG', 'TEMERLOH': 'PAHANG', 'BENTONG': 'PAHANG', 'RAUB': 'PAHANG',
+            'PEKAN': 'PAHANG', 'JERANTUT': 'PAHANG', 'CAMERON HIGHLANDS': 'PAHANG',
+            // PERAK
+            'PERAK': 'PERAK', 'PRK': 'PERAK',
+            'IPOH': 'PERAK', 'TAIPING': 'PERAK', 'TELUK INTAN': 'PERAK', 'LUMUT': 'PERAK',
+            'MANJUNG': 'PERAK', 'KUALA KANGSAR': 'PERAK', 'BATU GAJAH': 'PERAK',
+            'SUNGAI SIPUT': 'PERAK', 'TAPAH': 'PERAK',
+            // PERLIS
+            'PERLIS': 'PERLIS', 'PLS': 'PERLIS',
+            'KANGAR': 'PERLIS', 'ARAU': 'PERLIS', 'KUALA PERLIS': 'PERLIS',
+            // PULAU PINANG
+            'PULAU PINANG': 'PULAU PINANG', 'PENANG': 'PULAU PINANG', 'PNG': 'PULAU PINANG', 'PG': 'PULAU PINANG',
+            'GEORGE TOWN': 'PULAU PINANG', 'GEORGETOWN': 'PULAU PINANG', 'BUTTERWORTH': 'PULAU PINANG',
+            'BUKIT MERTAJAM': 'PULAU PINANG', 'BAYAN LEPAS': 'PULAU PINANG', 'BALIK PULAU': 'PULAU PINANG',
+            'NIBONG TEBAL': 'PULAU PINANG', 'SEBERANG PERAI': 'PULAU PINANG',
+            // SABAH
+            'SABAH': 'SABAH', 'SBH': 'SABAH',
+            'KOTA KINABALU': 'SABAH', 'KK': 'SABAH', 'SANDAKAN': 'SABAH', 'TAWAU': 'SABAH',
+            'LAHAD DATU': 'SABAH', 'KENINGAU': 'SABAH', 'PAPAR': 'SABAH', 'KUDAT': 'SABAH', 'BEAUFORT': 'SABAH',
+            // SARAWAK
+            'SARAWAK': 'SARAWAK', 'SWK': 'SARAWAK',
+            'KUCHING': 'SARAWAK', 'MIRI': 'SARAWAK', 'SIBU': 'SARAWAK', 'BINTULU': 'SARAWAK',
+            'SRI AMAN': 'SARAWAK', 'SAMARAHAN': 'SARAWAK', 'KAPIT': 'SARAWAK', 'LIMBANG': 'SARAWAK',
+            // SELANGOR
+            'SELANGOR': 'SELANGOR', 'SGR': 'SELANGOR',
+            'SHAH ALAM': 'SELANGOR', 'PETALING JAYA': 'SELANGOR', 'PJ': 'SELANGOR', 'SUBANG JAYA': 'SELANGOR',
+            'KLANG': 'SELANGOR', 'KAJANG': 'SELANGOR', 'AMPANG': 'SELANGOR', 'PUCHONG': 'SELANGOR',
+            'CYBERJAYA': 'SELANGOR', 'BANGI': 'SELANGOR', 'RAWANG': 'SELANGOR', 'SEMENYIH': 'SELANGOR',
+            'SEPANG': 'SELANGOR', 'SERI KEMBANGAN': 'SELANGOR', 'KOTA DAMANSARA': 'SELANGOR',
+            'DAMANSARA': 'SELANGOR', 'SUNGAI BULOH': 'SELANGOR',
+            // TERENGGANU
+            'TERENGGANU': 'TERENGGANU', 'TRG': 'TERENGGANU', 'TGG': 'TERENGGANU',
+            'KUALA TERENGGANU': 'TERENGGANU', 'KEMAMAN': 'TERENGGANU', 'DUNGUN': 'TERENGGANU',
+            'MARANG': 'TERENGGANU', 'BESUT': 'TERENGGANU', 'HULU TERENGGANU': 'TERENGGANU', 'SETIU': 'TERENGGANU',
+            // FEDERAL TERRITORIES
+            'KUALA LUMPUR': 'KUALA LUMPUR', 'KL': 'KUALA LUMPUR', 'K.L.': 'KUALA LUMPUR',
+            'KUALA LUMPUR, MALAYSIA': 'KUALA LUMPUR', 'WILAYAH PERSEKUTUAN KUALA LUMPUR': 'KUALA LUMPUR',
+            'WP KUALA LUMPUR': 'KUALA LUMPUR', 'WPKL': 'KUALA LUMPUR',
+            'FEDERAL TERRITORY OF KUALA LUMPUR': 'KUALA LUMPUR',
+            'LABUAN': 'LABUAN', 'WILAYAH PERSEKUTUAN LABUAN': 'LABUAN',
+            'WP LABUAN': 'LABUAN', 'FEDERAL TERRITORY OF LABUAN': 'LABUAN',
+            'PUTRAJAYA': 'PUTRAJAYA', 'PJAYA': 'PUTRAJAYA',
+            'WILAYAH PERSEKUTUAN PUTRAJAYA': 'PUTRAJAYA', 'WP PUTRAJAYA': 'PUTRAJAYA',
+            'FEDERAL TERRITORY OF PUTRAJAYA': 'PUTRAJAYA'
+        };
+
+        function standardizeMalaysianState(state) {
+            const raw = String(state || '').trim();
+            if (!raw) return '';
+            const normalized = raw.replace(/\s+/g, ' ').toUpperCase();
+            return CPR_STATE_ALIASES[normalized] || 'UNKNOWN';
+        }
+
+        const CPR_REGIONS = {
+            'Northern Region': ['PERLIS', 'KEDAH', 'PULAU PINANG', 'PERAK'],
+            'Central Region': ['SELANGOR', 'KUALA LUMPUR', 'PUTRAJAYA'],
+            'Southern Region': ['NEGERI SEMBILAN', 'MELAKA', 'JOHOR'],
+            'East Coast Region': ['KELANTAN', 'TERENGGANU', 'PAHANG'],
+            'East Malaysia': ['SABAH', 'SARAWAK', 'LABUAN']
+        };
+
+        const CPR_REGION_ORDER = Object.keys(CPR_REGIONS).concat(['Unassigned']);
+        const CPR_REGION_ICONS = {
+            'Northern Region': '&#128507;',
+            'Central Region': '&#127970;',
+            'Southern Region': '&#127958;',
+            'East Coast Region': '&#127754;',
+            'East Malaysia': '&#127965;',
+            'Unassigned': '&#10067;'
+        };
+        const CPR_REGION_COLORS = {
+            'Northern Region': '#0ea5e9',
+            'Central Region': '#8b5cf6',
+            'Southern Region': '#f59e0b',
+            'East Coast Region': '#10b981',
+            'East Malaysia': '#ec4899',
+            'Unassigned': '#6b7280'
+        };
+
+        let cprCurrentPage = 1;
+        let cprPageSize = 15;
+        let cprSelectedRegion = '';
+        let cprFilteredData = [];
+
+        function cprGetRegion(state) {
+            const normalized = String(state || '').trim().toUpperCase();
+            if (!normalized || normalized === 'UNKNOWN') return 'Unassigned';
+            for (const [region, states] of Object.entries(CPR_REGIONS)) {
+                if (states.includes(normalized)) {
+                    return region;
+                }
+            }
+            return 'Unassigned';
+        }
+
+        function cprBuildFullAddress(row) {
+            const parts = [
+                row['Address1'], row['Address2'], row['Address3'], row['Address4']
+            ].map(p => String(p || '').trim()).filter(Boolean);
+            return parts.join(', ') || '-';
+        }
+
+        function cprStatusBadge(status) {
+            const map = {
+                active: { cls: 'status-active', label: 'Active' },
+                expired: { cls: 'status-expired', label: 'Expired' },
+                loss: { cls: 'status-inactive', label: 'Loss' },
+                nodate: { cls: 'status-na', label: 'No Date' }
+            };
+            const s = map[status] || { cls: 'status-na', label: status || 'Unknown' };
+            return `<span class="status-badge ${s.cls}">${s.label}</span>`;
+        }
+
+        function cprToggleMtnStatusDropdown(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('cprMtnStatusFilter');
+            if (dropdown) dropdown.classList.toggle('open');
+        }
+
+        function cprCloseMtnStatusDropdown() {
+            const dropdown = document.getElementById('cprMtnStatusFilter');
+            if (dropdown) dropdown.classList.remove('open');
+        }
+
+        function cprGetSelectedMtnStatuses() {
+            const container = document.getElementById('cprMtnStatusFilter');
+            if (!container) return [];
+            return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+        }
+
+        function cprUpdateMtnStatusTrigger() {
+            const selected = cprGetSelectedMtnStatuses();
+            const textEl = document.getElementById('cprMtnStatusTriggerText');
+            if (!textEl) return;
+            const labels = { active: 'Active', expired: 'Expired', loss: 'Loss', nodate: 'No Date' };
+            if (selected.length === 0) {
+                textEl.textContent = 'All Status';
+            } else if (selected.length === 1) {
+                textEl.textContent = labels[selected[0]] || selected[0];
+            } else {
+                textEl.textContent = `${selected.length} selected`;
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('cprMtnStatusFilter');
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        function cprBuildClinicData() {
+            const seen = new Map();
+            crmData.forEach(row => {
+                const rawState = String(row['State'] || '').trim();
+                const state = standardizeMalaysianState(rawState);
+                const acctNo = String(row['ACCT NO'] || '').trim();
+                const clinicName = String(row['CLINIC NAME'] || '').trim() || '-';
+                const key = acctNo || clinicName;
+                if (!seen.has(key)) {
+                    seen.set(key, {
+                        row,
+                        id: row.id,
+                        region: cprGetRegion(state),
+                        state: state || 'Unassigned',
+                        clinicName,
+                        acctNo,
+                        coRegBrn: String(row['CO. REG & BRN'] || '').trim(),
+                        contactName: String(row['Contact Name'] || '').trim(),
+                        phone: String(row['PHONE'] || row['Contact Tel1'] || '').trim(),
+                        email: String(row['EMAIL ID MAIN'] || '').trim(),
+                        fullAddress: cprBuildFullAddress(row),
+                        mtnStatus: getCustomerStatus(row)
+                    });
+                }
+            });
+            return Array.from(seen.values()).sort((a, b) => {
+                const ra = CPR_REGION_ORDER.indexOf(a.region);
+                const rb = CPR_REGION_ORDER.indexOf(b.region);
+                if (ra !== rb) return ra - rb;
+                return a.state.localeCompare(b.state) || a.clinicName.localeCompare(b.clinicName);
+            });
+        }
+
+        function cprGetStateOptions(selectedRegion) {
+            const allClinics = cprBuildClinicData();
+            const pool = selectedRegion
+                ? allClinics.filter(c => c.region === selectedRegion)
+                : allClinics;
+            return [...new Set(pool.map(c => c.state).filter(Boolean))].sort();
+        }
+
+        function renderClinicPerformanceReport() {
+            const container = document.getElementById('cprContent');
+            if (!container) return;
+
+            cprCurrentPage = 1;
+            cprSelectedRegion = '';
+
+            const allClinics = cprBuildClinicData();
+            const totalClinics = allClinics.length;
+            const states = [...new Set(allClinics.map(c => c.state).filter(Boolean))].sort();
+
+            container.innerHTML = `
+                <div class="cpr-page-header">
+                    <div>
+                        <button class="cpr-back-btn" onclick="backToAvailableReports()">&#8592; Back to Reports</button>
+                        <h1>Clinic Listing</h1>
+                        <div class="cpr-subtitle">Total Clinics: ${totalClinics.toLocaleString()}</div>
+                    </div>
+                    <button class="cpr-export-btn" onclick="cprExportExcel()">&#128190; Export to Excel</button>
+                </div>
+
+                <div class="cpr-region-grid" id="cprRegionCards"></div>
+
+                <div class="cpr-filters" id="cprFilters">
+                    <div class="cpr-filter-group">
+                        <div class="cpr-filter-label">Search by Clinic Name</div>
+                        <input class="cpr-filter-input" id="cprClinicFilter" placeholder="Search clinic name..." onkeyup="if(event.key==='Enter') cprApplyFilters()">
+                    </div>
+                    <div class="cpr-filter-group">
+                        <div class="cpr-filter-label">Search by Account No.</div>
+                        <input class="cpr-filter-input" id="cprAcctFilter" placeholder="Search account no..." onkeyup="if(event.key==='Enter') cprApplyFilters()">
+                    </div>
+                    <div class="cpr-filter-group">
+                        <div class="cpr-filter-label">Region</div>
+                        <select class="cpr-filter-select" id="cprRegionFilter" onchange="cprOnRegionChange()">
+                            <option value="">All Regions</option>
+                            ${CPR_REGION_ORDER.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="cpr-filter-group">
+                        <div class="cpr-filter-label">State</div>
+                        <select class="cpr-filter-select" id="cprStateFilter" onchange="cprApplyFilters()">
+                            <option value="">All States</option>
+                            ${states.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="cpr-filter-group">
+                        <div class="cpr-filter-label">MTN Status</div>
+                        <div class="cpr-multiselect" id="cprMtnStatusFilter">
+                            <button type="button" class="cpr-multiselect-trigger" onclick="cprToggleMtnStatusDropdown(event)">
+                                <span id="cprMtnStatusTriggerText">All Status</span>
+                                <span>&#9662;</span>
+                            </button>
+                            <div class="cpr-multiselect-menu">
+                                <label class="cpr-multiselect-item">
+                                    <input type="checkbox" value="active" onchange="cprApplyFilters(); cprUpdateMtnStatusTrigger();">
+                                    <span>Active</span>
+                                </label>
+                                <label class="cpr-multiselect-item">
+                                    <input type="checkbox" value="expired" onchange="cprApplyFilters(); cprUpdateMtnStatusTrigger();">
+                                    <span>Expired</span>
+                                </label>
+                                <label class="cpr-multiselect-item">
+                                    <input type="checkbox" value="loss" onchange="cprApplyFilters(); cprUpdateMtnStatusTrigger();">
+                                    <span>Loss</span>
+                                </label>
+                                <label class="cpr-multiselect-item">
+                                    <input type="checkbox" value="nodate" onchange="cprApplyFilters(); cprUpdateMtnStatusTrigger();">
+                                    <span>No Date</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cpr-table-section">
+                    <div class="cpr-table-header">
+                        <div>
+                            <span class="cpr-table-title">Clinic Listing</span>
+                            <span style="font-size:12px;color:#6b7280;margin-left:10px;" id="cprRecordCount"></span>
+                        </div>
+                    </div>
+                    <div class="cpr-table-scroll">
+                        <table class="cpr-table" id="cprTable">
+                            <thead>
+                                <tr>
+                                    <th>Region</th>
+                                    <th>State</th>
+                                    <th>Clinic Name</th>
+                                    <th>Account No.</th>
+                                    <th>CO. REG &amp; BRN</th>
+                                    <th>Contact Name</th>
+                                    <th>Phone Number</th>
+                                    <th>MTN Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cprTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="cpr-pagination" id="cprPagination"></div>
+                </div>
+            `;
+
+            cprApplyFilters();
+        }
+
+        function cprOnRegionChange() {
+            const regionSelect = document.getElementById('cprRegionFilter');
+            const region = regionSelect?.value || '';
+            cprSelectedRegion = region;
+            const stateSelect = document.getElementById('cprStateFilter');
+            if (!stateSelect) return;
+            const currentState = stateSelect.value;
+            const states = cprGetStateOptions(region);
+            stateSelect.innerHTML = `<option value="">All States</option>` +
+                states.map(s => `<option value="${escapeHtml(s)}" ${s === currentState ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+            cprApplyFilters();
+        }
+
+        function cprSelectRegion(region) {
+            cprSelectedRegion = cprSelectedRegion === region ? '' : region;
+            const regionSelect = document.getElementById('cprRegionFilter');
+            if (regionSelect) regionSelect.value = cprSelectedRegion;
+            cprOnRegionChange();
+        }
+
+        function cprApplyFilters() {
+            const activeEl = document.activeElement;
+            const activeId = activeEl ? activeEl.id : null;
+            const activeSel = activeEl && typeof activeEl.selectionStart === 'number'
+                ? { id: activeId, start: activeEl.selectionStart, end: activeEl.selectionEnd }
+                : null;
+
+            const regionFilter = document.getElementById('cprRegionFilter')?.value || '';
+            const stateFilter = document.getElementById('cprStateFilter')?.value || '';
+            const clinicFilter = (document.getElementById('cprClinicFilter')?.value || '').trim().toLowerCase();
+            const acctFilter = (document.getElementById('cprAcctFilter')?.value || '').trim().toLowerCase();
+            const selectedMtnStatuses = cprGetSelectedMtnStatuses();
+
+            let filtered = cprBuildClinicData();
+            if (regionFilter) filtered = filtered.filter(c => c.region === regionFilter);
+            if (stateFilter) filtered = filtered.filter(c => c.state === stateFilter);
+            if (clinicFilter) {
+                filtered = filtered.filter(c => c.clinicName.toLowerCase().includes(clinicFilter));
+            }
+            if (acctFilter) {
+                filtered = filtered.filter(c => c.acctNo.toLowerCase().includes(acctFilter));
+            }
+            if (selectedMtnStatuses.length > 0) {
+                filtered = filtered.filter(c => selectedMtnStatuses.includes(c.mtnStatus));
+            }
+
+            cprFilteredData = filtered;
+            cprCurrentPage = 1;
+
+            const regionTotals = {};
+            CPR_REGION_ORDER.forEach(r => regionTotals[r] = 0);
+            filtered.forEach(c => { regionTotals[c.region] = (regionTotals[c.region] || 0) + 1; });
+
+            const cardsContainer = document.getElementById('cprRegionCards');
+            if (cardsContainer) {
+                cardsContainer.innerHTML = CPR_REGION_ORDER.map(region => {
+                    const count = regionTotals[region] || 0;
+                    const color = CPR_REGION_COLORS[region] || '#6b7280';
+                    const icon = CPR_REGION_ICONS[region] || '&#127760;';
+                    const isActive = cprSelectedRegion === region;
+                    return `
+                        <div class="cpr-region-card ${isActive ? 'active' : ''}" onclick="cprSelectRegion('${escapeHtml(region)}')">
+                            <div class="cpr-region-icon" style="background:${color}15;color:${color};">${icon}</div>
+                            <div class="cpr-region-info">
+                                <div class="cpr-region-name">${escapeHtml(region)}</div>
+                                <div class="cpr-region-count">${count.toLocaleString()}</div>
+                            </div>
+                            <div class="cpr-region-arrow">&#8250;</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            cprRenderTable();
+
+            if (activeSel && activeSel.id) {
+                setTimeout(() => {
+                    const el = document.getElementById(activeSel.id);
+                    if (el && el.focus) {
+                        el.focus();
+                        if (typeof el.setSelectionRange === 'function') {
+                            try { el.setSelectionRange(activeSel.start, activeSel.end); } catch (e) {}
+                        }
+                    }
+                }, 0);
+            }
+        }
+
+        function cprRenderTable() {
+            const tbody = document.getElementById('cprTableBody');
+            const recordCount = document.getElementById('cprRecordCount');
+            const pagination = document.getElementById('cprPagination');
+            if (!tbody) return;
+
+            const data = cprFilteredData;
+            const total = data.length;
+            const totalPages = Math.max(1, Math.ceil(total / cprPageSize));
+            if (cprCurrentPage > totalPages) cprCurrentPage = totalPages;
+            const start = (cprCurrentPage - 1) * cprPageSize;
+            const page = data.slice(start, start + cprPageSize);
+
+            if (recordCount) {
+                recordCount.textContent = total === 0
+                    ? 'No clinics found'
+                    : `Showing ${(start + 1).toLocaleString()} - ${Math.min(start + cprPageSize, total).toLocaleString()} of ${total.toLocaleString()} clinics`;
+            }
+
+            if (page.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#9ca3af;">No clinics found matching the filters.</td></tr>`;
+            } else {
+                tbody.innerHTML = page.map(c => `
+                    <tr>
+                        <td><span class="cpr-region-badge">${escapeHtml(c.region)}</span></td>
+                        <td>${escapeHtml(c.state)}</td>
+                        <td><span class="cpr-clinic-link" onclick="cprOpenClinicProfile('${c.id}')">${escapeHtml(c.clinicName)}</span></td>
+                        <td>${escapeHtml(c.acctNo)}</td>
+                        <td>${escapeHtml(c.coRegBrn) || '-'}</td>
+                        <td>${escapeHtml(c.contactName)}</td>
+                        <td>${escapeHtml(c.phone)}</td>
+                        <td>${cprStatusBadge(c.mtnStatus)}</td>
+                    </tr>
+                `).join('');
+            }
+
+            if (pagination) {
+                if (totalPages <= 1) {
+                    pagination.innerHTML = `<span class="cpr-page-info">Showing ${total.toLocaleString()} clinics</span>`;
+                } else {
+                    let pageHTML = `<span class="cpr-page-info">Showing ${(start + 1).toLocaleString()} to ${Math.min(start + cprPageSize, total).toLocaleString()} of ${total.toLocaleString()} clinics</span>`;
+                    pageHTML += `<div class="cpr-page-btns">`;
+                    pageHTML += `<button type="button" class="cpr-page-btn" data-page="first" ${cprCurrentPage === 1 ? 'disabled' : ''}>&#171;</button>`;
+                    pageHTML += `<button type="button" class="cpr-page-btn" data-page="prev" ${cprCurrentPage === 1 ? 'disabled' : ''}>&#8249;</button>`;
+                    const pRange = [];
+                    for (let p = Math.max(1, cprCurrentPage - 2); p <= Math.min(totalPages, cprCurrentPage + 2); p++) pRange.push(p);
+                    pRange.forEach(p => {
+                        pageHTML += `<button type="button" class="cpr-page-btn ${p === cprCurrentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+                    });
+                    pageHTML += `<button type="button" class="cpr-page-btn" data-page="next" ${cprCurrentPage === totalPages ? 'disabled' : ''}>&#8250;</button>`;
+                    pageHTML += `<button type="button" class="cpr-page-btn" data-page="last" ${cprCurrentPage === totalPages ? 'disabled' : ''}>&#187;</button>`;
+                    pageHTML += `</div>`;
+                    pagination.innerHTML = pageHTML;
+                }
+            }
+        }
+
+        function cprGoPage(p) {
+            cprCurrentPage = p;
+            cprRenderTable();
+        }
+
+        function cprChangePageSize(n) {
+            cprPageSize = parseInt(n);
+            cprCurrentPage = 1;
+            cprRenderTable();
+        }
+
+        function cprOpenClinicProfile(rowId) {
+            if (!rowId) {
+                showToast('Clinic profile not available', 'warning');
+                return;
+            }
+            viewRowDetails(rowId);
+        }
+
+        function cprResetFilters() {
+            cprSelectedRegion = '';
+            const regionSelect = document.getElementById('cprRegionFilter');
+            const stateSelect = document.getElementById('cprStateFilter');
+            const clinicInput = document.getElementById('cprClinicFilter');
+            const acctInput = document.getElementById('cprAcctFilter');
+            const mtnStatusDropdown = document.getElementById('cprMtnStatusFilter');
+            if (regionSelect) regionSelect.value = '';
+            if (clinicInput) clinicInput.value = '';
+            if (acctInput) acctInput.value = '';
+            if (mtnStatusDropdown) {
+                mtnStatusDropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                mtnStatusDropdown.classList.remove('open');
+            }
+            if (stateSelect) {
+                const states = cprGetStateOptions('');
+                stateSelect.innerHTML = `<option value="">All States</option>` +
+                    states.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+            }
+            cprApplyFilters();
+        }
+
+        function cprExportExcel() {
+            const data = cprFilteredData.length > 0 ? cprFilteredData : cprBuildClinicData();
+            const statusLabel = {
+                active: 'Active',
+                expired: 'Expired',
+                loss: 'Loss',
+                nodate: 'No Date'
+            };
+            const rows = data.map(c => ({
+                'Region': c.region,
+                'State': c.state,
+                'Clinic Name': c.clinicName,
+                'Account Number': c.acctNo,
+                'CO. REG & BRN': c.coRegBrn,
+                'Full Address': c.fullAddress,
+                'Contact Name': c.contactName,
+                'Phone Number': c.phone,
+                'Email': c.email,
+                'MTN Status': statusLabel[c.mtnStatus] || c.mtnStatus
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Clinic Listing');
+            const fn = `Clinic_Listing_by_Region_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(wb, fn);
         }
 
         function renderMultiProductReport() {
@@ -14632,13 +15653,13 @@ async function exportActivityLog() {
                 const showingEnd = Math.min(start + mprPageSize, total);
                 let pageHTML = `<span class="mpr-page-info">Showing ${(start+1).toLocaleString()} to ${showingEnd.toLocaleString()} of ${total.toLocaleString()} entries</span>`;
                 pageHTML += `<div class="mpr-page-btns">`;
-                pageHTML += `<button class="mpr-page-btn" ${mprCurrentPage===1?'disabled':''} onclick="mprGoPage(1)">&#171;</button>`;
-                pageHTML += `<button class="mpr-page-btn" ${mprCurrentPage===1?'disabled':''} onclick="mprGoPage(${mprCurrentPage-1})">&#8249;</button>`;
+                pageHTML += `<button type="button" class="mpr-page-btn" data-page="first" ${mprCurrentPage===1?'disabled':''}>&#171;</button>`;
+                pageHTML += `<button type="button" class="mpr-page-btn" data-page="prev" ${mprCurrentPage===1?'disabled':''}>&#8249;</button>`;
                 const pRange = [];
                 for (let p=Math.max(1,mprCurrentPage-2); p<=Math.min(totalPages,mprCurrentPage+2); p++) pRange.push(p);
-                pRange.forEach(p => { pageHTML += `<button class="mpr-page-btn ${p===mprCurrentPage?'active':''}" onclick="mprGoPage(${p})">${p}</button>`; });
-                pageHTML += `<button class="mpr-page-btn" ${mprCurrentPage===totalPages?'disabled':''} onclick="mprGoPage(${mprCurrentPage+1})">&#8250;</button>`;
-                pageHTML += `<button class="mpr-page-btn" ${mprCurrentPage===totalPages?'disabled':''} onclick="mprGoPage(${totalPages})">&#187;</button>`;
+                pRange.forEach(p => { pageHTML += `<button type="button" class="mpr-page-btn ${p===mprCurrentPage?'active':''}" data-page="${p}">${p}</button>`; });
+                pageHTML += `<button type="button" class="mpr-page-btn" data-page="next" ${mprCurrentPage===totalPages?'disabled':''}>&#8250;</button>`;
+                pageHTML += `<button type="button" class="mpr-page-btn" data-page="last" ${mprCurrentPage===totalPages?'disabled':''}>&#187;</button>`;
                 pageHTML += `<select class="mpr-filter-select" style="margin-left:8px;min-width:80px;" onchange="mprChangePageSize(this.value)">`;
                 [10,20,50,100].forEach(n => { pageHTML += `<option value="${n}" ${n===mprPageSize?'selected':''}>${n} / page</option>`; });
                 pageHTML += `</select></div>`;
@@ -14658,6 +15679,95 @@ async function exportActivityLog() {
             mprExpandedRow = null;
             mprRenderTable();
         }
+
+        // Generic event-delegation helper for report pagination
+        function delegateReportPagination(containerId, options) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-page]');
+                if (!btn || btn.disabled) return;
+                const action = btn.dataset.page;
+                if (!action) return;
+                const totalRecords = options.totalRecords();
+                const pageSize = options.pageSize();
+                const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+                const currentPage = options.currentPage();
+                let target = currentPage;
+                if (action === 'first') target = 1;
+                else if (action === 'prev') target = Math.max(1, currentPage - 1);
+                else if (action === 'next') target = Math.min(totalPages, currentPage + 1);
+                else if (action === 'last') target = totalPages;
+                else {
+                    const n = parseInt(action, 10);
+                    if (!isNaN(n)) target = n;
+                }
+                if (target >= 1 && target <= totalPages) {
+                    options.goToPage(target);
+                }
+            });
+        }
+
+        delegateReportPagination('productReportPagination', {
+            totalRecords: () => parseInt(document.getElementById('productReportPagination')?.dataset.totalRecords || '0', 10),
+            pageSize: () => currentProductReportPageSize,
+            currentPage: () => currentProductReportPage,
+            goToPage: goProductReportPage
+        });
+        delegateReportPagination('paginationControls', {
+            totalRecords: () => currentFilteredData ? currentFilteredData.length : crmData.length,
+            pageSize: () => rowsPerPage,
+            currentPage: () => currentPage,
+            goToPage: goToPage
+        });
+        delegateReportPagination('lkPaginationControls', {
+            totalRecords: () => lkTotalRecords,
+            pageSize: () => lkRowsPerPage,
+            currentPage: () => lkCurrentPage,
+            goToPage: goToLkPage
+        });
+        delegateReportPagination('activityLogPagination', {
+            totalRecords: () => activityLogData.length,
+            pageSize: () => ACTIVITY_PAGE_SIZE,
+            currentPage: () => activityLogPage,
+            goToPage: goToActivityPage
+        });
+        delegateReportPagination('clinicPerformanceReportPanel', {
+            totalRecords: () => cprFilteredData.length,
+            pageSize: () => cprPageSize,
+            currentPage: () => cprCurrentPage,
+            goToPage: cprGoPage
+        });
+        delegateReportPagination('multiProductReportPanel', {
+            totalRecords: () => mprFilteredData.length,
+            pageSize: () => mprPageSize,
+            currentPage: () => mprCurrentPage,
+            goToPage: mprGoPage
+        });
+        delegateReportPagination('mtnRenewalContent', {
+            totalRecords: () => mtnRenewalFilteredData.length,
+            pageSize: () => mtnRenewalRowsPerPage,
+            currentPage: () => mtnRenewalCurrentPage,
+            goToPage: goToMTNRenewalPage
+        });
+        delegateReportPagination('ispChecklistContent', {
+            totalRecords: () => ispChecklistFiltered.length,
+            pageSize: () => ispChecklistRowsPerPage,
+            currentPage: () => ispChecklistCurrentPage,
+            goToPage: (p) => { ispChecklistCurrentPage = p; renderISPChecklistTable(); }
+        });
+        delegateReportPagination('mtnServiceContent', {
+            totalRecords: () => mtnServiceFiltered.length,
+            pageSize: () => mtnServiceRowsPerPage,
+            currentPage: () => mtnServiceCurrentPage,
+            goToPage: (p) => { mtnServiceCurrentPage = p; renderMTNServiceTable(); }
+        });
+        delegateReportPagination('cloudBackupContent', {
+            totalRecords: () => cloudBackupFilteredData.length,
+            pageSize: () => cloudBackupRowsPerPage,
+            currentPage: () => cloudBackupCurrentPage,
+            goToPage: (p) => { cloudBackupCurrentPage = p; renderCloudBackupTable(); }
+        });
 
         function mprExpandRowHTML(d) {
             const r = d.row;
@@ -14801,7 +15911,8 @@ async function exportActivityLog() {
                 { key: 'C', title: 'Refused Renewal', desc: 'Choose not to renew MTN', icon: '&#128683;', color: 'gray' },
                 { key: 'D', title: 'ClaimEX Only', desc: 'Subscribe to ClaimEX only', icon: '&#128196;', color: 'purple' },
                 { key: 'F', title: 'GFLEX Only', desc: 'Subscribe to GFLEX only', icon: '&#128208;', color: 'teal' },
-                { key: 'E', title: 'Switched / Closed', desc: 'Changed provider or closed', icon: '&#10060;', color: 'red' }
+                { key: 'E', title: 'Closed Down', desc: 'Closed down or cancelled', icon: '&#128683;', color: 'red' },
+                { key: 'G', title: 'Changed Provider', desc: 'Changed to another provider', icon: '&#128260;', color: 'rose' }
             ];
             container.innerHTML = cards.map(c => {
                 const activeClass = mtnCatCurrentFilter === c.key ? 'active' : '';
@@ -14809,9 +15920,10 @@ async function exportActivityLog() {
                 return `
                     <div class="mtn-cat-card ${c.color} ${activeClass}" onclick="setMTNCatFilter('${c.key}')">
                         <div class="mtn-cat-card-icon ${c.color}">${c.icon}</div>
-                        <div class="mtn-cat-card-value">${(data[c.key] || 0).toLocaleString()}</div>
-                        <div class="mtn-cat-card-title">${c.title}</div>
-                        <div class="mtn-cat-card-desc">${c.desc}</div>
+                        <div style="min-width:0;flex:1;overflow:hidden;">
+                            <div class="mtn-cat-card-value">${(data[c.key] || 0).toLocaleString()}</div>
+                            <div class="mtn-cat-card-title">${c.title}</div>
+                        </div>
                         <span class="mtn-cat-card-pct ${c.color}">${pct}</span>
                     </div>
                 `;
@@ -15022,7 +16134,7 @@ async function exportActivityLog() {
             let ep = Math.min(totalPages, sp + maxVisible - 1);
             if (ep - sp < maxVisible - 1) sp = Math.max(1, ep - maxVisible + 1);
             for (let i = sp; i <= ep; i++) {
-                pageButtons += `<button class="mtn-cat-page-btn ${i === mtnCatCurrentPage ? 'active' : ''}" onclick="goToMTNCatPage(${i})">${i}</button>`;
+                pageButtons += `<button type="button" class="mtn-cat-page-btn ${i === mtnCatCurrentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
             }
 
             const sortArrow = key => {
@@ -15042,7 +16154,8 @@ async function exportActivityLog() {
                             <option value="C" ${mtnCatCurrentFilter === 'C' ? 'selected' : ''}>Refused Renewal</option>
                             <option value="D" ${mtnCatCurrentFilter === 'D' ? 'selected' : ''}>ClaimEX Only</option>
                             <option value="F" ${mtnCatCurrentFilter === 'F' ? 'selected' : ''}>GFLEX Only</option>
-                            <option value="E" ${mtnCatCurrentFilter === 'E' ? 'selected' : ''}>Switched / Closed</option>
+                            <option value="E" ${mtnCatCurrentFilter === 'E' ? 'selected' : ''}>Closed Down</option>
+                            <option value="G" ${mtnCatCurrentFilter === 'G' ? 'selected' : ''}>Changed Provider</option>
                         </select>
                         <button class="btn btn-outline btn-sm" onclick="exportMTNCatExcel()">Export Excel</button>
                         <button class="btn btn-outline btn-sm" onclick="exportMTNCatPDF()">Export PDF</button>
@@ -15085,12 +16198,12 @@ async function exportActivityLog() {
                 <div class="mtn-cat-pagination">
                     <div class="mtn-cat-page-info">Showing ${total > 0 ? start + 1 : 0} to ${Math.min(start + mtnCatRowsPerPage, total)} of ${total.toLocaleString()} entries</div>
                     <div class="mtn-cat-page-controls">
-                        <button class="mtn-cat-page-btn" onclick="goToMTNCatPage(1)" ${mtnCatCurrentPage === 1 ? 'disabled' : ''}>First</button>
-                        <button class="mtn-cat-page-btn" onclick="goToMTNCatPage(${mtnCatCurrentPage - 1})" ${mtnCatCurrentPage === 1 ? 'disabled' : ''}>Prev</button>
+                        <button type="button" class="mtn-cat-page-btn" data-page="first" ${mtnCatCurrentPage === 1 ? 'disabled' : ''}>First</button>
+                        <button type="button" class="mtn-cat-page-btn" data-page="prev" ${mtnCatCurrentPage === 1 ? 'disabled' : ''}>Prev</button>
                         ${pageButtons}
-                        <button class="mtn-cat-page-btn" onclick="goToMTNCatPage(${mtnCatCurrentPage + 1})" ${mtnCatCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Next</button>
-                        <button class="mtn-cat-page-btn" onclick="goToMTNCatPage(${totalPages})" ${mtnCatCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Last</button>
-                        <select class="mtn-cat-page-size" onchange="setMTNCatPageSize(this.value)">
+                        <button type="button" class="mtn-cat-page-btn" data-page="next" ${mtnCatCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Next</button>
+                        <button type="button" class="mtn-cat-page-btn" data-page="last" ${mtnCatCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Last</button>
+                        <select class="mtn-cat-page-size">
                             <option value="10" ${mtnCatRowsPerPage === 10 ? 'selected' : ''}>10</option>
                             <option value="25" ${mtnCatRowsPerPage === 25 ? 'selected' : ''}>25</option>
                             <option value="50" ${mtnCatRowsPerPage === 50 ? 'selected' : ''}>50</option>
@@ -15102,7 +16215,7 @@ async function exportActivityLog() {
         }
 
         function getMTNCatFilterLabel(cat) {
-            const labels = { X: 'Total Customer Base', A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Switched / Closed' };
+            const labels = { X: 'Total Customer Base', A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down', G: 'Changed Provider' };
             return labels[cat] || 'All Customers';
         }
 
@@ -15117,11 +16230,41 @@ async function exportActivityLog() {
             renderMTNCatTable();
         }
 
+        // Use event delegation for MTN Categorized pagination so clicks survive re-renders
+        const mtnCatDetailContainer = document.getElementById('mtnCategorizedDetailContainer');
+        if (mtnCatDetailContainer) {
+            mtnCatDetailContainer.addEventListener('click', function(e) {
+                const btn = e.target.closest('.mtn-cat-page-btn');
+                if (!btn || btn.disabled) return;
+                const action = btn.dataset.page;
+                if (!action) return;
+                const total = mtnCatFilteredData.length;
+                const totalPages = Math.max(1, Math.ceil(total / mtnCatRowsPerPage));
+                let target = mtnCatCurrentPage;
+                if (action === 'first') target = 1;
+                else if (action === 'prev') target = Math.max(1, mtnCatCurrentPage - 1);
+                else if (action === 'next') target = Math.min(totalPages, mtnCatCurrentPage + 1);
+                else if (action === 'last') target = totalPages;
+                else {
+                    const n = parseInt(action, 10);
+                    if (!isNaN(n)) target = n;
+                }
+                if (target >= 1 && target <= totalPages && target !== mtnCatCurrentPage) {
+                    goToMTNCatPage(target);
+                }
+            });
+            mtnCatDetailContainer.addEventListener('change', function(e) {
+                if (e.target.classList.contains('mtn-cat-page-size')) {
+                    setMTNCatPageSize(e.target.value);
+                }
+            });
+        }
+
         function exportMTNCatExcel() {
             if (mtnCatFilteredData.length === 0) { alert('No data to export.'); return; }
             const rows = mtnCatFilteredData.map(r => {
                 const fmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '';
-                const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Switched / Closed' };
+                const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down', G: 'Changed Provider' };
                 return {
                     'Customer Code': r['ACCT NO'] || '', 'Customer Name': r['CLINIC NAME'] || '',
                     'Product Type': r['PRODUCT TYPE'] || '', 'MTN Status': r._mtnStatus.label,
@@ -15142,7 +16285,7 @@ async function exportActivityLog() {
             if (mtnCatFilteredData.length === 0) { alert('No data to export.'); return; }
 
             const fmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '-';
-            const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Switched / Closed' };
+            const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down', G: 'Changed Provider' };
 
             const data = mtnCatFilteredData.map(r => ({
                 'ACCT NO': r['ACCT NO'] || '',
@@ -15233,7 +16376,7 @@ async function exportActivityLog() {
             const thirtyDays = new Date(today); thirtyDays.setDate(today.getDate() + 30);
             const nowMonth = today.getMonth(); const nowYear = today.getFullYear();
 
-            let total = 0, overdue = 0, upcoming = 0, completed = 0, excluded = 0, paid = 0;
+            let total = 0, overdue = 0, upcoming = 0, renew = 0, excluded = 0, paid = 0;
             let catA = 0, catB = 0, catC = 0, catD = 0, catE = 0;
             const enriched = [];
 
@@ -15265,35 +16408,21 @@ async function exportActivityLog() {
                 const mtnEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']);
                 const mtnStart = parseDateToJs(row['CMS/MHIS MTN START DATE']);
                 const isExcluded = row['EXCLUDE FROM MTN TRACKING'] === true || row['EXCLUDE FROM MTN TRACKING'] === 'true';
-                const completedDate = parseDateToJs(row['COMPLETED DATE']);
+                const renewDate = row['MTN RENEW DATE'];
                 const paidDate = row['MTN PAID DATE'];
                 if (paidDate) paid++;
+                if (renewDate && !paidDate) renew++;
 
                 // Determine renewal status based on category
                 let status = 'Active';
                 let daysLeft = null;
 
-                // Check if completed date falls within the selected month range
-                let isCompletedThisPeriod = false;
-                if (completedDate) {
-                    const cMonth = completedDate.getMonth() + 1;
-                    const cYear = completedDate.getFullYear();
-                    // Check if completed date falls within the from-to month range
-                    const fromCompare = mtnRenewalYearFrom * 100 + mtnRenewalMonthFrom;
-                    const toCompare = mtnRenewalYearTo * 100 + mtnRenewalMonthTo;
-                    const completedCompare = cYear * 100 + cMonth;
-                    if (completedCompare >= fromCompare && completedCompare <= toCompare) {
-                        isCompletedThisPeriod = true;
-                    }
-                }
-
                 if (isExcluded) {
                     status = 'Excluded';
                     excluded++;
-                } else if (isCompletedThisPeriod) {
-                    // Completed takes priority - customer was renewed this period
-                    status = 'Completed';
-                    completed++;
+                } else if (renewDate && !paidDate) {
+                    // Renew takes priority - customer is in the renewal pipeline
+                    status = 'Renew';
                 } else if (cat === 'B') {
                     status = 'Expired but Still Using';
                     daysLeft = mtnEnd ? Math.ceil((mtnEnd - today) / 86400000) : null;
@@ -15302,7 +16431,9 @@ async function exportActivityLog() {
                 } else if (cat === 'D') {
                     status = 'ClaimEX Only';
                 } else if (cat === 'E') {
-                    status = 'Switched / Closed';
+                    status = 'Closed Down';
+                } else if (cat === 'G') {
+                    status = 'Changed Provider';
                 } else if (mtnEnd && mtnEnd >= today && mtnEnd <= thirtyDays) {
                     // Category A but MTN expiring within 30 days
                     status = 'Upcoming Renewal';
@@ -15331,10 +16462,10 @@ async function exportActivityLog() {
                 });
             });
 
-            const completionRate = (overdue + upcoming + completed) > 0
-                ? Math.round((completed / (overdue + upcoming + completed)) * 100) : 0;
+            const completionRate = (overdue + upcoming + renew) > 0
+                ? Math.round((renew / (overdue + upcoming + renew)) * 100) : 0;
 
-            return { enriched, total, overdue, upcoming, completed, excluded, completionRate, paid, nowMonth, nowYear,
+            return { enriched, total, overdue, upcoming, renew, excluded, completionRate, paid, nowMonth, nowYear,
                      catA, catB, catC, catD, catE };
         }
 
@@ -15353,16 +16484,16 @@ async function exportActivityLog() {
                 { key: 'total', label: 'Total Customer Base', value: data.total, icon: '&#128202;', color: 'blue' },
                 { key: 'overdue', label: 'Expired but Still Using', value: data.overdue, icon: '&#9888;&#65039;', color: 'red' },
                 { key: 'upcoming', label: 'Upcoming Renewal', value: data.upcoming, icon: '&#128337;', color: 'orange' },
-                { key: 'completed', label: 'Completed', value: data.completed, icon: '&#9989;', color: 'green' },
+                { key: 'renew', label: 'Renew', value: data.renew, icon: '&#128260;', color: 'teal' },
                 { key: 'paid', label: 'Paid', value: data.paid, icon: '&#128176;', color: 'purple' }
             ];
             container.innerHTML = cards.map(c => {
                 const isActive = (c.key === 'overdue' && mtnRenewalStatusFilter === 'Expired but Still Using') ||
                     (c.key === 'upcoming' && mtnRenewalStatusFilter === 'Upcoming Renewal') ||
-                    (c.key === 'completed' && mtnRenewalStatusFilter === 'Completed') ||
+                    (c.key === 'renew' && mtnRenewalStatusFilter === 'Renew') ||
                     (c.key === 'paid' && mtnRenewalStatusFilter === 'Paid') ||
                     (c.key === 'total' && mtnRenewalStatusFilter === '');
-                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Expired but Still Using' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'completed' ? 'Completed' : c.key === 'paid' ? 'Paid' : ''}')">
+                return `<div class="mtn-renewal-kpi-card ${c.color} ${isActive ? 'active' : ''}" onclick="setMTNRenewalStatusFilter('${c.key === 'total' ? '' : c.key === 'overdue' ? 'Expired but Still Using' : c.key === 'upcoming' ? 'Upcoming Renewal' : c.key === 'renew' ? 'Renew' : c.key === 'paid' ? 'Paid' : ''}')">
                     <div class="kpi-bar"></div>
                     <div class="kpi-icon">${c.icon}</div>
                     <div class="kpi-value">${c.value}</div>
@@ -15542,7 +16673,7 @@ async function exportActivityLog() {
                 return `<span class="mtn-renewal-badge ${cls}">${escapeHtml(type)}</span>`;
             };
             const daysHtml = (days, status) => {
-                if (status === 'Excluded' || status === 'Completed' || days === null) return '-';
+                if (status === 'Excluded' || days === null) return '-';
                 const cls = days < 0 ? 'negative' : days <= 30 ? 'warning' : 'positive';
                 return `<span class="mtn-renewal-days ${cls}">${days < 0 ? days + ' days' : days + ' days'}</span>`;
             };
@@ -15572,7 +16703,7 @@ async function exportActivityLog() {
                         <td>
                             <div class="mtn-renewal-actions">
                                 <button class="mtn-renewal-action-btn renew" onclick="renewMTN(${row.id})" title="Renew MTN">Renew</button>
-                                <button class="mtn-renewal-action-btn complete" onclick="completeMTN(${row.id})" title="Complete Task" ${row._renewalStatus === 'Completed' ? 'disabled' : ''}>Complete</button>
+                                <button class="mtn-renewal-action-btn complete" onclick="completeMTN(${row.id})" title="Mark Renew" ${row._renewalStatus === 'Renew' ? 'disabled' : ''}>Complete</button>
                                 <button class="mtn-renewal-action-btn" onclick="markMTNPaid(${row.id})" title="${row._paidDate ? 'Undo Paid' : 'Mark as Paid'}" style="background:${row._paidDate ? '#dc2626' : '#16a34a'};color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;">${row._paidDate ? '&#10005; Undo Paid' : 'Paid'}</button>
                                 <button class="mtn-renewal-action-btn history" onclick="viewMTNHistory(${row.id})" title="View History">History</button>
                             </div>
@@ -15587,7 +16718,7 @@ async function exportActivityLog() {
             let ep = Math.min(totalPages, sp + maxVisible - 1);
             if (ep - sp < maxVisible - 1) sp = Math.max(1, ep - maxVisible + 1);
             for (let i = sp; i <= ep; i++) {
-                pageButtons += `<button class="mtn-renewal-page-btn ${i === mtnRenewalCurrentPage ? 'active' : ''}" onclick="goToMTNRenewalPage(${i})">${i}</button>`;
+                pageButtons += `<button type="button" class="mtn-renewal-page-btn ${i === mtnRenewalCurrentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
             }
 
             const selectedCount = mtnRenewalSelectedIds.size;
@@ -15674,11 +16805,11 @@ async function exportActivityLog() {
                 <div class="mtn-renewal-pagination">
                     <div class="mtn-renewal-page-info">Showing ${total > 0 ? start + 1 : 0} to ${Math.min(start + mtnRenewalRowsPerPage, total)} of ${total.toLocaleString()} entries</div>
                     <div class="mtn-renewal-page-controls">
-                        <button class="mtn-renewal-page-btn" onclick="goToMTNRenewalPage(1)" ${mtnRenewalCurrentPage === 1 ? 'disabled' : ''}>First</button>
-                        <button class="mtn-renewal-page-btn" onclick="goToMTNRenewalPage(${mtnRenewalCurrentPage - 1})" ${mtnRenewalCurrentPage === 1 ? 'disabled' : ''}>Prev</button>
+                        <button type="button" class="mtn-renewal-page-btn" data-page="first" ${mtnRenewalCurrentPage === 1 ? 'disabled' : ''}>First</button>
+                        <button type="button" class="mtn-renewal-page-btn" data-page="prev" ${mtnRenewalCurrentPage === 1 ? 'disabled' : ''}>Prev</button>
                         ${pageButtons}
-                        <button class="mtn-renewal-page-btn" onclick="goToMTNRenewalPage(${mtnRenewalCurrentPage + 1})" ${mtnRenewalCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Next</button>
-                        <button class="mtn-renewal-page-btn" onclick="goToMTNRenewalPage(${totalPages})" ${mtnRenewalCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Last</button>
+                        <button type="button" class="mtn-renewal-page-btn" data-page="next" ${mtnRenewalCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Next</button>
+                        <button type="button" class="mtn-renewal-page-btn" data-page="last" ${mtnRenewalCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>Last</button>
                         <select class="mtn-cat-page-size" onchange="setMTNRenewalPageSize(this.value)">
                             <option value="10" ${mtnRenewalRowsPerPage === 10 ? 'selected' : ''}>10</option>
                             <option value="25" ${mtnRenewalRowsPerPage === 25 ? 'selected' : ''}>25</option>
@@ -15689,7 +16820,7 @@ async function exportActivityLog() {
                 </div>
                 <div id="mtnRenewalBulkBar" class="mtn-renewal-bulk-bar ${selectedCount > 0 ? 'visible' : ''}">
                     <span class="bulk-count">${selectedCount} selected</span>
-                    <button onclick="bulkCompleteMTN()">Bulk Mark Completed</button>
+                    <button onclick="bulkCompleteMTN()">Bulk Mark Renew</button>
                     <button onclick="bulkAssignStaff()">Bulk Assign Staff</button>
                     <button onclick="bulkSendReminder()" id="mtnBulkSendReminderBtn">Bulk Send Reminder</button>
                 </div>
@@ -15776,11 +16907,11 @@ async function exportActivityLog() {
             const now = new Date();
             row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            // If end date extended to future, mark completed
+            // If end date extended to future, mark as renew
             if (fieldType === 'end') {
                 const today = new Date(); today.setHours(0,0,0,0);
                 if (newDate > today) {
-                    row['COMPLETED DATE'] = mtnRenewalFmt(now);
+                    row['MTN RENEW DATE'] = mtnRenewalFmt(now);
                 }
             }
 
@@ -15825,30 +16956,30 @@ async function exportActivityLog() {
             showMTNExtendModal(rowId, currentEnd);
         }
 
-        // Quick action: Complete
+        // Quick action: Complete (puts the customer into the Renew pipeline)
         async function completeMTN(rowId) {
             const rowIdx = crmData.findIndex(r => r.id === rowId);
             if (rowIdx === -1) return;
             const row = crmData[rowIdx];
             const oldEnd = row['CMS/MHIS MTN END DATE'] || '';
             const now = new Date();
-            row['COMPLETED DATE'] = mtnRenewalFmt(now);
+            row['MTN RENEW DATE'] = mtnRenewalFmt(now);
             row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
             row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
             try {
                 await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
-                logActivity({ module: 'MTN Renewal', action: 'COMPLETE', description: `Marked completed: ${row['ACCT NO']}` });
+                logActivity({ module: 'MTN Renewal', action: 'RENEW', description: `Marked renew: ${row['ACCT NO']}` });
             } catch (err) { console.error(err); showToast('Failed to update', 'error'); return; }
 
             try {
                 await supabaseClient.from('mtn_renewal_audit').insert([{
                     contacts_id: rowId, old_end_date: oldEnd, new_end_date: oldEnd,
-                    edited_by: currentUser?.username || 'Unknown', action: 'COMPLETE', remarks: 'Marked as completed'
+                    edited_by: currentUser?.username || 'Unknown', action: 'RENEW', remarks: 'Marked as renew'
                 }]);
             } catch (err) { console.warn('Audit insert failed:', err.message); }
 
-            showToast('Marked as completed', 'success');
+            showToast('Marked as renew', 'success');
             renderMTNRenewalModule();
         }
 
@@ -15938,7 +17069,7 @@ async function exportActivityLog() {
             row['CMS/MHIS MTN START DATE'] = newStart;
             row['CMS/MHIS MTN END DATE'] = newEnd;
             const now = new Date();
-            row['COMPLETED DATE'] = mtnRenewalFmt(now);
+            row['MTN RENEW DATE'] = mtnRenewalFmt(now);
             row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
             row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
@@ -15993,7 +17124,7 @@ async function exportActivityLog() {
 
             row['CMS/MHIS MTN END DATE'] = newEnd;
             const now = new Date();
-            row['COMPLETED DATE'] = mtnRenewalFmt(now);
+            row['MTN RENEW DATE'] = mtnRenewalFmt(now);
             row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
             row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
@@ -16072,8 +17203,8 @@ async function exportActivityLog() {
             // Restore old dates back into the contact row
             if (oldStart) row['CMS/MHIS MTN START DATE'] = oldStart;
             if (oldEnd) row['CMS/MHIS MTN END DATE'] = oldEnd;
-            // Clear COMPLETED DATE since we are reverting
-            row['COMPLETED DATE'] = '';
+            // Clear MTN RENEW DATE since we are reverting
+            row['MTN RENEW DATE'] = '';
             const now = new Date();
             row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
             row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -16145,26 +17276,26 @@ async function exportActivityLog() {
         }
 
         async function bulkCompleteMTN() {
-            if (!confirm('Mark all selected as completed?')) return;
+            if (!confirm('Mark all selected as renew?')) return;
             let count = 0;
             for (const id of mtnRenewalSelectedIds) {
                 const rowIdx = crmData.findIndex(r => r.id === id);
                 if (rowIdx === -1) continue;
                 const row = crmData[rowIdx];
                 const now = new Date();
-                row['COMPLETED DATE'] = mtnRenewalFmt(now);
+                row['MTN RENEW DATE'] = mtnRenewalFmt(now);
                 row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
                 row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
                 try {
                     await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
-                    const { error: bulkCompleteAuditErr } = await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, edited_by: currentUser?.username || 'Unknown', action: 'BULK_COMPLETE', remarks: 'Bulk marked as completed' }]);
-                    if (bulkCompleteAuditErr) console.warn('Bulk complete audit failed:', bulkCompleteAuditErr.message);
+                    const { error: bulkCompleteAuditErr } = await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, edited_by: currentUser?.username || 'Unknown', action: 'BULK_RENEW', remarks: 'Bulk marked as renew' }]);
+                    if (bulkCompleteAuditErr) console.warn('Bulk renew audit failed:', bulkCompleteAuditErr.message);
                     count++;
-                } catch (err) { console.error('Bulk complete error:', err); }
+                } catch (err) { console.error('Bulk renew error:', err); }
             }
             mtnRenewalSelectedIds.clear();
-            logActivity({ module: 'MTN Renewal', action: 'BULK_COMPLETE', description: `Bulk completed ${count} customers` });
-            showToast(`${count} customers marked as completed`, 'success');
+            logActivity({ module: 'MTN Renewal', action: 'BULK_RENEW', description: `Bulk renew ${count} customers` });
+            showToast(`${count} customers marked as renew`, 'success');
             renderMTNRenewalModule();
         }
 
@@ -16218,6 +17349,7 @@ async function exportActivityLog() {
         let mtnServiceStatusFilter = '';
         let mtnServiceCurrentPage = 1;
         let mtnServiceRowsPerPage = 25;
+        let mtnServiceEInvoicePriority = false;
 
         const ISP_ITEMS = ['E-Invoice', 'Cloud Backup', 'Hybrid', 'MyCard', 'Printer & Label', 'Kiosk', 'Customization', 'WhatsApp', 'Inventory Portal', 'Patient Apps', 'CMS', 'MHIS', 'XP Pen', 'Server', 'Desktop'];
 
@@ -16496,9 +17628,9 @@ async function exportActivityLog() {
             html += `<div class="pagination-container" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:13px;color:#6b7280;">Showing ${ispChecklistFiltered.length} records</div>
                 <div style="display:flex;gap:6px;align-items:center;">
-                    <button onclick="ispChecklistCurrentPage=Math.max(1,ispChecklistCurrentPage-1);renderISPChecklistTable();" ${ispChecklistCurrentPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Prev</button>
+                    <button type="button" class="isp-checklist-page-btn" data-page="prev" ${ispChecklistCurrentPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Prev</button>
                     <span style="font-size:13px;color:#374151;">Page ${ispChecklistCurrentPage} of ${totalPages}</span>
-                    <button onclick="ispChecklistCurrentPage=Math.min(${totalPages},ispChecklistCurrentPage+1);renderISPChecklistTable();" ${ispChecklistCurrentPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Next</button>
+                    <button type="button" class="isp-checklist-page-btn" data-page="next" ${ispChecklistCurrentPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Next</button>
                 </div>
                 <select onchange="ispChecklistRowsPerPage=parseInt(this.value);ispChecklistCurrentPage=1;renderISPChecklistTable();" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
                     <option value="10" ${ispChecklistRowsPerPage===10?'selected':''}>10 / page</option>
@@ -16933,6 +18065,9 @@ async function exportActivityLog() {
                                 <option value="active">Active Customers</option>
                                 <option value="expired">Expired Customers (excl. GFLEX/EM2)</option>
                                 <option value="all">All Customers</option>
+                                <optgroup label="── By Product ──">
+                                    ${PRODUCT_CATEGORIES.map(cat => `<option value="product_${cat.key}">Product: ${cat.label}</option>`).join('')}
+                                </optgroup>
                             </select>
                             <span id="sendReminderCount" class="send-reminder-count manual">0 recipients</span>
                         </div>
@@ -16998,6 +18133,16 @@ async function exportActivityLog() {
                     ['PRODUCT TYPE']: '-',
                     ['EMAIL ID MAIN']: email
                 }));
+            } else if (filterType.startsWith('product_')) {
+                // Filter by product category
+                const catKey = filterType.replace('product_', '');
+                const productCat = PRODUCT_CATEGORIES.find(c => c.key === catKey);
+                sendReminderRecipients = productCat
+                    ? crmData.filter(row => {
+                        const hasEmail = row['EMAIL ID MAIN'] && String(row['EMAIL ID MAIN']).includes('@');
+                        return hasEmail && customerBelongsToCategory(row, productCat);
+                    })
+                    : [];
             } else {
                 sendReminderRecipients = crmData.filter(row => {
                     const cat = getMTNCategory(row);
@@ -17392,6 +18537,7 @@ async function exportActivityLog() {
             // Reset filters to prevent stale browser-cached input values
             mtnServiceSearch = '';
             mtnServiceStatusFilter = '';
+            mtnServiceEInvoicePriority = false;
             mtnServiceCurrentPage = 1;
             loadMTNServiceData().then(() => {
                 renderMTNServiceKPIs();
@@ -17469,6 +18615,12 @@ async function exportActivityLog() {
             if (mtnServiceStatusFilter) {
                 merged = merged.filter(d => d.status === mtnServiceStatusFilter);
             }
+            if (mtnServiceEInvoicePriority) {
+                merged = merged.filter(d => {
+                    const c = d.contact;
+                    return !!(c['E-INVOICE STATUS'] || c['EINV PO RCVD DATE'] || c['E-INV PO RCVD DATE']);
+                });
+            }
             if (mtnServiceSearch) {
                 const q = mtnServiceSearch.toLowerCase();
                 merged = merged.filter(d => {
@@ -17534,6 +18686,10 @@ async function exportActivityLog() {
                     <option value="postponed" ${mtnServiceStatusFilter==='postponed'?'selected':''}>Postponed</option>
                     <option value="rejected" ${mtnServiceStatusFilter==='rejected'?'selected':''}>Rejected</option>
                 </select>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#374151;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;background:#fff;user-select:none;">
+                    <input type="checkbox" id="mtnServiceEInvoicePriority" ${mtnServiceEInvoicePriority?'checked':''} onchange="onMTNServiceEInvoicePriorityToggle()" style="cursor:pointer;">
+                    E-Invoice Priority View
+                </label>
                 <button class="btn btn-outline" onclick="renderMTNServiceModule()" style="padding:8px 14px;">Refresh</button>
             </div>
             <div class="table-container" style="overflow-x:auto;">
@@ -17547,6 +18703,7 @@ async function exportActivityLog() {
                             <th>Completed MTN</th>
                             <th>Balance</th>
                             <th>Status</th>
+                            <th style="text-align:center;">E-Invoice</th>
                             <th>Service Type</th>
                             <th>Service By</th>
                             <th>Notes</th>
@@ -17556,7 +18713,7 @@ async function exportActivityLog() {
                     <tbody>`;
 
             if (pageData.length === 0) {
-                html += `<tr><td colspan="11" style="text-align:center;padding:40px;color:#64748b;">No customers found.</td></tr>`;
+                html += `<tr><td colspan="12" style="text-align:center;padding:40px;color:#64748b;">No customers found.</td></tr>`;
             } else {
                 pageData.forEach(d => {
                     const c = d.contact;
@@ -17567,6 +18724,14 @@ async function exportActivityLog() {
                     const canDelete = hasPermission('mtnService', 'delete');
                     const actions = `<button class="btn btn-sm btn-primary" onclick="openMTNServiceUpdateModal(${d.contact_id})" style="padding:4px 10px;font-size:12px;margin-right:4px;">Update</button>${canDelete ? `<button class="btn btn-sm" onclick="deleteMTNServiceTracking(${d.id})" style="padding:4px 10px;font-size:12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;">Remove</button>` : ''}`;
 
+                    const einvStatus = String(c['E-INVOICE STATUS'] || '').trim();
+                    let eInvoiceCell = '<span style="font-size:16px;" title="No E-Invoice Status">-</span>';
+                    if (einvStatus.toLowerCase() === 'active') {
+                        eInvoiceCell = '<span style="font-size:16px;" title="E-Invoice Active">&#9989;</span>';
+                    } else if (einvStatus.toLowerCase() === 'inactive') {
+                        eInvoiceCell = '<span style="font-size:16px;" title="E-Invoice Inactive">&#10060;</span>';
+                    }
+
                     html += `<tr>
                         <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${d.contact_id}')">${escapeHtml(c['ACCT NO'] || '')}</span></td>
                         <td><span style="color:#2563eb;cursor:pointer;font-weight:500;" onclick="viewRowDetails('${d.contact_id}')">${escapeHtml(c['CLINIC NAME'] || '')}</span></td>
@@ -17575,6 +18740,7 @@ async function exportActivityLog() {
                         <td>${d.mtn_completed_count || 0}</td>
                         <td>${d._balance || 0}</td>
                         <td>${statusBadge}</td>
+                        <td style="text-align:center;">${eInvoiceCell}</td>
                         <td>${escapeHtml(d.service_type || '-')}</td>
                         <td>${escapeHtml(d.service_by || '-')}</td>
                         <td style="text-align:center;">${d.remark ? `<span style="cursor:pointer;font-size:18px;color:#2563eb;" onclick="viewMTNServiceRemarks(${d.contact_id})" title="View Remarks">&#128196;</span>` : ''}</td>
@@ -17587,9 +18753,9 @@ async function exportActivityLog() {
             html += `<div class="pagination-container" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:13px;color:#6b7280;">Showing ${mtnServiceFiltered.length} records</div>
                 <div style="display:flex;gap:6px;align-items:center;">
-                    <button onclick="mtnServiceCurrentPage=Math.max(1,mtnServiceCurrentPage-1);renderMTNServiceTable();" ${mtnServiceCurrentPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Prev</button>
+                    <button type="button" class="mtn-service-page-btn" data-page="prev" ${mtnServiceCurrentPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Prev</button>
                     <span style="font-size:13px;color:#374151;">Page ${mtnServiceCurrentPage} of ${totalPages}</span>
-                    <button onclick="mtnServiceCurrentPage=Math.min(${totalPages},mtnServiceCurrentPage+1);renderMTNServiceTable();" ${mtnServiceCurrentPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Next</button>
+                    <button type="button" class="mtn-service-page-btn" data-page="next" ${mtnServiceCurrentPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Next</button>
                 </div>
                 <select onchange="mtnServiceRowsPerPage=parseInt(this.value);mtnServiceCurrentPage=1;renderMTNServiceTable();" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
                     <option value="10" ${mtnServiceRowsPerPage===10?'selected':''}>10 / page</option>
@@ -17618,6 +18784,12 @@ async function exportActivityLog() {
             mtnServiceStatusFilter = document.getElementById('mtnServiceStatusFilter')?.value || '';
             mtnServiceCurrentPage = 1;
             renderMTNServiceKPIs();
+            filterMTNServiceData();
+        }
+
+        function onMTNServiceEInvoicePriorityToggle() {
+            mtnServiceEInvoicePriority = document.getElementById('mtnServiceEInvoicePriority')?.checked || false;
+            mtnServiceCurrentPage = 1;
             filterMTNServiceData();
         }
 
@@ -17953,6 +19125,7 @@ async function exportActivityLog() {
                 'COMPLETED MTN': d.mtn_completed_count || 0,
                 'BALANCE': d._balance || 0,
                 'STATUS': d.status || '',
+                'E-INVOICE': !!(d.contact['E-INVOICE STATUS'] || d.contact['EINV PO RCVD DATE'] || d.contact['E-INV PO RCVD DATE']) ? 'Yes' : 'No',
                 'SERVICE TYPE': d.service_type || '',
                 'SERVICE BY': d.service_by || '',
                 'REMARK': d.remark || '',
@@ -18390,9 +19563,9 @@ async function exportActivityLog() {
             <div class="pagination-container" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:13px;color:#6b7280;">Showing ${cloudBackupFilteredData.length} records</div>
                 <div style="display:flex;gap:6px;align-items:center;">
-                    <button onclick="cloudBackupCurrentPage = Math.max(1, cloudBackupCurrentPage - 1); renderCloudBackupTable();" ${cloudBackupCurrentPage <= 1 ? 'disabled' : ''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Prev</button>
+                    <button type="button" class="cloud-backup-page-btn" data-page="prev" ${cloudBackupCurrentPage <= 1 ? 'disabled' : ''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Prev</button>
                     <span style="font-size:13px;color:#374151;">Page ${cloudBackupCurrentPage} of ${totalPages}</span>
-                    <button onclick="cloudBackupCurrentPage = Math.min(${totalPages}, cloudBackupCurrentPage + 1); renderCloudBackupTable();" ${cloudBackupCurrentPage >= totalPages ? 'disabled' : ''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Next</button>
+                    <button type="button" class="cloud-backup-page-btn" data-page="next" ${cloudBackupCurrentPage >= totalPages ? 'disabled' : ''} style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">Next</button>
                 </div>
                 <select onchange="cloudBackupRowsPerPage = parseInt(this.value); cloudBackupCurrentPage = 1; renderCloudBackupTable();" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
                     <option value="10" ${cloudBackupRowsPerPage === 10 ? 'selected' : ''}>10 / page</option>
