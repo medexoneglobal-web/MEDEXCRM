@@ -189,6 +189,7 @@ async function ensureStarted() {
     client = new wweb.Client({
         authStrategy: new wweb.LocalAuth({ dataPath: SESSION_PATH }),
         puppeteer: {
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
         }
