@@ -4740,6 +4740,22 @@
         .send-reminder-cancel-btn:hover { background: #f9fafb; }
         .send-reminder-progress { font-size: 13px; color: #6b7280; margin-top: 8px; }
         .send-reminder-no-email { color: #ef4444; font-size: 12px; font-style: italic; }
+        .send-reminder-count.search { background: #e0f2fe; color: #0369a1; }
+        .send-reminder-search-wrap { position: relative; }
+        .send-reminder-search-results { position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 240px; overflow-y: auto; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); z-index: 10; }
+        .send-reminder-search-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f3f4f6; display: block; }
+        .send-reminder-search-item:hover { background: #f0f9ff; }
+        .send-reminder-search-item.already-added { opacity: 0.55; cursor: default; }
+        .send-reminder-search-item-main { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: #1f2937; }
+        .send-reminder-search-item-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+        .send-reminder-search-item-added { color: #16a34a; font-weight: 600; }
+        .send-reminder-search-empty { padding: 14px; text-align: center; color: #9ca3af; font-size: 13px; }
+        .send-reminder-search-more { padding: 8px 12px; text-align: center; color: #9ca3af; font-size: 12px; background: #f9fafb; }
+        .send-reminder-selected-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .send-reminder-chip { display: inline-flex; align-items: center; gap: 4px; background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .send-reminder-chip-remove { cursor: pointer; color: #6366f1; font-size: 15px; line-height: 1; padding: 0 2px; }
+        .send-reminder-chip-remove:hover { color: #dc2626; }
+        .send-reminder-chips-empty { font-size: 12px; color: #9ca3af; }
 
         .mtn-renewal-content { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; }
 
@@ -18023,6 +18039,8 @@ async function exportActivityLog() {
 
         let sendReminderRecipients = []; // Current recipient list
         let sendReminderFilterType = 'manual'; // 'active', 'expired', 'all', 'manual'
+        let sendReminderSearchSelection = []; // Customers picked via search & select mode
+        let sendReminderSearchTimer = null; // Debounce timer for customer search
 
         function openSendReminderModal(preselectedRows) {
             // Check permission
@@ -18062,6 +18080,7 @@ async function exportActivityLog() {
                             <label style="font-size:13px;font-weight:600;color:#374151;">Recipients:</label>
                             <select id="sendReminderFilter" onchange="updateSendReminderRecipients()" ${preselectedRows ? 'disabled' : ''}>
                                 <option value="manual">Manual Email Addresses</option>
+                                <option value="search">Search &amp; Select Customers</option>
                                 <option value="active">Active Customers</option>
                                 <option value="expired">Expired Customers (excl. GFLEX/EM2)</option>
                                 <option value="all">All Customers</option>
@@ -18075,6 +18094,15 @@ async function exportActivityLog() {
                         <div class="send-reminder-field" id="manualEmailField" style="display:block;">
                             <label>Manual Email Addresses (one per line or comma-separated)</label>
                             <textarea id="sendReminderManualEmails" placeholder="email1@example.com\nemail2@example.com\nemail3@example.com" rows="4" oninput="updateSendReminderRecipients()"></textarea>
+                        </div>
+
+                        <div class="send-reminder-field" id="customerSearchField" style="display:none;">
+                            <label>Search &amp; Select Customers <span style="font-weight:normal;color:#9ca3af;font-size:12px;">(type at least 2 characters, click a result to add — you can add multiple)</span></label>
+                            <div class="send-reminder-search-wrap">
+                                <input type="text" id="sendReminderCustomerSearch" placeholder="Search by clinic name, ACCT NO, contact name, or email..." oninput="debounceSendReminderSearch()" onblur="setTimeout(hideSendReminderSearchResults, 150)" autocomplete="off">
+                                <div id="sendReminderSearchResults" class="send-reminder-search-results" style="display:none;"></div>
+                            </div>
+                            <div id="sendReminderSelectedChips" class="send-reminder-selected-chips"></div>
                         </div>
 
                         <div class="send-reminder-preview">
@@ -18097,6 +18125,7 @@ async function exportActivityLog() {
             document.body.appendChild(modal);
 
             // Initialize recipients
+            sendReminderSearchSelection = [];
             if (preselectedRows && preselectedRows.length > 0) {
                 sendReminderRecipients = preselectedRows.filter(r => r['EMAIL ID MAIN'] && String(r['EMAIL ID MAIN']).includes('@'));
                 const noEmail = preselectedRows.length - sendReminderRecipients.length;
@@ -18123,6 +18152,10 @@ async function exportActivityLog() {
             const manualField = document.getElementById('manualEmailField');
             if (manualField) manualField.style.display = filterType === 'manual' ? 'block' : 'none';
 
+            // Show/hide customer search & select field
+            const searchField = document.getElementById('customerSearchField');
+            if (searchField) searchField.style.display = filterType === 'search' ? 'block' : 'none';
+
             if (filterType === 'manual') {
                 // Parse manual email addresses
                 const raw = document.getElementById('sendReminderManualEmails')?.value || '';
@@ -18133,6 +18166,10 @@ async function exportActivityLog() {
                     ['PRODUCT TYPE']: '-',
                     ['EMAIL ID MAIN']: email
                 }));
+            } else if (filterType === 'search') {
+                // Customers individually picked via search & select (valid emails only)
+                sendReminderRecipients = sendReminderSearchSelection.filter(r => r['EMAIL ID MAIN'] && String(r['EMAIL ID MAIN']).includes('@'));
+                renderSendReminderSearchSelection();
             } else if (filterType.startsWith('product_')) {
                 // Filter by product category
                 const catKey = filterType.replace('product_', '');
@@ -18176,7 +18213,7 @@ async function exportActivityLog() {
             if (!tbody || !countEl) return;
 
             const filterType = sendReminderFilterType;
-            countEl.className = `send-reminder-count ${filterType === 'active' ? 'active' : filterType === 'expired' ? 'expired' : filterType === 'manual' ? 'manual' : 'all'}`;
+            countEl.className = `send-reminder-count ${filterType === 'active' ? 'active' : filterType === 'expired' ? 'expired' : filterType === 'manual' ? 'manual' : filterType === 'search' ? 'search' : 'all'}`;
             countEl.textContent = `${sendReminderRecipients.length} recipients`;
 
             // Render preview (limit to first 100 rows for performance)
@@ -18194,6 +18231,91 @@ async function exportActivityLog() {
             if (sendReminderRecipients.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:24px;">No recipients found with valid email addresses</td></tr>';
             }
+        }
+
+        function debounceSendReminderSearch() {
+            if (sendReminderSearchTimer) clearTimeout(sendReminderSearchTimer);
+            sendReminderSearchTimer = setTimeout(renderSendReminderSearchResults, 250);
+        }
+
+        function hideSendReminderSearchResults() {
+            const box = document.getElementById('sendReminderSearchResults');
+            if (box) box.style.display = 'none';
+        }
+
+        function renderSendReminderSearchResults() {
+            const box = document.getElementById('sendReminderSearchResults');
+            if (!box) return;
+            const q = (document.getElementById('sendReminderCustomerSearch')?.value || '').trim().toLowerCase();
+            if (q.length < 2) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+            const matches = crmData.filter(row => {
+                const acct = String(row['ACCT NO'] || '').toLowerCase();
+                const clinic = String(row['CLINIC NAME'] || '').toLowerCase();
+                const contact = String(row['Contact Name'] || '').toLowerCase();
+                const email = String(row['EMAIL ID MAIN'] || '').toLowerCase();
+                return acct.includes(q) || clinic.includes(q) || contact.includes(q) || email.includes(q);
+            });
+
+            const MAX_RESULTS = 20;
+            const shown = matches.slice(0, MAX_RESULTS);
+            const selectedAccts = new Set(sendReminderSearchSelection.map(r => String(r['ACCT NO'] || '')));
+
+            if (shown.length === 0) {
+                box.innerHTML = '<div class="send-reminder-search-empty">No customers found</div>';
+            } else {
+                box.innerHTML = shown.map(r => {
+                    const acct = String(r['ACCT NO'] || '');
+                    const hasEmail = r['EMAIL ID MAIN'] && String(r['EMAIL ID MAIN']).includes('@');
+                    const alreadyAdded = selectedAccts.has(acct);
+                    const jsAcct = acct.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    return `<div class="send-reminder-search-item${alreadyAdded ? ' already-added' : ''}" ${(!hasEmail || alreadyAdded) ? '' : `onmousedown="addSendReminderSearchCustomer('${jsAcct}')"`}>
+                        <div class="send-reminder-search-item-main">
+                            <strong>${escapeHtml(r['CLINIC NAME'] || '-')}</strong>
+                            <span>${escapeHtml(acct)}</span>
+                        </div>
+                        <div class="send-reminder-search-item-sub">${escapeHtml(r['PRODUCT TYPE'] || '-')} · ${hasEmail ? escapeHtml(String(r['EMAIL ID MAIN'])) : '<span class="send-reminder-no-email">No email — cannot add</span>'}${alreadyAdded ? ' · <span class="send-reminder-search-item-added">✓ Added</span>' : ''}</div>
+                    </div>`;
+                }).join('') + (matches.length > MAX_RESULTS ? `<div class="send-reminder-search-more">... and ${matches.length - MAX_RESULTS} more — keep typing to narrow down</div>` : '');
+            }
+            box.style.display = 'block';
+        }
+
+        function addSendReminderSearchCustomer(acctNo) {
+            const row = crmData.find(r => String(r['ACCT NO']) === String(acctNo));
+            if (!row) return;
+            if (sendReminderSearchSelection.some(r => String(r['ACCT NO']) === String(acctNo))) return;
+            if (!row['EMAIL ID MAIN'] || !String(row['EMAIL ID MAIN']).includes('@')) return;
+            sendReminderSearchSelection.push(row);
+            renderSendReminderSearchSelection();
+            if (sendReminderFilterType === 'search') {
+                sendReminderRecipients = [...sendReminderSearchSelection];
+                renderSendReminderPreview();
+            }
+            renderSendReminderSearchResults();
+        }
+
+        function removeSendReminderSearchCustomer(acctNo) {
+            sendReminderSearchSelection = sendReminderSearchSelection.filter(r => String(r['ACCT NO']) !== String(acctNo));
+            renderSendReminderSearchSelection();
+            if (sendReminderFilterType === 'search') {
+                sendReminderRecipients = [...sendReminderSearchSelection];
+                renderSendReminderPreview();
+            }
+            renderSendReminderSearchResults();
+        }
+
+        function renderSendReminderSearchSelection() {
+            const wrap = document.getElementById('sendReminderSelectedChips');
+            if (!wrap) return;
+            if (sendReminderSearchSelection.length === 0) {
+                wrap.innerHTML = '<span class="send-reminder-chips-empty">No customers selected yet — search above and click a result to add</span>';
+                return;
+            }
+            wrap.innerHTML = sendReminderSearchSelection.map(r => {
+                const jsAcct = String(r['ACCT NO'] || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return `<span class="send-reminder-chip">${escapeHtml(r['CLINIC NAME'] || r['ACCT NO'] || 'Customer')}<span class="send-reminder-chip-remove" onclick="removeSendReminderSearchCustomer('${jsAcct}')" title="Remove">&times;</span></span>`;
+            }).join('');
         }
 
         function updateSendReminderAttachmentPreview() {
