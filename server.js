@@ -4,6 +4,11 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(express.json({ limit: '12mb' }));
+
+// WhatsApp module API (whatsapp-web.js — requires the always-on backend host)
+app.use('/api/whatsapp', require('./routes/whatsapp'));
+
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 

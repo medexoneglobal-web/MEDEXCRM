@@ -4757,6 +4757,70 @@
         .send-reminder-chip-remove:hover { color: #dc2626; }
         .send-reminder-chips-empty { font-size: 12px; color: #9ca3af; }
 
+        /* ===== WHATSAPP MODULE ===== */
+        .wa-card { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; margin-bottom: 20px; }
+        .wa-card h3 { margin: 0 0 4px; font-size: 16px; color: #1f2937; }
+        .wa-card-sub { margin: 0 0 16px; color: #64748b; font-size: 13px; }
+        .wa-conn-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+        .wa-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .wa-badge.disconnected { background: #fee2e2; color: #dc2626; }
+        .wa-badge.qr, .wa-badge.connecting { background: #fef3c7; color: #92400e; }
+        .wa-badge.ready { background: #d1fae5; color: #065f46; }
+        .wa-sender-line { font-size: 13px; color: #374151; margin-bottom: 12px; }
+        .wa-sender-line strong { color: #1f2937; }
+        .wa-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .wa-btn { padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid transparent; font-family: inherit; }
+        .wa-btn-primary { background: #16a34a; color: #fff; }
+        .wa-btn-primary:hover { background: #15803d; }
+        .wa-btn-outline { background: #fff; color: #374151; border-color: #d1d5db; }
+        .wa-btn-outline:hover { background: #f9fafb; }
+        .wa-btn-danger { background: #fff; color: #dc2626; border-color: #fecaca; }
+        .wa-btn-danger:hover { background: #fef2f2; }
+        .wa-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .wa-note { margin-top: 12px; font-size: 13px; color: #6b7280; }
+        .wa-note.error { color: #dc2626; }
+        .wa-config-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px dashed #e5e7eb; }
+        .wa-config-row input { flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: inherit; }
+        .wa-qr-box { text-align: center; padding: 10px 0; min-height: 120px; display: flex; align-items: center; justify-content: center; }
+        .wa-qr-box img { width: 280px; height: 280px; border: 1px solid #e5e7eb; border-radius: 12px; }
+        .wa-validation-bar { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+        .wa-validation-bar .v { font-weight: 600; }
+        .wa-v-sel { color: #1f2937; } .wa-v-ok { color: #16a34a; } .wa-v-bad { color: #dc2626; } .wa-v-dup { color: #d97706; } .wa-v-none { color: #6b7280; }
+        .wa-rcpt-status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .wa-rcpt-status.ok { background: #dbeafe; color: #1d4ed8; }
+        .wa-rcpt-status.queued { background: #f3f4f6; color: #4b5563; }
+        .wa-rcpt-status.sent { background: #dbeafe; color: #1d4ed8; }
+        .wa-rcpt-status.delivered { background: #ccfbf1; color: #0f766e; }
+        .wa-rcpt-status.read { background: #d1fae5; color: #065f46; }
+        .wa-rcpt-status.failed, .wa-rcpt-status.invalid { background: #fee2e2; color: #dc2626; }
+        .wa-rcpt-status.duplicate { background: #fef3c7; color: #92400e; }
+        .wa-rcpt-status.notel { background: #f3f4f6; color: #4b5563; }
+        .wa-rcpt-status.skipped { background: #e5e7eb; color: #6b7280; }
+        .wa-remove-btn { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+        .wa-remove-btn:hover { color: #dc2626; background: #fef2f2; }
+        .wa-search-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .wa-search-table th { padding: 8px 10px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; font-size: 12px; position: sticky; top: 0; background: #f8fafc; }
+        .wa-search-table td { padding: 6px 10px; border-bottom: 1px solid #f3f4f6; color: #4b5563; }
+        .wa-search-table tr:hover td { background: #f9fafb; }
+        .wa-search-wrap { border: 1px solid #e5e7eb; border-radius: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 8px; }
+        .wa-search-hint { padding: 14px; text-align: center; color: #9ca3af; font-size: 13px; }
+        .wa-history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .wa-history-table th { background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
+        .wa-history-table td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; color: #4b5563; vertical-align: top; }
+        .wa-history-table tr.blast-row { cursor: pointer; }
+        .wa-history-table tr.blast-row:hover td { background: #f9fafb; }
+        .wa-history-table tr.wa-history-detail:hover td { background: #fafafa; }
+        .wa-blast-status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .wa-blast-status.sending { background: #dbeafe; color: #1d4ed8; }
+        .wa-blast-status.completed { background: #d1fae5; color: #065f46; }
+        .wa-blast-status.failed { background: #fee2e2; color: #dc2626; }
+        .wa-blast-status.cancelled { background: #e5e7eb; color: #6b7280; }
+        .wa-expand-icon { display: inline-block; width: 16px; color: #9ca3af; font-size: 11px; }
+        .wa-conn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+        .wa-detail-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 6px 0 10px; }
+        .wa-detail-table th { background: #f1f5f9; padding: 6px 10px; text-align: left; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; }
+        .wa-detail-table td { padding: 5px 10px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+
         .mtn-renewal-content { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; }
 
         /* ===== CLOUD BACKUP TRACKING ===== */
@@ -5011,6 +5075,9 @@
                 <a class="nav-item" data-section="activityLog" onclick="showSection('activityLog')">
                     <span class="nav-icon">📝</span> Activity Log
                 </a>
+                <a class="nav-item" data-section="whatsapp" onclick="showSection('whatsapp'); startWaPolling(); loadWAHistory(true);">
+                    <span class="nav-icon">💬</span> WhatsApp
+                </a>
             </nav>
             <div class="sidebar-section-label">SETTINGS</div>
             <nav class="sidebar-nav">
@@ -5074,6 +5141,7 @@
                                 <button class="quick-action-btn" onclick="showNewCustomerModal()"><span class="qa-icon">➕</span> Add Customer</button>
                                 <button class="quick-action-btn" onclick="showSection('licenseKey')"><span class="qa-icon">🔑</span> Add License</button>
                                 <button class="quick-action-btn" onclick="openSendReminderModal()" id="quickActionSendReminder"><span class="qa-icon">📧</span> Send Reminder</button>
+                                                                <button class="quick-action-btn" onclick="openSendWhatsAppModal()" id="quickActionSendWhatsApp"><span class="qa-icon">💬</span> Send WhatsApp</button>
                                 <button class="quick-action-btn" onclick="showSection('reports')"><span class="qa-icon">📊</span> View Reports</button>
                             </div>
                         </div>
@@ -5708,6 +5776,50 @@
         </div>
     </div>
 </div>
+
+            <!-- WhatsApp Section -->
+            <div id="whatsapp" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>WhatsApp</h2>
+                        <p style="margin:4px 0 0;color:#64748b;font-size:14px;">Connect a WhatsApp account, send messages to customers, and track delivery history</p>
+                    </div>
+                </div>
+                <div class="wa-conn-grid">
+                    <div class="wa-card">
+                        <div class="wa-conn-top">
+                            <h3>WhatsApp Connection</h3>
+                            <span id="waStatusBadge" class="wa-badge disconnected">Disconnected</span>
+                        </div>
+                        <div id="waSenderLine" class="wa-sender-line" style="display:none;"></div>
+                        <div class="wa-btn-row">
+                            <button id="waConnectBtn" class="wa-btn wa-btn-primary" onclick="waConnect()">Connect WhatsApp</button>
+                            <button id="waReconnectBtn" class="wa-btn wa-btn-outline" onclick="waReconnect()" disabled>Reconnect</button>
+                            <button id="waDisconnectBtn" class="wa-btn wa-btn-danger" onclick="waDisconnect()" disabled>Disconnect</button>
+                        </div>
+                        <div id="waConnNote" class="wa-note"></div>
+                        <div class="wa-config-row">
+                            <input type="text" id="waApiBaseInput" placeholder="Backend URL, e.g. https://your-app.onrender.com">
+                            <input type="password" id="waApiSecretInput" placeholder="API secret (optional)" autocomplete="new-password">
+                            <button class="wa-btn wa-btn-outline" onclick="saveWAConfig()">Save</button>
+                        </div>
+                    </div>
+                    <div class="wa-card">
+                        <h3>Send WhatsApp</h3>
+                        <p class="wa-card-sub">Send a message or announcement to customers — manual numbers, searched customers, or filtered groups (active, expired, by product).</p>
+                        <div class="wa-btn-row">
+                            <button class="wa-btn wa-btn-primary" onclick="openSendWhatsAppModal()">Open Send WhatsApp</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="wa-card">
+                    <div class="wa-conn-top">
+                        <h3>WhatsApp History</h3>
+                        <button class="wa-btn wa-btn-outline" onclick="loadWAHistory(true)">Refresh</button>
+                    </div>
+                    <div id="waHistoryBody"><div class="wa-search-hint">Open this section again or click Refresh to load history.</div></div>
+                </div>
+            </div>
 
             <!-- Tasks Section -->
             <div id="tasks" class="content-section">
@@ -18486,6 +18598,754 @@ async function exportActivityLog() {
                     renderMTNRenewalTable();
                 }
             }
+        }
+
+        // ==================== WHATSAPP MODULE ====================
+
+        // Backend URL + secret: set defaults here after deploying the backend,
+        // or enter them in the WhatsApp connection card (saved in this browser).
+        const WHATSAPP_API_BASE = ''; // e.g. 'https://your-app.onrender.com'
+        const WHATSAPP_API_SECRET = '';
+
+        let waConnection = { state: 'disconnected', qr: null, sender: null, lastError: null };
+        let waConnTimer = null;
+        let waHistoryTick = 0;
+        let waRecipients = [];
+        let waFilterType = 'manual';
+        let waSearchSelection = [];
+        let waSearchTimer = null;
+        let waExcludedKeys = new Set();
+        let waSending = false;
+        let waHistoryExpanded = {};
+
+        function getWhatsAppApiBase() {
+            return (localStorage.getItem('wa_api_base') || WHATSAPP_API_BASE || '').replace(/\/+$/, '');
+        }
+        function getWhatsAppSecret() {
+            return localStorage.getItem('wa_api_secret') || WHATSAPP_API_SECRET || '';
+        }
+
+        // MUST stay in sync with normalizeMalaysiaPhone() in whatsapp-service.js
+        function normalizeMalaysiaPhone(raw) {
+            if (raw === null || raw === undefined) return { ok: false, reason: 'blank' };
+            let s = String(raw).trim();
+            if (!s) return { ok: false, reason: 'blank' };
+            s = s.replace(/[\s.\-()]/g, '').replace(/^\+/, '');
+            if (s.startsWith('00')) s = s.slice(2);
+            if (!/^\d+$/.test(s)) return { ok: false, reason: 'invalid characters' };
+            if (/^60\d{8,10}$/.test(s)) return { ok: true, phone: s };
+            if (/^0\d{8,10}$/.test(s)) return { ok: true, phone: '6' + s };
+            if (/^1\d{8,9}$/.test(s)) return { ok: true, phone: '60' + s };
+            return { ok: false, reason: 'invalid format' };
+        }
+
+        async function waApiFetch(path, method = 'GET', body) {
+            const base = getWhatsAppApiBase();
+            if (!base) throw new Error('WhatsApp backend URL is not configured.');
+            const opts = { method, headers: { 'Content-Type': 'application/json' } };
+            const secret = getWhatsAppSecret();
+            if (secret) opts.headers['x-wa-secret'] = secret;
+            if (body) opts.body = JSON.stringify(body);
+            const resp = await fetch(`${base}/api/whatsapp${path}`, opts);
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+            return data;
+        }
+
+        function waSectionActive() {
+            return document.getElementById('whatsapp')?.classList.contains('active');
+        }
+
+        function startWaPolling() {
+            waPrefillConfig();
+            if (waConnTimer) return;
+            waConnTimer = setInterval(async () => {
+                const qrModalOpen = !!document.getElementById('waQrModal');
+                if (!waSectionActive() && !qrModalOpen) return;
+                await waPollStatus();
+                waHistoryTick++;
+                if (waHistoryTick % 3 === 0) loadWAHistory(false); // ~every 9s while open
+            }, 3000);
+        }
+
+        async function waPollStatus() {
+            const base = getWhatsAppApiBase();
+            if (!base) {
+                waRenderConnection({ state: 'disconnected' }, 'Backend URL not configured — enter it below and click Save.');
+                return;
+            }
+            try {
+                const data = await waApiFetch('/status');
+                waRenderConnection(data);
+                waUpdateQrModal(data);
+            } catch (e) {
+                waRenderConnection({ state: 'disconnected', lastError: e.message }, `Cannot reach WhatsApp backend (${e.message}). Check the URL and that the backend is running.`);
+            }
+        }
+
+        function waRenderConnection(data, noteOverride) {
+            waConnection = data || { state: 'disconnected' };
+            const s = waConnection.state || 'disconnected';
+            const badge = document.getElementById('waStatusBadge');
+            if (badge) {
+                const label = { disconnected: 'Disconnected', qr: 'Waiting for QR scan', connecting: 'Connecting', ready: 'Connected' }[s] || s;
+                badge.className = `wa-badge ${s === 'ready' ? 'ready' : (s === 'qr' || s === 'connecting') ? 'connecting' : 'disconnected'}`;
+                badge.textContent = label;
+            }
+            const senderLine = document.getElementById('waSenderLine');
+            if (senderLine) {
+                if (s === 'ready' && waConnection.sender) {
+                    senderLine.style.display = 'block';
+                    senderLine.innerHTML = `Connected as <strong>${escapeHtml(waConnection.sender.pushname || '')}</strong>${waConnection.sender.number ? ` (+${escapeHtml(waConnection.sender.number)})` : ''}`;
+                } else {
+                    senderLine.style.display = 'none';
+                    senderLine.innerHTML = '';
+                }
+            }
+            const connectBtn = document.getElementById('waConnectBtn');
+            const reconnectBtn = document.getElementById('waReconnectBtn');
+            const disconnectBtn = document.getElementById('waDisconnectBtn');
+            if (connectBtn) connectBtn.disabled = (s === 'ready' || s === 'connecting');
+            if (reconnectBtn) reconnectBtn.disabled = (s === 'disconnected' || s === 'connecting');
+            if (disconnectBtn) disconnectBtn.disabled = (s === 'disconnected');
+            const note = document.getElementById('waConnNote');
+            if (note) {
+                let text = noteOverride || '';
+                if (!text && waConnection.lastError) text = waConnection.lastError;
+                if (!text) {
+                    if (s === 'qr') text = 'Scan the QR code shown in the popup with WhatsApp > Linked devices.';
+                    else if (s === 'ready') text = 'WhatsApp is connected. You can send messages and blasts.';
+                    else if (!getWhatsAppApiBase()) text = 'Backend URL not configured.';
+                }
+                note.textContent = text;
+                note.className = `wa-note${waConnection.lastError && !noteOverride ? ' error' : ''}`;
+            }
+        }
+
+        function waPrefillConfig() {
+            const baseInput = document.getElementById('waApiBaseInput');
+            const secretInput = document.getElementById('waApiSecretInput');
+            if (baseInput && !baseInput.value) baseInput.value = getWhatsAppApiBase();
+            if (secretInput && !secretInput.value) secretInput.value = getWhatsAppSecret();
+        }
+
+        function saveWAConfig() {
+            const base = (document.getElementById('waApiBaseInput')?.value || '').trim().replace(/\/+$/, '');
+            const secret = (document.getElementById('waApiSecretInput')?.value || '').trim();
+            if (base) localStorage.setItem('wa_api_base', base); else localStorage.removeItem('wa_api_base');
+            if (secret) localStorage.setItem('wa_api_secret', secret); else localStorage.removeItem('wa_api_secret');
+            showToast('WhatsApp backend settings saved.', 'success');
+            waPollStatus();
+        }
+
+        async function waConnect() {
+            if (!getWhatsAppApiBase()) { showToast('Set the WhatsApp backend URL below and click Save first.', 'error'); return; }
+            openWaQrModal();
+            try {
+                await waApiFetch('/connect', 'POST');
+                await waPollStatus();
+            } catch (e) {
+                const note = document.getElementById('waQrNote');
+                if (note) { note.textContent = 'Failed to start WhatsApp: ' + e.message; note.className = 'wa-note error'; }
+            }
+        }
+
+        async function waReconnect() {
+            if (!confirm('Reconnect WhatsApp? This generates a new QR code — the current session will be replaced.')) return;
+            openWaQrModal();
+            try {
+                await waApiFetch('/reconnect', 'POST');
+                await waPollStatus();
+            } catch (e) {
+                const note = document.getElementById('waQrNote');
+                if (note) { note.textContent = 'Reconnect failed: ' + e.message; note.className = 'wa-note error'; }
+            }
+        }
+
+        async function waDisconnect() {
+            if (!confirm('Disconnect WhatsApp? You will need to scan the QR code again to reconnect.')) return;
+            try {
+                await waApiFetch('/disconnect', 'POST');
+                showToast('WhatsApp disconnected.', 'success');
+            } catch (e) {
+                showToast('Disconnect failed: ' + e.message, 'error');
+            }
+            await waPollStatus();
+        }
+
+        function openWaQrModal() {
+            document.getElementById('waQrModal')?.remove();
+            const m = document.createElement('div');
+            m.id = 'waQrModal';
+            m.className = 'send-reminder-overlay';
+            m.innerHTML = `
+                <div class="send-reminder-modal" style="max-width:420px;">
+                    <div class="send-reminder-header">
+                        <h3>Connect WhatsApp</h3>
+                        <button class="close-btn" onclick="document.getElementById('waQrModal').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;">&times;</button>
+                    </div>
+                    <div class="send-reminder-body">
+                        <p style="margin:0 0 12px;font-size:13px;color:#4b5563;">Open WhatsApp on your phone, go to <strong>Settings &gt; Linked devices &gt; Link a device</strong>, and scan this QR code.</p>
+                        <div class="wa-qr-box" id="waQrBox"><div class="wa-search-hint">Generating QR code...</div></div>
+                        <div id="waQrNote" class="wa-note"></div>
+                    </div>
+                    <div class="send-reminder-footer">
+                        <button class="send-reminder-cancel-btn" onclick="document.getElementById('waQrModal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(m);
+            waUpdateQrModal(waConnection);
+        }
+
+        function waUpdateQrModal(data) {
+            waConnection = data || waConnection;
+            const box = document.getElementById('waQrBox');
+            if (!box) return;
+            const s = waConnection.state || 'disconnected';
+            if (s === 'ready') {
+                box.innerHTML = '<div style="padding:30px 0;color:#16a34a;font-weight:600;font-size:15px;">Connected successfully</div>';
+                setTimeout(() => document.getElementById('waQrModal')?.remove(), 1500);
+            } else if (s === 'qr' && waConnection.qr) {
+                box.innerHTML = `<img src="${waConnection.qr}" alt="WhatsApp QR code">`;
+            } else if (s === 'connecting') {
+                box.innerHTML = '<div class="wa-search-hint">Connecting...</div>';
+            } else {
+                box.innerHTML = '<div class="wa-search-hint">Waiting for QR code...</div>';
+            }
+        }
+
+        // -------------------- SEND WHATSAPP MODAL --------------------
+
+        function openSendWhatsAppModal() {
+            if (!hasPermission('crm', 'send_reminder')) {
+                showToast('You do not have permission to send WhatsApp messages.', 'error');
+                return;
+            }
+            document.getElementById('waSendModal')?.remove();
+            waRecipients = [];
+            waFilterType = 'manual';
+            waSearchSelection = [];
+            waExcludedKeys = new Set();
+            waSending = false;
+
+            const modal = document.createElement('div');
+            modal.id = 'waSendModal';
+            modal.className = 'send-reminder-overlay';
+            modal.innerHTML = `
+                <div class="send-reminder-modal">
+                    <div class="send-reminder-header">
+                        <h3>\u{1F4AC} Send WhatsApp / Announcement</h3>
+                        <button class="close-btn" onclick="document.getElementById('waSendModal').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;">&times;</button>
+                    </div>
+                    <div class="send-reminder-body">
+                        <div class="send-reminder-field">
+                            <label>Message Body</label>
+                            <textarea id="waMessage" rows="6" placeholder="Type your WhatsApp message here..."></textarea>
+                        </div>
+                        <div class="send-reminder-field">
+                            <label>Attachment <span style="font-weight:normal;color:#9ca3af;font-size:12px;">(image or document, max 5MB)</span></label>
+                            <input type="file" id="waAttachment" onchange="waUpdateAttachmentPreview()" style="padding:8px 0;font-size:14px;">
+                            <div id="waAttachmentList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+                        </div>
+
+                        <div class="send-reminder-filter-row">
+                            <label style="font-size:13px;font-weight:600;color:#374151;">Recipients:</label>
+                            <select id="waFilter" onchange="waUpdateRecipients()">
+                                <option value="manual">Manual WhatsApp Numbers</option>
+                                <option value="search">Search &amp; Select Customers</option>
+                                <option value="active">Active Customers</option>
+                                <option value="expired">Expired Customers (excl. GFLEX/EM2)</option>
+                                <option value="all">All Customers</option>
+                                <optgroup label="── By Product ──">
+                                    ${PRODUCT_CATEGORIES.map(cat => `<option value="product_${cat.key}">Product: ${cat.label}</option>`).join('')}
+                                </optgroup>
+                            </select>
+                            <span id="waCount" class="send-reminder-count manual">0 recipients</span>
+                        </div>
+
+                        <div class="send-reminder-field" id="waManualField" style="display:block;">
+                            <label>Manual WhatsApp Numbers <span style="font-weight:normal;color:#9ca3af;font-size:12px;">(one per line — Malaysian numbers auto-converted, e.g. 019-573 0818 becomes 60195730818)</span></label>
+                            <textarea id="waManualNumbers" rows="4" placeholder="60195730818&#10;60123456789&#10;601112223333" oninput="waUpdateRecipients()"></textarea>
+                        </div>
+
+                        <div class="send-reminder-field" id="waSearchField" style="display:none;">
+                            <label>Search &amp; Select Customers <span style="font-weight:normal;color:#9ca3af;font-size:12px;">(search, then tick customers to add — you can select multiple)</span></label>
+                            <input type="text" id="waSearchInput" placeholder="Search by account no, clinic name, company name, contact name, or contact tel..." oninput="debounceWASearch()" autocomplete="off">
+                            <div id="waSearchResults" style="margin-top:8px;"></div>
+                            <div id="waSelectedChips" class="send-reminder-selected-chips"></div>
+                        </div>
+
+                        <div id="waValidationBar"></div>
+
+                        <div class="send-reminder-preview">
+                            <table>
+                                <thead><tr><th>ACCT NO</th><th>CLINIC NAME</th><th>CONTACT NAME</th><th>WHATSAPP NUMBER</th><th>PRODUCT TYPE</th><th>STATUS</th><th style="width:36px;"></th></tr></thead>
+                                <tbody id="waPreviewBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="waProgress" class="send-reminder-progress"></div>
+                    </div>
+                    <div class="send-reminder-footer">
+                        <button class="send-reminder-cancel-btn" onclick="document.getElementById('waSendModal').remove()">Cancel</button>
+                        <button class="send-reminder-send-btn" id="waSendBtn" onclick="waSendClick()">Send WhatsApp</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            renderWASearchSelection();
+            renderWASearchHint();
+            waUpdateRecipients();
+        }
+
+        function waUpdateAttachmentPreview() {
+            const fileInput = document.getElementById('waAttachment');
+            const listEl = document.getElementById('waAttachmentList');
+            if (!fileInput || !listEl) return;
+            if (fileInput.files.length === 0) { listEl.innerHTML = ''; return; }
+            const file = fileInput.files[0];
+            const sizeText = file.size < 1024 ? file.size + ' B' : file.size < 1024 * 1024 ? (file.size / 1024).toFixed(1) + ' KB' : (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+            const tooBig = file.size > 5 * 1024 * 1024;
+            listEl.innerHTML = `<span style="background:#f3f4f6;padding:4px 10px;border-radius:6px;font-size:12px;color:${tooBig ? '#dc2626' : '#374151'};border:1px solid #e5e7eb;display:flex;align-items:center;gap:4px;">
+                <span style="font-size:14px;">${file.type.startsWith('image/') ? '\u{1F4F7}' : '\u{1F4C4}'}</span>
+                ${escapeHtml(file.name)} <span style="color:#9ca3af;">(${sizeText})</span>${tooBig ? ' — exceeds 5MB limit' : ''}
+            </span>`;
+        }
+
+        function waJsArg(s) {
+            return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        function waRowToRecipient(r) {
+            const telRaw = String(r['Contact Tel1'] || '').trim();
+            const norm = normalizeMalaysiaPhone(telRaw);
+            return {
+                key: 'acct_' + String(r['ACCT NO'] || ''),
+                source: 'customer',
+                acctNo: String(r['ACCT NO'] || ''),
+                clinicName: String(r['CLINIC NAME'] || ''),
+                contactName: String(r['Contact Name'] || ''),
+                productType: String(r['PRODUCT TYPE'] || ''),
+                phoneRaw: telRaw,
+                phoneWa: norm.ok ? norm.phone : '',
+                status: !telRaw ? 'notel' : (norm.ok ? 'ok' : 'invalid'),
+                error: norm.ok ? '' : (norm.reason === 'blank' ? 'no Contact Tel1' : norm.reason)
+            };
+        }
+
+        function waFilterMatch(row, filterType) {
+            if (filterType.startsWith('product_')) {
+                const cat = PRODUCT_CATEGORIES.find(c => c.key === filterType.replace('product_', ''));
+                return cat ? customerBelongsToCategory(row, cat) : false;
+            }
+            const cat = getMTNCategory(row);
+            if (filterType === 'active') return cat === 'A';
+            if (filterType === 'expired') return cat === 'B' && !isGFlexOrEM2Only(row);
+            if (filterType === 'all') return cat === 'A' || (cat === 'B' && !isGFlexOrEM2Only(row));
+            return false;
+        }
+
+        function waUpdateRecipients() {
+            const filterType = document.getElementById('waFilter')?.value || 'manual';
+            waFilterType = filterType;
+
+            const manualField = document.getElementById('waManualField');
+            if (manualField) manualField.style.display = filterType === 'manual' ? 'block' : 'none';
+            const searchField = document.getElementById('waSearchField');
+            if (searchField) searchField.style.display = filterType === 'search' ? 'block' : 'none';
+
+            let list = [];
+            if (filterType === 'manual') {
+                const raw = document.getElementById('waManualNumbers')?.value || '';
+                raw.split(/\n+/).forEach((line, idx) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return;
+                    const norm = normalizeMalaysiaPhone(trimmed);
+                    list.push({
+                        key: 'manual_' + idx, source: 'manual', lineIdx: idx,
+                        acctNo: '', clinicName: '', contactName: '', productType: '',
+                        phoneRaw: trimmed,
+                        phoneWa: norm.ok ? norm.phone : '',
+                        status: norm.ok ? 'ok' : 'invalid',
+                        error: norm.ok ? '' : norm.reason
+                    });
+                });
+            } else if (filterType === 'search') {
+                list = waSearchSelection.map(r => waRowToRecipient(r));
+                renderWASearchSelection();
+            } else {
+                list = crmData.filter(row => waFilterMatch(row, filterType) && !waExcludedKeys.has('acct_' + String(row['ACCT NO'] || ''))).map(r => waRowToRecipient(r));
+            }
+
+            // Duplicate detection across valid entries (first occurrence wins)
+            const seen = new Set();
+            list.forEach(e => {
+                if (e.status !== 'ok') return;
+                if (seen.has(e.phoneWa)) { e.status = 'duplicate'; e.error = 'duplicate number'; }
+                else seen.add(e.phoneWa);
+            });
+
+            waRecipients = list;
+            renderWAPreview();
+            renderWAValidationBar();
+        }
+
+        function renderWAValidationBar() {
+            const bar = document.getElementById('waValidationBar');
+            const countEl = document.getElementById('waCount');
+            if (!bar || !countEl) return;
+            const counts = { total: waRecipients.length, ok: 0, invalid: 0, duplicate: 0, notel: 0 };
+            waRecipients.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+            bar.innerHTML = `
+                <span class="v wa-v-sel">Selected: ${counts.total}</span>
+                <span class="v wa-v-ok">Valid: ${counts.ok}</span>
+                <span class="v wa-v-bad">Invalid: ${counts.invalid}</span>
+                <span class="v wa-v-dup">Duplicate: ${counts.duplicate}</span>
+                <span class="v wa-v-none">No Contact Tel1: ${counts.notel}</span>
+            `;
+            countEl.className = 'send-reminder-count search';
+            countEl.textContent = `${counts.ok} recipients`;
+        }
+
+        function renderWAPreview() {
+            const tbody = document.getElementById('waPreviewBody');
+            if (!tbody) return;
+            const statusLabel = { ok: 'Ready', invalid: 'Invalid', duplicate: 'Duplicate', notel: 'No Contact Tel1', queued: 'Queued', sent: 'Sent', delivered: 'Delivered', read: 'Read', failed: 'Failed', skipped: 'Skipped' };
+            const preview = waRecipients.slice(0, 300);
+            tbody.innerHTML = preview.map(r => `<tr>
+                <td>${escapeHtml(r.acctNo || '-')}</td>
+                <td>${escapeHtml(r.clinicName || '-')}</td>
+                <td>${escapeHtml(r.contactName || '-')}</td>
+                <td>${escapeHtml(r.phoneWa || '-')}</td>
+                <td>${escapeHtml(r.productType || '-')}</td>
+                <td><span class="wa-rcpt-status ${r.status}" title="${escapeHtml(r.error || '')}">${statusLabel[r.status] || r.status}</span></td>
+                <td><button class="wa-remove-btn" onclick="waRemoveRecipient('${waJsArg(r.key)}')" title="Remove">&times;</button></td>
+            </tr>`).join('');
+            if (waRecipients.length > 300) {
+                tbody.innerHTML += `<tr><td colspan="7" style="text-align:center;color:#9ca3af;">... and ${waRecipients.length - 300} more</td></tr>`;
+            }
+            if (waRecipients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:24px;">No recipients yet</td></tr>';
+            }
+        }
+
+        function waRemoveRecipient(key) {
+            const entry = waRecipients.find(r => r.key === key);
+            if (!entry) return;
+            if (entry.source === 'manual') {
+                const ta = document.getElementById('waManualNumbers');
+                if (ta) {
+                    const lines = ta.value.split('\n');
+                    if (lines[entry.lineIdx] !== undefined) lines[entry.lineIdx] = '';
+                    ta.value = lines.join('\n');
+                }
+            } else if (entry.source === 'customer' && waFilterType === 'search') {
+                waSearchSelection = waSearchSelection.filter(r => String(r['ACCT NO']) !== entry.acctNo);
+                renderWASearchSelection();
+                renderWASearchResults();
+            } else {
+                waExcludedKeys.add(key);
+            }
+            waUpdateRecipients();
+        }
+
+        // -------------------- SEARCH & SELECT (checkbox table) --------------------
+
+        function renderWASearchHint() {
+            const box = document.getElementById('waSearchResults');
+            if (box) box.innerHTML = '<div class="wa-search-hint">Type at least 2 characters to search customers</div>';
+        }
+
+        function debounceWASearch() {
+            if (waSearchTimer) clearTimeout(waSearchTimer);
+            waSearchTimer = setTimeout(renderWASearchResults, 250);
+        }
+
+        function renderWASearchResults() {
+            const box = document.getElementById('waSearchResults');
+            if (!box) return;
+            const q = (document.getElementById('waSearchInput')?.value || '').trim().toLowerCase();
+            if (q.length < 2) { renderWASearchHint(); return; }
+            const matches = crmData.filter(row => {
+                const acct = String(row['ACCT NO'] || '').toLowerCase();
+                const clinic = String(row['CLINIC NAME'] || '').toLowerCase();
+                const company = String(row['COMPANY NAME'] || '').toLowerCase();
+                const contact = String(row['Contact Name'] || '').toLowerCase();
+                const tel = String(row['Contact Tel1'] || '').toLowerCase();
+                return acct.includes(q) || clinic.includes(q) || company.includes(q) || contact.includes(q) || tel.includes(q);
+            }).slice(0, 50);
+            if (matches.length === 0) { box.innerHTML = '<div class="wa-search-hint">No customers found</div>'; return; }
+
+            const selSet = new Set(waSearchSelection.map(r => String(r['ACCT NO'] || '')));
+            const telSet = new Set(matches.map(r => String(r['ACCT NO'] || '')).filter(a => selSet.has(a)));
+            const allChecked = matches.every(r => selSet.has(String(r['ACCT NO'] || '')));
+            let html = `<div class="wa-search-wrap"><table class="wa-search-table"><thead><tr>
+                <th style="width:36px;"><input type="checkbox" ${allChecked ? 'checked' : ''} onchange="waToggleSelectAllShown(this.checked)" title="Select all shown"></th>
+                <th>ACCT NO</th><th>CLINIC NAME</th><th>CONTACT NAME</th><th>CONTACT TEL1</th><th>PRODUCT TYPE</th>
+            </tr></thead><tbody>`;
+            matches.forEach(r => {
+                const acct = String(r['ACCT NO'] || '');
+                const tel = String(r['Contact Tel1'] || '').trim();
+                const hasTel = !!tel;
+                const checked = selSet.has(acct);
+                html += `<tr>
+                    <td><input type="checkbox" ${checked ? 'checked' : ''} ${hasTel ? '' : 'disabled'} onchange="waToggleSearchCustomer('${waJsArg(acct)}', this.checked)"></td>
+                    <td>${escapeHtml(acct)}</td>
+                    <td>${escapeHtml(r['CLINIC NAME'] || '')}</td>
+                    <td>${escapeHtml(r['Contact Name'] || '')}</td>
+                    <td>${escapeHtml(tel) || '<span class="send-reminder-no-email">No Contact Tel1</span>'}</td>
+                    <td>${escapeHtml(r['PRODUCT TYPE'] || '')}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            if (matches.length === 50) html += '<div class="wa-search-hint">Showing first 50 matches — keep typing to narrow down</div>';
+            box.innerHTML = html;
+        }
+
+        function waToggleSearchCustomer(acctNo, checked) {
+            const row = crmData.find(r => String(r['ACCT NO']) === String(acctNo));
+            if (!row) return;
+            if (checked) {
+                if (!waSearchSelection.some(r => String(r['ACCT NO']) === String(acctNo))) waSearchSelection.push(row);
+            } else {
+                waSearchSelection = waSearchSelection.filter(r => String(r['ACCT NO']) !== String(acctNo));
+            }
+            renderWASearchSelection();
+            waUpdateRecipients();
+            renderWASearchResults();
+        }
+
+        function waToggleSelectAllShown(checked) {
+            const q = (document.getElementById('waSearchInput')?.value || '').trim().toLowerCase();
+            if (q.length < 2) return;
+            const matches = crmData.filter(row => {
+                const acct = String(row['ACCT NO'] || '').toLowerCase();
+                const clinic = String(row['CLINIC NAME'] || '').toLowerCase();
+                const company = String(row['COMPANY NAME'] || '').toLowerCase();
+                const contact = String(row['Contact Name'] || '').toLowerCase();
+                const tel = String(row['Contact Tel1'] || '').toLowerCase();
+                return acct.includes(q) || clinic.includes(q) || company.includes(q) || contact.includes(q) || tel.includes(q);
+            }).slice(0, 50);
+            matches.forEach(r => {
+                const acct = String(r['ACCT NO'] || '');
+                if (!String(r['Contact Tel1'] || '').trim()) return; // skip no-tel customers
+                if (checked) {
+                    if (!waSearchSelection.some(x => String(x['ACCT NO']) === acct)) waSearchSelection.push(r);
+                } else {
+                    waSearchSelection = waSearchSelection.filter(x => String(x['ACCT NO']) !== acct);
+                }
+            });
+            renderWASearchSelection();
+            waUpdateRecipients();
+            renderWASearchResults();
+        }
+
+        function renderWASearchSelection() {
+            const wrap = document.getElementById('waSelectedChips');
+            if (!wrap) return;
+            if (waSearchSelection.length === 0) {
+                wrap.innerHTML = '<span class="send-reminder-chips-empty">No customers selected yet — search above and tick customers to add</span>';
+                return;
+            }
+            wrap.innerHTML = waSearchSelection.map(r => {
+                const acct = String(r['ACCT NO'] || '');
+                return `<span class="send-reminder-chip">${escapeHtml(r['CLINIC NAME'] || acct)}<span class="send-reminder-chip-remove" onclick="waToggleSearchCustomer('${waJsArg(acct)}', false)" title="Remove">&times;</span></span>`;
+            }).join('');
+        }
+
+        // -------------------- SEND FLOW --------------------
+
+        async function waSendClick() {
+            const message = document.getElementById('waMessage')?.value?.trim();
+            if (!message) { alert('Please enter a message body.'); return; }
+            const valid = waRecipients.filter(r => r.status === 'ok');
+            if (valid.length === 0) { alert('No valid recipients to send to.'); return; }
+            if (waSending) return;
+            let st;
+            try {
+                st = await waApiFetch('/status');
+            } catch (e) {
+                showToast('Cannot reach WhatsApp backend: ' + e.message, 'error');
+                return;
+            }
+            if (st.state !== 'ready') {
+                showToast('WhatsApp is not connected. Open the WhatsApp module and connect first.', 'error');
+                return;
+            }
+            openWaConfirm(valid.length);
+        }
+
+        function openWaConfirm(count) {
+            document.getElementById('waConfirmModal')?.remove();
+            const m = document.createElement('div');
+            m.id = 'waConfirmModal';
+            m.className = 'send-reminder-overlay';
+            m.style.zIndex = '10001';
+            m.innerHTML = `
+                <div class="send-reminder-modal" style="max-width:420px;">
+                    <div class="send-reminder-header"><h3>Confirm Send</h3></div>
+                    <div class="send-reminder-body">
+                        <p style="margin:0;font-size:14px;color:#374151;">You are about to send this WhatsApp message to <strong>${count}</strong> recipient${count === 1 ? '' : 's'}. Do you want to continue?</p>
+                    </div>
+                    <div class="send-reminder-footer">
+                        <button class="send-reminder-cancel-btn" onclick="document.getElementById('waConfirmModal').remove()">Cancel</button>
+                        <button class="send-reminder-send-btn" onclick="waDoSend()">Confirm &amp; Send</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(m);
+        }
+
+        function waReadFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve({
+                    filename: file.name,
+                    mimetype: file.type || 'application/octet-stream',
+                    data: String(reader.result).split(',')[1]
+                });
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function waDoSend() {
+            document.getElementById('waConfirmModal')?.remove();
+            const btn = document.getElementById('waSendBtn');
+            const prog = document.getElementById('waProgress');
+            const message = document.getElementById('waMessage').value.trim();
+            const valid = waRecipients.filter(r => r.status === 'ok');
+            waSending = true;
+            if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+            if (prog) prog.textContent = 'Preparing message...';
+            try {
+                let attachment;
+                const fileInput = document.getElementById('waAttachment');
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if (file.size > 5 * 1024 * 1024) throw new Error('Attachment exceeds the 5MB limit.');
+                    if (prog) prog.textContent = 'Reading attachment...';
+                    attachment = await waReadFile(file);
+                }
+                if (prog) prog.textContent = `Sending to ${valid.length} recipients...`;
+                const result = await waApiFetch('/send', 'POST', {
+                    message,
+                    attachment,
+                    sender: currentUser?.username || 'unknown',
+                    recipients: valid.map(r => ({
+                        acctNo: r.acctNo, clinicName: r.clinicName, contactName: r.contactName,
+                        productType: r.productType, phone: r.phoneWa
+                    }))
+                });
+                const rej = (result.rejected || []).length;
+                showToast(`WhatsApp blast queued: ${result.accepted} accepted${rej ? `, ${rej} rejected` : ''}. Track progress in WhatsApp History.`, rej ? 'warning' : 'success');
+                logActivity({ module: 'WhatsApp', action: 'SEND_MESSAGE', description: `Queued WhatsApp blast to ${result.accepted} recipients (${rej} rejected)` });
+                document.getElementById('waSendModal')?.remove();
+                loadWAHistory(true);
+            } catch (e) {
+                if (prog) prog.innerHTML = `<span style="color:#dc2626;font-weight:600;">Failed to send: ${escapeHtml(e.message)}</span>`;
+                if (btn) { btn.disabled = false; btn.textContent = 'Send WhatsApp'; }
+                waSending = false;
+            }
+        }
+
+        // -------------------- HISTORY --------------------
+
+        function waFormatDate(ts) {
+            if (!ts) return '-';
+            const d = new Date(ts);
+            return isNaN(d.getTime()) ? '-' : d.toLocaleString();
+        }
+
+        async function loadWAHistory(manual) {
+            const body = document.getElementById('waHistoryBody');
+            if (!body || (!waSectionActive() && !manual)) return;
+            const { data, error } = await supabaseClient
+                .from('whatsapp_blasts')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50);
+            if (error) {
+                body.innerHTML = `<div class="wa-search-hint">Failed to load history: ${escapeHtml(error.message)} — run whatsapp-migration.sql in Supabase if you have not yet.</div>`;
+                return;
+            }
+            if (!data || data.length === 0) {
+                body.innerHTML = '<div class="wa-search-hint">No WhatsApp blasts yet</div>';
+                return;
+            }
+            let html = `<table class="wa-history-table"><thead><tr>
+                <th style="width:24px;"></th><th>DATE/TIME</th><th>SENDER</th><th>MESSAGE</th><th>TOTAL</th><th>SENT</th><th>DELIVERED</th><th>READ</th><th>FAILED</th><th>STATUS</th><th style="width:60px;"></th>
+            </tr></thead><tbody>`;
+            data.forEach(b => {
+                const expanded = !!waHistoryExpanded[b.id];
+                const msgShort = String(b.message || '');
+                html += `<tr class="blast-row" onclick="waToggleBlastDetail('${b.id}')">
+                    <td><span class="wa-expand-icon">${expanded ? '&#9660;' : '&#9656;'}</span></td>
+                    <td style="white-space:nowrap;">${escapeHtml(waFormatDate(b.created_at))}</td>
+                    <td>${escapeHtml(b.sender || '-')}</td>
+                    <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(b.message || '')}">${escapeHtml(msgShort.slice(0, 80))}${msgShort.length > 80 ? '…' : ''}${b.attachment ? ' &#128206;' : ''}</td>
+                    <td>${b.total_recipients ?? 0}</td>
+                    <td>${b.sent_count ?? 0}</td>
+                    <td>${b.delivered_count ?? 0}</td>
+                    <td>${b.read_count ?? 0}</td>
+                    <td>${b.failed_count ?? 0}</td>
+                    <td><span class="wa-blast-status ${b.status}">${escapeHtml(b.status)}</span></td>
+                    <td>${b.status === 'sending' ? `<button class="wa-remove-btn" onclick="event.stopPropagation(); waCancelBlast('${b.id}')" title="Cancel blast">Cancel</button>` : ''}</td>
+                </tr>`;
+                if (expanded) {
+                    html += `<tr class="wa-history-detail"><td></td><td colspan="10"><div id="waBlastDetail_${b.id}"><div class="wa-search-hint">Loading recipients...</div></div></td></tr>`;
+                }
+            });
+            html += '</tbody></table>';
+            body.innerHTML = html;
+            data.filter(b => waHistoryExpanded[b.id]).forEach(b => loadWABlastDetail(b.id));
+        }
+
+        function waToggleBlastDetail(blastId) {
+            waHistoryExpanded[blastId] = !waHistoryExpanded[blastId];
+            loadWAHistory(true);
+        }
+
+        async function loadWABlastDetail(blastId) {
+            const box = document.getElementById('waBlastDetail_' + blastId);
+            if (!box) return;
+            const { data, error } = await supabaseClient
+                .from('whatsapp_blast_recipients')
+                .select('*')
+                .eq('blast_id', blastId)
+                .order('created_at', { ascending: true })
+                .limit(500);
+            if (error) { box.innerHTML = `<div class="wa-search-hint">Failed to load recipients: ${escapeHtml(error.message)}</div>`; return; }
+            if (!data || data.length === 0) { box.innerHTML = '<div class="wa-search-hint">No recipients recorded</div>'; return; }
+            let html = `<div style="font-size:12px;color:#64748b;margin-bottom:4px;">${data.length} recipient(s)</div>
+                <div class="wa-search-wrap" style="max-height:320px;"><table class="wa-detail-table"><thead><tr>
+                <th>ACCT NO</th><th>CLINIC NAME</th><th>CONTACT NAME</th><th>WHATSAPP NUMBER</th><th>PRODUCT TYPE</th><th>STATUS</th><th>ERROR</th><th>SENT AT</th>
+            </tr></thead><tbody>`;
+            data.forEach(r => {
+                html += `<tr>
+                    <td>${escapeHtml(r.acct_no || '-')}</td>
+                    <td>${escapeHtml(r.clinic_name || '-')}</td>
+                    <td>${escapeHtml(r.contact_name || '-')}</td>
+                    <td>${escapeHtml(r.phone_wa || '-')}</td>
+                    <td>${escapeHtml(r.product_type || '-')}</td>
+                    <td><span class="wa-rcpt-status ${r.status}">${escapeHtml(r.status)}</span></td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(r.error || '')}">${escapeHtml(r.error || '')}</td>
+                    <td style="white-space:nowrap;">${escapeHtml(waFormatDate(r.sent_at))}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            box.innerHTML = html;
+        }
+
+        async function waCancelBlast(blastId) {
+            if (!confirm('Cancel this blast? Messages already sent cannot be recalled; remaining queued recipients will be skipped.')) return;
+            try {
+                await waApiFetch(`/blasts/${blastId}/cancel`, 'POST');
+                showToast('Blast cancelled.', 'success');
+            } catch (e) {
+                showToast('Cancel failed: ' + e.message, 'error');
+            }
+            loadWAHistory(true);
         }
 
         // Export Excel

@@ -8,3 +8,5 @@ node.zip
 node-installer.msi
 uploads/
 .env
+.vercel
+whatsapp-session/

@@ -1,6 +1,9 @@
 server.js
 database.js
 export-data.js
+whatsapp-service.js
+whatsapp-session/
+whatsapp-migration.sql
 supabase-migration.sql
 supabase-schema.sql
 supabase-data-migration.sql
@@ -8,6 +11,8 @@ routes/
 uploads/
 node_modules/
 node-v20.11.1-win-x64/
+package.json
+package-lock.json
 *.db
 *.db-shm
 *.db-wal
