@@ -26,6 +26,27 @@ const MAX_ATTACHMENT_BYTES = parseInt(process.env.WA_MAX_ATTACHMENT_BYTES || Str
 const MAX_RECIPIENTS_PER_BLAST = 500;
 
 // ---------------------------------------------------------------------------
+// Free-tier resilience (Render Free has no persistent disk — /tmp is wiped on
+// every restart/sleep, which used to kill the pairing each time):
+//  - the LocalAuth session folder is zipped and backed up to Supabase Storage
+//    every few minutes while connected, and restored before the client starts
+//  - WA_AUTO_CONNECT=true reconnects automatically after every process restart
+//  - interrupted blasts resume once the connection is back
+//  - WA_KEEPALIVE_URL makes the service ping itself so Render never sleeps
+// ---------------------------------------------------------------------------
+const AUTO_CONNECT = String(process.env.WA_AUTO_CONNECT || '').toLowerCase() === 'true';
+const AUTO_CONNECT_DELAY_MS = parseInt(process.env.WA_AUTO_CONNECT_DELAY_MS || '15000', 10);
+const SESSION_BACKUP_INTERVAL_MS = parseInt(process.env.WA_SESSION_BACKUP_INTERVAL_MS || '300000', 10);
+const KEEPALIVE_URL = (process.env.WA_KEEPALIVE_URL || '').replace(/\/+$/, '');
+const KEEPALIVE_MS = Math.max(1, parseInt(process.env.WA_KEEPALIVE_MINUTES || '10', 10)) * 60000;
+const SESSION_BUCKET = 'whatsapp-sessions';
+const SESSION_BACKUP_FILE = 'current.zip';
+
+let sessionBucketChecked = false;
+let backupTimer = null;
+let autoConnectTimer = null;
+
+// ---------------------------------------------------------------------------
 // Lazy-loaded dependencies
 // ---------------------------------------------------------------------------
 let wweb = null;          // { Client, LocalAuth, MessageMedia }
@@ -107,6 +128,104 @@ function getStatus() {
 }
 
 // ---------------------------------------------------------------------------
+// Free-tier resilience: session backup/restore + blast recovery
+// ---------------------------------------------------------------------------
+async function ensureSessionBucket() {
+    if (sessionBucketChecked) return;
+    sessionBucketChecked = true;
+    try {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        if ((buckets || []).some(b => b.name === SESSION_BUCKET)) return;
+        const { error } = await supabase.storage.createBucket(SESSION_BUCKET, { private: true });
+        if (error && !/already exist/i.test(error.message)) {
+            console.error('[WhatsApp] Storage bucket creation failed:', error.message);
+        }
+    } catch (e) {
+        console.error('[WhatsApp] Storage bucket check failed:', e.message);
+    }
+}
+
+async function backupSession() {
+    try {
+        if (state.connectionState !== 'ready') return;
+        if (!supabase) return;
+        if (!fs.existsSync(SESSION_PATH)) return;
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip();
+        // No root prefix: the zip mirrors the folder as-is (session/creds.json),
+        // so extractAllTo(SESSION_PATH) restores the exact original layout.
+        zip.addLocalFolder(SESSION_PATH);
+        const buf = zip.toBuffer();
+        if (!buf || !buf.length) return;
+        await ensureSessionBucket();
+        const { error } = await supabase.storage
+            .from(SESSION_BUCKET)
+            .upload(SESSION_BACKUP_FILE, buf, { contentType: 'application/zip', upsert: true });
+        if (error) console.error('[WhatsApp] Session backup failed:', error.message);
+    } catch (e) {
+        console.error('[WhatsApp] Session backup error:', e.message);
+    }
+}
+
+function startSessionBackupTimer() {
+    if (backupTimer) return;
+    backupTimer = setInterval(() => { backupSession(); }, SESSION_BACKUP_INTERVAL_MS);
+    if (backupTimer.unref) backupTimer.unref();
+}
+
+async function deleteSessionBackup() {
+    try {
+        if (!supabase) return;
+        await supabase.storage.from(SESSION_BUCKET).remove([SESSION_BACKUP_FILE]);
+    } catch (_) { /* ignore */ }
+}
+
+/**
+ * Restore the pairing from the Supabase backup when the local session folder
+ * was wiped (free-tier restarts clear /tmp). A valid restored session lets
+ * LocalAuth reconnect without showing a new QR code.
+ */
+async function restoreSession() {
+    try {
+        if (fs.existsSync(SESSION_PATH) && fs.readdirSync(SESSION_PATH).length > 0) return false;
+        loadSupabase();
+        const { data, error } = await supabase.storage.from(SESSION_BUCKET).download(SESSION_BACKUP_FILE);
+        if (error || !data) return false;
+        const raw = Buffer.isBuffer(data) ? data : Buffer.from(await data.arrayBuffer());
+        if (!raw.length) return false;
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip(raw);
+        fs.mkdirSync(SESSION_PATH, { recursive: true });
+        zip.extractAllTo(SESSION_PATH, true);
+        console.log('[WhatsApp] Session restored from Supabase backup');
+        return true;
+    } catch (e) {
+        console.error('[WhatsApp] Session restore failed:', e.message);
+        return false;
+    }
+}
+
+/** Re-enqueue blasts that were interrupted by a crash/restart. */
+async function recoverInterruptedBlasts() {
+    try {
+        loadSupabase();
+        const { data: blasts } = await supabase.from('whatsapp_blasts').select('id').eq('status', 'sending');
+        for (const b of blasts || []) {
+            const { count } = await supabase.from('whatsapp_blast_recipients')
+                .select('id', { count: 'exact', head: true })
+                .eq('blast_id', b.id)
+                .eq('status', 'queued');
+            if (count > 0) {
+                console.log(`[WhatsApp] Resuming interrupted blast ${b.id} (${count} queued)`);
+                enqueueExistingBlast(b.id);
+            }
+        }
+    } catch (e) {
+        console.error('[WhatsApp] Blast recovery error:', e.message);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Client lifecycle
 // ---------------------------------------------------------------------------
 function wireEvents() {
@@ -138,6 +257,11 @@ function wireEvents() {
         };
         state.lastError = null;
         console.log(`[WhatsApp] Connected as ${state.sender.pushname || state.sender.number}`);
+        // Free-tier resilience: persist the pairing, keep persisting it, and
+        // resume any blast that a crash/restart interrupted.
+        backupSession();
+        startSessionBackupTimer();
+        recoverInterruptedBlasts();
     });
 
     client.on('auth_failure', (msg) => {
@@ -189,11 +313,15 @@ function teardownClient(clearSession) {
     client = null;
     isInitializing = false;
     resetState();
+    if (backupTimer) { clearInterval(backupTimer); backupTimer = null; }
     if (oldClient) {
         try { oldClient.destroy(); } catch (_) { /* ignore */ }
     }
     if (clearSession) {
         try { fs.rmSync(SESSION_PATH, { recursive: true, force: true }); } catch (_) { /* ignore */ }
+        // The stored session is being discarded on purpose (explicit Disconnect
+        // / Reconnect, or auth failure) — the remote backup must not resurrect it.
+        deleteSessionBackup();
     }
 }
 
@@ -209,6 +337,9 @@ async function ensureStarted() {
     isInitializing = true;
     state.connectionState = 'connecting';
     state.lastError = null;
+    // If a restart/sleep wiped the session folder, restore the pairing from the
+    // Supabase backup first — a valid session then reconnects with no new QR.
+    await restoreSession();
     client = new wweb.Client({
         authStrategy: new wweb.LocalAuth({ dataPath: SESSION_PATH }),
         puppeteer: {
@@ -498,11 +629,38 @@ async function getBlast(blastId) {
 
 async function shutdown() {
     cancelledBlasts.clear();
+    if (autoConnectTimer) { clearTimeout(autoConnectTimer); autoConnectTimer = null; }
+    if (backupTimer) { clearInterval(backupTimer); backupTimer = null; }
     if (client) {
         try { await client.destroy(); } catch (_) { /* ignore */ }
         client = null;
     }
     isInitializing = false;
+}
+
+// ---------------------------------------------------------------------------
+// Boot behaviour: auto-connect (with session restore) + optional keep-alive
+// ---------------------------------------------------------------------------
+if (AUTO_CONNECT) {
+    autoConnectTimer = setTimeout(() => {
+        console.log('[WhatsApp] Auto-connecting (restoring session if needed)...');
+        ensureStarted().catch(e => console.error('[WhatsApp] Auto-connect failed:', e.message));
+    }, AUTO_CONNECT_DELAY_MS);
+    if (autoConnectTimer.unref) autoConnectTimer.unref();
+}
+
+if (KEEPALIVE_URL) {
+    // Render Free sleeps after ~15 min without inbound traffic. A light
+    // self-ping resets that timer so the service (and its WhatsApp session)
+    // stays alive. (An external monitor like UptimeRobot works too.)
+    const https = require('https');
+    const ping = () => {
+        try {
+            https.get(`${KEEPALIVE_URL}/api/whatsapp/status`, (res) => { res.resume(); }).on('error', () => { });
+        } catch (_) { /* ignore */ }
+    };
+    setInterval(ping, KEEPALIVE_MS);
+    console.log(`[WhatsApp] Keep-alive ping every ${KEEPALIVE_MS / 60000} min -> ${KEEPALIVE_URL}`);
 }
 
 module.exports = {
