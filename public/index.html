@@ -18688,8 +18688,8 @@ async function exportActivityLog() {
             const s = waConnection.state || 'disconnected';
             const badge = document.getElementById('waStatusBadge');
             if (badge) {
-                const label = { disconnected: 'Disconnected', qr: 'Waiting for QR scan', connecting: 'Connecting', ready: 'Connected' }[s] || s;
-                badge.className = `wa-badge ${s === 'ready' ? 'ready' : (s === 'qr' || s === 'connecting') ? 'connecting' : 'disconnected'}`;
+                const label = { disconnected: 'Disconnected', qr: 'Waiting for QR scan', connecting: 'Connecting', authenticated: 'Authenticated', ready: 'Connected' }[s] || s;
+                badge.className = `wa-badge ${s === 'ready' ? 'ready' : (s === 'qr' || s === 'connecting' || s === 'authenticated') ? 'connecting' : 'disconnected'}`;
                 badge.textContent = label;
             }
             const senderLine = document.getElementById('waSenderLine');
@@ -18705,8 +18705,8 @@ async function exportActivityLog() {
             const connectBtn = document.getElementById('waConnectBtn');
             const reconnectBtn = document.getElementById('waReconnectBtn');
             const disconnectBtn = document.getElementById('waDisconnectBtn');
-            if (connectBtn) connectBtn.disabled = (s === 'ready' || s === 'connecting');
-            if (reconnectBtn) reconnectBtn.disabled = (s === 'disconnected' || s === 'connecting');
+            if (connectBtn) connectBtn.disabled = (s === 'ready' || s === 'connecting' || s === 'authenticated');
+            if (reconnectBtn) reconnectBtn.disabled = (s === 'disconnected' || s === 'connecting' || s === 'authenticated');
             if (disconnectBtn) disconnectBtn.disabled = (s === 'disconnected');
             const note = document.getElementById('waConnNote');
             if (note) {
@@ -18714,6 +18714,7 @@ async function exportActivityLog() {
                 if (!text && waConnection.lastError) text = waConnection.lastError;
                 if (!text) {
                     if (s === 'qr') text = 'Scan the QR code shown in the popup with WhatsApp > Linked devices.';
+                    else if (s === 'authenticated') text = 'Authenticated — finalizing connection...';
                     else if (s === 'ready') text = 'WhatsApp is connected. You can send messages and blasts.';
                     else if (!getWhatsAppApiBase()) text = 'Backend URL not configured.';
                 }
@@ -18808,6 +18809,8 @@ async function exportActivityLog() {
                 setTimeout(() => document.getElementById('waQrModal')?.remove(), 1500);
             } else if (s === 'qr' && waConnection.qr) {
                 box.innerHTML = `<img src="${waConnection.qr}" alt="WhatsApp QR code">`;
+            } else if (s === 'authenticated') {
+                box.innerHTML = '<div class="wa-search-hint">Authenticated — finalizing connection...</div>';
             } else if (s === 'connecting') {
                 box.innerHTML = '<div class="wa-search-hint">Connecting...</div>';
             } else {

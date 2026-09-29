@@ -40,7 +40,12 @@ function loadSupabase() {
         if (!url || !key) {
             throw new Error('Missing SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY environment variables.');
         }
-        supabase = createClient(url, key);
+        // Node < 22 has no native WebSocket, which @supabase/supabase-js needs for
+        // its RealtimeClient — supply the `ws` package as transport so the backend
+        // also runs on older Node versions (Render runs Node 24, unaffected).
+        const realtime = {};
+        try { realtime.transport = require('ws'); } catch (_) { /* Node >= 22: native WebSocket */ }
+        supabase = createClient(url, key, { realtime });
     }
 }
 
@@ -74,15 +79,18 @@ function normalizeMalaysiaPhone(raw) {
 // Module state
 // ---------------------------------------------------------------------------
 const state = {
-    connectionState: 'disconnected', // disconnected | qr | connecting | ready
+    connectionState: 'disconnected', // disconnected | connecting | qr | authenticated | ready
     qr: null,                        // latest QR code as a data-URL
     sender: null,                    // { number, pushname } when ready
     lastError: null
 };
 
 let client = null;
-let starting = false;
-let initialized = false;
+// Initialization lock: guarantees a single Client instance and a single
+// client.initialize() call per client. Never start a second initialize while
+// one is in progress — duplicate initialize() on a live client is what
+// produced "Protocol error (Runtime.callFunctionOn): Execution context was destroyed".
+let isInitializing = false;
 
 const blastQueue = [];
 let processingQueue = false;
@@ -103,21 +111,24 @@ function getStatus() {
 // ---------------------------------------------------------------------------
 function wireEvents() {
     client.on('qr', async (qr) => {
+        console.log('[WhatsApp] QR received');
         try {
             state.qr = await qrCodeLib.toDataURL(qr, { margin: 1, width: 280 });
         } catch (e) {
-            console.error('QR generation error:', e.message);
+            console.error('[WhatsApp] QR generation error:', e.message);
         }
+        // Only ever update the stored QR — never build a new Client here.
         state.connectionState = 'qr';
-        console.log('WhatsApp QR generated — waiting for scan');
     });
 
     client.on('authenticated', () => {
-        state.connectionState = 'connecting';
-        state.qr = null;
+        console.log('[WhatsApp] Authenticated');
+        state.connectionState = 'authenticated';
+        state.qr = null; // scan complete — a stale QR must never be shown again
     });
 
     client.on('ready', () => {
+        console.log('[WhatsApp] Ready');
         state.connectionState = 'ready';
         state.qr = null;
         const info = client.info || {};
@@ -126,19 +137,25 @@ function wireEvents() {
             pushname: info.pushname || ''
         };
         state.lastError = null;
-        console.log(`WhatsApp connected as ${state.sender.pushname || state.sender.number}`);
+        console.log(`[WhatsApp] Connected as ${state.sender.pushname || state.sender.number}`);
     });
 
     client.on('auth_failure', (msg) => {
+        console.error('[WhatsApp] Authentication failure:', msg);
         state.lastError = `Authentication failed: ${msg}`;
-        state.connectionState = 'disconnected';
-        console.error('WhatsApp auth_failure:', msg);
+        teardownClient(true); // stored session was rejected — clear it
     });
 
     client.on('disconnected', (reason) => {
-        console.log('WhatsApp disconnected:', reason);
+        console.log('[WhatsApp] Disconnected:', reason);
         state.lastError = `Disconnected: ${reason}`;
+        // Keep the session files: on restart LocalAuth silently restores a valid
+        // session without a new QR. (Only an explicit Disconnect clears them.)
         teardownClient(false);
+    });
+
+    client.on('change_state', (s) => {
+        console.log('[WhatsApp] State changed:', s);
     });
 
     client.on('message_ack', async (msg, ack) => {
@@ -170,7 +187,7 @@ function wireEvents() {
 function teardownClient(clearSession) {
     const oldClient = client;
     client = null;
-    starting = false;
+    isInitializing = false;
     resetState();
     if (oldClient) {
         try { oldClient.destroy(); } catch (_) { /* ignore */ }
@@ -180,12 +197,18 @@ function teardownClient(clearSession) {
     }
 }
 
+/**
+ * Idempotent start. Safe to call on every "Connect" press:
+ *  - does nothing while a client already exists (any state)
+ *  - does nothing while an initialization is already running
+ *  - otherwise creates the single Client instance and initializes it once
+ */
 async function ensureStarted() {
     loadDeps();
-    if (state.connectionState === 'ready') return;
-    if (starting || client) return; // initialization in progress or session exists
-    starting = true;
+    if (client || isInitializing) return;
+    isInitializing = true;
     state.connectionState = 'connecting';
+    state.lastError = null;
     client = new wweb.Client({
         authStrategy: new wweb.LocalAuth({ dataPath: SESSION_PATH }),
         puppeteer: {
@@ -195,21 +218,46 @@ async function ensureStarted() {
         }
     });
     wireEvents();
+    let initWatchdog = null;
     try {
-        await client.initialize();
-        initialized = true;
+        const initPromise = client.initialize();
+        // Swallow a late rejection once the watchdog has already won the race.
+        initPromise.catch(() => { });
+        const watchdog = new Promise((_, reject) => {
+            initWatchdog = setTimeout(() => reject(new Error('Initialization timed out after 120s')), 120000);
+        });
+        await Promise.race([initPromise, watchdog]);
     } catch (e) {
-        console.error('WhatsApp client initialize error:', e.message);
-        state.lastError = `Initialize failed: ${e.message}`;
+        const msg = String(e.message || e);
+        // WhatsApp Web reloads its page the instant the QR is scanned. Any
+        // puppeteer evaluate() in flight during that reload rejects with
+        // "Execution context was destroyed". The client underneath is still
+        // healthy and will emit 'authenticated' then 'ready' — tearing the
+        // browser down here was the old bug that spawned duplicate clients.
+        if (/execution context was destroyed/i.test(msg)) {
+            console.log('[WhatsApp] Page reload during initialization (QR scan in progress) — keeping the client alive.');
+            return;
+        }
+        console.error('[WhatsApp] Initialize failed:', msg);
+        state.lastError = `Initialize failed: ${msg}`;
         teardownClient(false);
         throw e;
     } finally {
-        starting = false;
+        if (initWatchdog) clearTimeout(initWatchdog);
+        isInitializing = false;
     }
 }
 
+/**
+ * Explicit user reset ("Reconnect" button). This is the ONLY path allowed to
+ * destroy a live client — and it still never interrupts an in-flight
+ * initialization, because killing the browser mid-auth is what cascaded into
+ * the duplicate-client protocol errors.
+ */
 async function reconnect() {
-    teardownClient(false);
+    loadDeps();
+    if (isInitializing) return;
+    if (client) teardownClient(true); // clear session so the next start shows a fresh QR
     await ensureStarted();
 }
 
@@ -454,6 +502,7 @@ async function shutdown() {
         try { await client.destroy(); } catch (_) { /* ignore */ }
         client = null;
     }
+    isInitializing = false;
 }
 
 module.exports = {
