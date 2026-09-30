@@ -570,21 +570,41 @@ async function processBlast(blastId) {
             await refreshBlastCounts(blastId);
             continue;
         }
-        try {
-            const chatId = `${row.phone_wa}@c.us`;
-            const sentMsg = media
-                ? await client.sendMessage(chatId, blast.message, { media })
-                : await client.sendMessage(chatId, blast.message);
+        let sendErr = null;
+        let sentMsg = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const chatId = `${row.phone_wa}@c.us`;
+                sentMsg = media
+                    ? await client.sendMessage(chatId, blast.message, { media })
+                    : await client.sendMessage(chatId, blast.message);
+                sendErr = null;
+                break;
+            } catch (e) {
+                sendErr = e;
+                const msg = String(e.message || e);
+                // WhatsApp Web reloads its page periodically (authenticated ->
+                // ready again). While the store re-warms, sendMessage can fail
+                // with "Data passed to getter must include an id property" or
+                // evaluation/protocol errors. Those are transient — wait for
+                // the store to warm and retry instead of failing the recipient.
+                const retryable = /id property|memoize|Evaluation failed|Execution context|Protocol error|not (connected|ready)|LOGGED_OUT|logged out/i.test(msg);
+                if (!retryable || attempt === 3) break;
+                console.log(`[WhatsApp] Send to ${row.phone_wa} failed (attempt ${attempt}/3): ${msg.slice(0, 140)} — retrying in 30s`);
+                await delay(30000);
+            }
+        }
+        if (sendErr) {
+            await supabase.from('whatsapp_blast_recipients')
+                .update({ status: 'failed', error: String(sendErr.message || sendErr).slice(0, 500) })
+                .eq('id', row.id);
+        } else {
             await supabase.from('whatsapp_blast_recipients')
                 .update({
                     status: 'sent',
                     sent_at: new Date().toISOString(),
                     wa_message_id: sentMsg && sentMsg.id ? sentMsg.id._serialized : null
                 })
-                .eq('id', row.id);
-        } catch (e) {
-            await supabase.from('whatsapp_blast_recipients')
-                .update({ status: 'failed', error: String(e.message || e).slice(0, 500) })
                 .eq('id', row.id);
         }
         await refreshBlastCounts(blastId);
