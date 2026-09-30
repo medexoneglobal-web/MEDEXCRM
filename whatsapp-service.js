@@ -354,9 +354,25 @@ async function ensureStarted() {
         const initPromise = client.initialize();
         // Swallow a late rejection once the watchdog has already won the race.
         initPromise.catch(() => { });
-        const watchdog = new Promise((_, reject) => {
-            initWatchdog = setTimeout(() => reject(new Error('Initialization timed out after 120s')), 120000);
-        });
+        let rejectWatchdog;
+        const watchdog = new Promise((_, reject) => { rejectWatchdog = reject; });
+        // The watchdog only guards against a GENUINELY hung initialization.
+        // authenticated/ready events can fire while initialize() is still
+        // pending (a slow cold boot killed a healthy Ready client here), and
+        // an unscanned QR can sit for ages — never tear the client down in
+        // either case; just re-arm and keep waiting.
+        const armWatchdog = () => {
+            initWatchdog = setTimeout(() => {
+                if (client && (state.connectionState === 'authenticated' || state.connectionState === 'ready')) {
+                    console.log(`[WhatsApp] Initialization still settling (state: ${state.connectionState}) — keeping the client alive.`);
+                    armWatchdog();
+                    return;
+                }
+                if (state.connectionState === 'qr') { armWatchdog(); return; }
+                rejectWatchdog(new Error('Initialization timed out after 120s'));
+            }, 120000);
+        };
+        armWatchdog();
         await Promise.race([initPromise, watchdog]);
     } catch (e) {
         const msg = String(e.message || e);
@@ -367,6 +383,11 @@ async function ensureStarted() {
         // browser down here was the old bug that spawned duplicate clients.
         if (/execution context was destroyed/i.test(msg)) {
             console.log('[WhatsApp] Page reload during initialization (QR scan in progress) — keeping the client alive.');
+            return;
+        }
+        // Same protection for any other late error once the client is up.
+        if (client && (state.connectionState === 'authenticated' || state.connectionState === 'ready')) {
+            console.log(`[WhatsApp] Late initialization error ("${msg.slice(0, 100)}") after ${state.connectionState} — keeping the client alive.`);
             return;
         }
         console.error('[WhatsApp] Initialize failed:', msg);
