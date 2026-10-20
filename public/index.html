@@ -16398,7 +16398,7 @@ async function exportActivityLog() {
                     'Product Type': r['PRODUCT TYPE'] || '', 'MTN Status': r._mtnStatus.label,
                     'Expiry Date': fmt(r._mtnEndDate), 'Renewal Status': r['RENEWAL STATUS 2'] || '',
                     'Category': labels[r._category] || '', 'PIC': r['M1G/ DEALER CASE'] || r['Contact Name'] || '',
-                    'Remarks': r['REMARKS - FOLLOW UP'] || r['REMARKS'] || ''
+                    'Remarks': r['REMARK'] || r['REMARKS'] || r['REMARKS - FOLLOW UP'] || r['REMARKS FOLLOW UP'] || ''
                 };
             });
             const ws = XLSX.utils.json_to_sheet(rows);
@@ -16424,7 +16424,7 @@ async function exportActivityLog() {
                 'Renewal Status': r['RENEWAL STATUS 2'] || '-',
                 'Category': labels[r._category] || '-',
                 'PIC': r['M1G/ DEALER CASE'] || r['Contact Name'] || '',
-                'Remarks': r['REMARKS - FOLLOW UP'] || r['REMARKS'] || ''
+                'Remarks': r['REMARK'] || r['REMARKS'] || r['REMARKS - FOLLOW UP'] || r['REMARKS FOLLOW UP'] || ''
             }));
 
             const columns = ['ACCT NO', 'CLINIC NAME', 'PRODUCT TYPE', 'MTN Status', 'Expiry Date', 'Renewal Status', 'Category', 'PIC', 'Remarks'];
