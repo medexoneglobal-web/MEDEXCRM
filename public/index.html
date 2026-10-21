@@ -14760,7 +14760,7 @@ async function exportActivityLog() {
             today.setHours(0, 0, 0, 0);
             const usingCMSMHIS = isUsingCMSMHIS(row);
 
-            const closedStatuses = ['closed down', 'cancelled purchase', 'terminated'];
+            const closedStatuses = ['closed down', 'cancelled purchase', 'terminated', 'change license ver'];
             const changedStatuses = ['change service provider'];
             if (closedStatuses.includes(renewalStatus2)) return 'E';
             if (changedStatuses.includes(renewalStatus2)) return 'G';
@@ -16040,7 +16040,7 @@ async function exportActivityLog() {
                 { key: 'C', title: 'Refused Renewal', desc: 'Choose not to renew MTN', icon: '&#128683;', color: 'gray' },
                 { key: 'D', title: 'ClaimEX Only', desc: 'Subscribe to ClaimEX only', icon: '&#128196;', color: 'purple' },
                 { key: 'F', title: 'GFLEX Only', desc: 'Subscribe to GFLEX only', icon: '&#128208;', color: 'teal' },
-                { key: 'E', title: 'Closed Down', desc: 'Closed down or cancelled', icon: '&#128683;', color: 'red' },
+                { key: 'E', title: 'Closed Down/Terminated', desc: 'Closed down or cancelled', icon: '&#128683;', color: 'red' },
                 { key: 'G', title: 'Changed Provider', desc: 'Changed to another provider', icon: '&#128260;', color: 'rose' }
             ];
             container.innerHTML = cards.map(c => {
@@ -16283,7 +16283,7 @@ async function exportActivityLog() {
                             <option value="C" ${mtnCatCurrentFilter === 'C' ? 'selected' : ''}>Refused Renewal</option>
                             <option value="D" ${mtnCatCurrentFilter === 'D' ? 'selected' : ''}>ClaimEX Only</option>
                             <option value="F" ${mtnCatCurrentFilter === 'F' ? 'selected' : ''}>GFLEX Only</option>
-                            <option value="E" ${mtnCatCurrentFilter === 'E' ? 'selected' : ''}>Closed Down</option>
+                            <option value="E" ${mtnCatCurrentFilter === 'E' ? 'selected' : ''}>Closed Down/Terminated</option>
                             <option value="G" ${mtnCatCurrentFilter === 'G' ? 'selected' : ''}>Changed Provider</option>
                         </select>
                         <button class="btn btn-outline btn-sm" onclick="exportMTNCatExcel()">Export Excel</button>
@@ -16344,7 +16344,7 @@ async function exportActivityLog() {
         }
 
         function getMTNCatFilterLabel(cat) {
-            const labels = { X: 'Total Customer Base', A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down', G: 'Changed Provider' };
+            const labels = { X: 'Total Customer Base', A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down/Terminated', G: 'Changed Provider' };
             return labels[cat] || 'All Customers';
         }
 
@@ -16393,7 +16393,7 @@ async function exportActivityLog() {
             if (mtnCatFilteredData.length === 0) { alert('No data to export.'); return; }
             const rows = mtnCatFilteredData.map(r => {
                 const fmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '';
-                const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down', G: 'Changed Provider' };
+                const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down/Terminated', G: 'Changed Provider' };
                 return {
                     'Customer Code': r['ACCT NO'] || '', 'Customer Name': r['CLINIC NAME'] || '',
                     'Product Type': r['PRODUCT TYPE'] || '', 'MTN Status': r._mtnStatus.label,
@@ -16414,7 +16414,7 @@ async function exportActivityLog() {
             if (mtnCatFilteredData.length === 0) { alert('No data to export.'); return; }
 
             const fmt = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '-';
-            const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down', G: 'Changed Provider' };
+            const labels = { A: 'Active MTN', B: 'Expired but Still Using', C: 'Refused Renewal', D: 'ClaimEX Only', F: 'GFLEX Only', E: 'Closed Down/Terminated', G: 'Changed Provider' };
 
             const data = mtnCatFilteredData.map(r => ({
                 'ACCT NO': r['ACCT NO'] || '',
