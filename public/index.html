@@ -3170,7 +3170,8 @@
            CLINIC PERFORMANCE REPORT STYLES
            ======================== */
         .cpr-panel {
-            display: flex;
+            /* Never force display here: .report-panel (display:none) must keep
+               inactive panels hidden — the active state supplies display:flex. */
             flex-direction: column;
             gap: 20px;
         }
