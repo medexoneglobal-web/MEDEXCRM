@@ -5804,6 +5804,7 @@
                             <input type="password" id="waApiSecretInput" placeholder="API secret (optional)" autocomplete="new-password">
                             <button class="wa-btn wa-btn-outline" onclick="saveWAConfig()">Save</button>
                         </div>
+                        <div class="wa-note" style="margin-top:6px;">The Cloudflare tunnel URL is detected automatically after every restart — this field is only needed for a separate backend host.</div>
                     </div>
                     <div class="wa-card">
                         <h3>Send WhatsApp</h3>
@@ -6489,6 +6490,366 @@
 
             console.log(`fetchAllContacts completed: ${allData.length} total records`);
             return allData;
+        }
+
+        // ==================== SAFE CONCURRENT CUSTOMER UPDATES ====================
+        // A customer is stored as one row in `contacts` whose `data` column is a JSONB
+        // object holding every customer field. Saving used to write that whole object
+        // back, so a user working from an older copy of the row silently reverted the
+        // fields another user had just saved. Every customer save now goes through
+        // commitCustomerChanges(), which:
+        //   1. reads the freshest row from Supabase,
+        //   2. merges ONLY the fields this user actually changed,
+        //   3. compares each changed field with the value the user was looking at
+        //      (the baseline) and reports a conflict - instead of overwriting - when
+        //      somebody else has changed that same field in the meantime,
+        //   4. writes with a compare-and-swap on contacts.updated_at, so a write that
+        //      loses a race is retried on the fresh row instead of clobbering it.
+        // Step 4 is the database-level guard: the conditional UPDATE is atomic, so
+        // two simultaneous saves can never silently drop each other's changes.
+        const CUSTOMER_SAVE_MAX_ATTEMPTS = 4;
+
+        // Customer row keys that belong to the UI only and must never be persisted
+        function isCustomerInternalKey(key) {
+            return key === 'id' || key === '_rowIndex' || key.includes('_EMPTY_') || key.startsWith('__');
+        }
+
+        // Normalise a value for comparison only (never for storage)
+        function normalizeCustomerValue(value) {
+            if (value === undefined || value === null) return '';
+            if (typeof value === 'boolean') return value ? 'true' : 'false';
+            if (typeof value === 'object') return JSON.stringify(value);
+            return String(value);
+        }
+
+        function customerValuesEqual(a, b) {
+            return normalizeCustomerValue(a) === normalizeCustomerValue(b);
+        }
+
+        // Strip UI-only keys and turn undefined/null into '' so JSONB round-trips cleanly
+        function sanitizeCustomerFields(obj) {
+            const out = {};
+            if (!obj) return out;
+            Object.entries(obj).forEach(([key, value]) => {
+                if (isCustomerInternalKey(key)) return;
+                out[key] = (value === undefined || value === null) ? '' : value;
+            });
+            return out;
+        }
+
+        // LAST UPDATED BY / LAST UPDATED AT stamp written with every customer save
+        function buildCustomerStamp(overrides) {
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            return Object.assign({
+                'LAST UPDATED BY': currentUser ? currentUser.username : 'system',
+                'LAST UPDATED AT': `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`
+            }, overrides || {});
+        }
+
+        // Read the latest version of a customer (data + updated_at used for the CAS)
+        async function fetchFreshCustomerRow(recordId) {
+            const { data, error } = await supabaseClient
+                .from('contacts')
+                .select('id,data,updated_at')
+                .eq('id', recordId)
+                .maybeSingle();
+            if (error) throw error;
+            return data;
+        }
+
+        // Copy the freshest database values onto the in-memory row(s) for this customer
+        function mergeCustomerRowIntoLocal(recordId, data, extraLists) {
+            if (!data) return;
+            const lists = [crmData].concat(extraLists || []);
+            lists.forEach(list => {
+                if (!Array.isArray(list)) return;
+                const row = list.find(r => String(r.id) === String(recordId));
+                if (!row) return;
+                Object.entries(data).forEach(([key, value]) => {
+                    if (isCustomerInternalKey(key)) return;
+                    row[key] = value;
+                });
+            });
+        }
+
+        /**
+         * Field-level, conflict-aware customer update.
+         *
+         * @param {*} recordId        contacts.id of the customer
+         * @param {Object} changes    ONLY the fields the user modified -> new value
+         * @param {Object} baseline   the same fields as the user saw them when editing
+         *                            (omit a field to skip conflict detection for it)
+         * @param {Object} options    { force, silent, stamp, syncLists }
+         * @returns {Promise<Object>} { ok, reason, applied, conflicts, current, data }
+         *                            reason: 'conflict' | 'error' | 'missing' | 'cancelled'
+         */
+        async function commitCustomerChanges(recordId, changes, baseline, options) {
+            options = options || {};
+            const cleanChanges = sanitizeCustomerFields(changes);
+            if (Object.keys(cleanChanges).length === 0) {
+                return { ok: true, applied: {}, conflicts: [], noop: true };
+            }
+            const baselineValues = sanitizeCustomerFields(baseline);
+            const stamp = buildCustomerStamp(options.stamp);
+            const force = options.force === true;
+            let lastError = null;
+
+            for (let attempt = 1; attempt <= CUSTOMER_SAVE_MAX_ATTEMPTS; attempt++) {
+                let latest;
+                try {
+                    latest = await fetchFreshCustomerRow(recordId);
+                } catch (err) {
+                    return { ok: false, reason: 'error', error: err };
+                }
+                if (!latest) return { ok: false, reason: 'missing' };
+
+                const currentData = latest.data || {};
+                const pending = {};
+                const conflicts = [];
+
+                Object.entries(cleanChanges).forEach(([field, value]) => {
+                    // Already stored with the requested value (saved by this user on a
+                    // previous attempt, or by somebody else) -> nothing to write.
+                    if (customerValuesEqual(currentData[field], value)) return;
+                    const baseKnown = Object.prototype.hasOwnProperty.call(baselineValues, field);
+                    if (!force && baseKnown && !customerValuesEqual(currentData[field], baselineValues[field])) {
+                        conflicts.push({
+                            field: field,
+                            yours: value,
+                            theirs: currentData[field] === undefined ? '' : currentData[field]
+                        });
+                        return;
+                    }
+                    pending[field] = value;
+                });
+
+                if (conflicts.length > 0) {
+                    return {
+                        ok: false,
+                        reason: 'conflict',
+                        conflicts: conflicts,
+                        current: currentData,
+                        updatedAt: latest.updated_at
+                    };
+                }
+                if (Object.keys(pending).length === 0) {
+                    return { ok: true, applied: {}, data: currentData, updatedAt: latest.updated_at, noop: true };
+                }
+
+                // Merge the user's fields on top of the FRESH row: everything the user
+                // did not touch is preserved exactly as another user left it.
+                const merged = Object.assign({}, currentData, pending, stamp);
+
+                // Compare-and-swap: the write only lands if nobody saved between our
+                // read and this update. Losing the race returns 0 rows -> retry.
+                const { data: written, error } = await supabaseClient
+                    .from('contacts')
+                    .update({ data: merged })
+                    .eq('id', latest.id)
+                    .eq('updated_at', latest.updated_at)
+                    .select('id,data,updated_at');
+
+                if (error) {
+                    lastError = error;
+                } else if (written && written.length > 0) {
+                    return {
+                        ok: true,
+                        applied: pending,
+                        conflicts: [],
+                        previous: currentData,
+                        data: written[0].data,
+                        updatedAt: written[0].updated_at
+                    };
+                }
+
+                // Retry against the fresh row (also covers a temporary network error)
+                if (attempt < CUSTOMER_SAVE_MAX_ATTEMPTS) {
+                    await new Promise(r => setTimeout(r, 80 * attempt));
+                }
+            }
+
+            return {
+                ok: false,
+                reason: 'error',
+                error: lastError || new Error('The record kept changing while saving. Please try again.')
+            };
+        }
+
+        // Reload a customer's latest values into memory so the UI can show them
+        async function reloadCustomerRowFromDb(recordId, extraLists) {
+            try {
+                const latest = await fetchFreshCustomerRow(recordId);
+                if (latest) mergeCustomerRowIntoLocal(recordId, latest.data, extraLists);
+                return latest ? latest.data : null;
+            } catch (err) {
+                console.error('reloadCustomerRowFromDb failed:', err);
+                return null;
+            }
+        }
+
+        // ---- Conflict warning dialog ----
+        let __customerConflictResolver = null;
+
+        function resolveCustomerConflictChoice(choice) {
+            const modal = document.getElementById('customerConflictModal');
+            if (modal) modal.remove();
+            const resolver = __customerConflictResolver;
+            __customerConflictResolver = null;
+            if (resolver) resolver(choice);
+        }
+
+        /**
+         * Warn the user that somebody else changed the same field(s).
+         * Resolves with 'overwrite' | 'reload' | 'cancel'.
+         */
+        function promptCustomerConflict(conflicts, currentData) {
+            const current = currentData || {};
+            const who = String(current['LAST UPDATED BY'] || '').trim();
+            const when = String(current['LAST UPDATED AT'] || '').trim();
+            const whoLine = (who || when)
+                ? `The current copy was last saved by <strong>${escapeHtml(who || 'another user')}</strong>${when ? ` at ${escapeHtml(when)}` : ''}.`
+                : 'Another user saved this customer while you were editing.';
+
+            const rowsHtml = conflicts.map(c => {
+                const yours = normalizeCustomerValue(c.yours);
+                const theirs = normalizeCustomerValue(c.theirs);
+                return `<tr>
+                    <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-weight:600;color:#374151;">${escapeHtml(c.field)}</td>
+                    <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;color:#6b7280;">${yours === '' ? '<em>(empty)</em>' : escapeHtml(yours)}</td>
+                    <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;color:#b91c1c;font-weight:600;">${theirs === '' ? '<em>(empty)</em>' : escapeHtml(theirs)}</td>
+                </tr>`;
+            }).join('');
+
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'customerConflictModal';
+            modal.style.zIndex = '100000';
+            modal.innerHTML = `<div class="modal-content" style="max-width:760px;">
+                <div class="modal-header" style="background:#fef3c7;border-bottom:1px solid #fde68a;">
+                    <h3 style="color:#92400e;">&#9888;&#65039; Save Conflict Detected</h3>
+                    <button class="close-btn" onclick="resolveCustomerConflictChoice('cancel')">&times;</button>
+                </div>
+                <div style="padding:20px;">
+                    <p style="margin:0 0 6px;font-size:14px;color:#374151;">
+                        Your change was <strong>not saved</strong> because the following field(s) were changed by someone else after you opened this record.
+                    </p>
+                    <p style="margin:0 0 14px;font-size:13px;color:#6b7280;">${whoLine}</p>
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                        <thead>
+                            <tr style="background:#f9fafb;text-align:left;">
+                                <th style="padding:8px 10px;color:#6b7280;font-weight:600;">Field</th>
+                                <th style="padding:8px 10px;color:#6b7280;font-weight:600;">Your change</th>
+                                <th style="padding:8px 10px;color:#6b7280;font-weight:600;">Currently saved</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                    <p style="margin:14px 0 0;font-size:12px;color:#9ca3af;">
+                        &ldquo;Reload latest&rdquo; keeps the other user&rsquo;s values and lets you review before saving again.
+                        &ldquo;Overwrite&rdquo; replaces them with your values.
+                    </p>
+                </div>
+                <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="resolveCustomerConflictChoice('cancel')">Cancel</button>
+                    <button class="btn btn-secondary" style="background:#0ea5e9;color:#fff;border:none;" onclick="resolveCustomerConflictChoice('reload')">Reload Latest &amp; Review</button>
+                    <button class="btn btn-primary" style="background:#dc2626;border:none;" onclick="resolveCustomerConflictChoice('overwrite')">Overwrite Anyway</button>
+                </div>
+            </div>`;
+            document.body.appendChild(modal);
+
+            return new Promise(resolve => {
+                __customerConflictResolver = resolve;
+            });
+        }
+
+        /**
+         * commitCustomerChanges + conflict dialog + local row sync.
+         * Use this from every customer save screen.
+         * Returns the same shape as commitCustomerChanges(), plus
+         * reason 'reloaded' / 'cancelled' when the user resolved a conflict.
+         */
+        async function saveCustomerFields(recordId, changes, baseline, options) {
+            options = options || {};
+            const lists = options.syncLists || [];
+
+            let result = await commitCustomerChanges(recordId, changes, baseline, options);
+            if (result.ok) {
+                mergeCustomerRowIntoLocal(recordId, result.data, lists);
+                return result;
+            }
+            if (result.reason !== 'conflict' || options.silent) return result;
+
+            const choice = await promptCustomerConflict(result.conflicts, result.current);
+            if (choice === 'overwrite') {
+                result = await commitCustomerChanges(recordId, changes, baseline,
+                    Object.assign({}, options, { force: true }));
+                if (result.ok) mergeCustomerRowIntoLocal(recordId, result.data, lists);
+                return result;
+            }
+            if (choice === 'reload') {
+                const latest = await reloadCustomerRowFromDb(recordId, lists);
+                return { ok: false, reason: 'reloaded', conflicts: result.conflicts, data: latest };
+            }
+            return { ok: false, reason: 'cancelled', conflicts: result.conflicts };
+        }
+
+        // Compact human readable conflict summary (used by bulk operations)
+        function describeCustomerConflicts(conflicts) {
+            return (conflicts || []).map(c => c.field).join(', ');
+        }
+
+        // Summary warning for bulk/grid saves where some rows were skipped because
+        // another user had already changed the same field.
+        let __bulkConflictResolver = null;
+
+        function closeBulkConflictDialog() {
+            const modal = document.getElementById('bulkConflictModal');
+            if (modal) modal.remove();
+            const resolver = __bulkConflictResolver;
+            __bulkConflictResolver = null;
+            if (resolver) resolver();
+        }
+
+        function notifyBulkConflicts(reports) {
+            const rowsHtml = (reports || []).map(r => `<tr>
+                <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-weight:600;color:#374151;">${escapeHtml(r.label || '')}</td>
+                <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;color:#b91c1c;">${escapeHtml(r.fields || '')}</td>
+            </tr>`).join('');
+
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'bulkConflictModal';
+            modal.style.zIndex = '100000';
+            modal.innerHTML = `<div class="modal-content" style="max-width:680px;">
+                <div class="modal-header" style="background:#fef3c7;border-bottom:1px solid #fde68a;">
+                    <h3 style="color:#92400e;">&#9888;&#65039; ${(reports || []).length} Record(s) Not Saved</h3>
+                    <button class="close-btn" onclick="closeBulkConflictDialog()">&times;</button>
+                </div>
+                <div style="padding:20px;">
+                    <p style="margin:0 0 12px;font-size:14px;color:#374151;">
+                        These fields were changed by another user while you were editing, so your value was
+                        <strong>not written</strong>. The latest saved values have been reloaded into the table.
+                    </p>
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                        <thead>
+                            <tr style="background:#f9fafb;text-align:left;">
+                                <th style="padding:8px 10px;color:#6b7280;font-weight:600;">Customer</th>
+                                <th style="padding:8px 10px;color:#6b7280;font-weight:600;">Conflicting field(s)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+                <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;">
+                    <button class="btn btn-primary" onclick="closeBulkConflictDialog()">OK</button>
+                </div>
+            </div>`;
+            document.body.appendChild(modal);
+
+            return new Promise(resolve => {
+                __bulkConflictResolver = resolve;
+            });
         }
 
         // Date columns that should use date picker
@@ -7635,6 +7996,7 @@
             document.getElementById('eInvoiceReportPanel').classList.remove('active');
             document.getElementById('mtnCategorizedReportPanel').classList.remove('active');
             document.getElementById('productReportPanel').classList.remove('active');
+            document.getElementById('multiProductReportPanel').classList.remove('active');
             document.getElementById('clinicPerformanceReportPanel').classList.remove('active');
             
             // Reset tab styles
@@ -7643,6 +8005,7 @@
             document.getElementById('eInvoiceReportSubTab').classList.remove('active');
             document.getElementById('mtnCategorizedReportSubTab').classList.remove('active');
             document.getElementById('productReportSubTab').classList.remove('active');
+            document.getElementById('multiProductReportSubTab').classList.remove('active');
             document.getElementById('clinicPerformanceReportSubTab').classList.remove('active');
             
             // Show selected panel
@@ -10256,75 +10619,86 @@
         // Save changes from the view details modal
         async function saveViewDetails() {
             if (!currentViewRowId) return;
-            
+
             const row = crmData.find(r => String(r.id) === String(currentViewRowId));
             if (!row) { console.error('saveViewDetails: row not found for id', currentViewRowId); return; }
             const recordId = row.id;
-            
-            // Capture old data before applying changes
+
+            // Collect ONLY the fields the user actually changed, together with the value
+            // they were looking at (baseline) so a concurrent edit of the same field is
+            // detected instead of being silently reverted.
             const oldData = {};
             const newData = {};
-            const changedFieldsList = [];
-            
-            // Read all input values and update the row
+
             headers.forEach((headerName, colIdx) => {
                 const inputEl = document.getElementById(`viewDetail_${colIdx}`);
-                if (inputEl) {
-                    let newValue = inputEl.value;
-                    
-                    // Convert date format if this is a date column
-                    if (isDateColumn(headerName)) {
-                        newValue = fromInputDate(newValue);
-                    }
-                    
-                    if (row[headerName] !== newValue) {
-                        oldData[headerName] = row[headerName];
-                        newData[headerName] = newValue;
-                        changedFieldsList.push(headerName);
-                    }
-                    
-                    row[headerName] = newValue;
+                if (!inputEl) return;
+                let newValue = inputEl.value;
+                // Convert date format if this is a date column
+                if (isDateColumn(headerName)) {
+                    newValue = fromInputDate(newValue);
+                }
+                if (!customerValuesEqual(row[headerName], newValue)) {
+                    oldData[headerName] = normalizeCustomerValue(row[headerName]);
+                    newData[headerName] = newValue;
                 }
             });
-            
-            // Save to Supabase if record has an ID
-            if (recordId) {
-                const rowData = {...row};
-                delete rowData.id;
-                // Remove any _EMPTY_ keys before saving
-                for (const key of Object.keys(rowData)) {
-                    if (key.includes('_EMPTY_') || key.startsWith('__')) {
-                        delete rowData[key];
-                    }
-                }
-                const { error } = await supabaseClient.from('contacts').update({ data: rowData }).eq('id', recordId);
-                if (error) {
-                    console.error('Failed to update record in Supabase:', error);
-                } else if (changedFieldsList.length > 0) {
-                    // Insert audit log
-                    try {
-                        await supabaseClient.from('audit_log').insert([{
-                            contacts_id: recordId,
-                            action: 'UPDATE',
-                            changed_by: currentUser ? currentUser.username : 'Unknown',
-                            old_data: oldData,
-                            new_data: newData,
-                            changed_fields: changedFieldsList
-                        }]);
-                    } catch (auditErr) {
-                        console.error('Failed to insert audit log:', auditErr);
-                    }
-                    await logActivity({ module: 'CRM', action: 'UPDATE', customerId: recordId, customerName: rowData['CLINIC NAME'] || rowData['ACCOUNT NAME'] || '', field: changedFieldsList.join(', '), oldValue: JSON.stringify(oldData), newValue: JSON.stringify(newData), description: `${currentUser?.username || 'User'} updated ${changedFieldsList.join(', ')} for ${rowData['CLINIC NAME'] || rowData['ACCOUNT NAME'] || 'customer'}` });
-                }
+
+            const changedFieldsList = Object.keys(newData);
+            if (changedFieldsList.length === 0) {
+                closeViewDetailsModal();
+                return;
             }
-            
+
+            // Field-level save against the freshest database row (never the stale copy).
+            // Other users' changes to other fields are preserved; a change to the same
+            // field raises the conflict dialog.
+            const result = await saveCustomerFields(recordId, newData, oldData);
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    closeViewDetailsModal();
+                    viewRowDetails(recordId);
+                    showNotification(`Latest data loaded. ${describeCustomerConflicts(result.conflicts)} was changed by another user - please review and save again.`, 'error');
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    showNotification('Save failed: ' + ((result.error && result.error.message) || 'unknown error'), 'error');
+                }
+                return;
+            }
+
+            // Audit only the fields that were actually written (empty when the value was
+            // already identical in the database)
+            const appliedFields = Object.keys(result.applied || {});
+            const appliedOld = {};
+            const appliedNew = {};
+            appliedFields.forEach(field => {
+                appliedOld[field] = oldData[field];
+                appliedNew[field] = newData[field];
+            });
+
+            if (appliedFields.length > 0) {
+                // Insert audit log
+                try {
+                    await supabaseClient.from('audit_log').insert([{
+                        contacts_id: recordId,
+                        action: 'UPDATE',
+                        changed_by: currentUser ? currentUser.username : 'Unknown',
+                        old_data: appliedOld,
+                        new_data: appliedNew,
+                        changed_fields: appliedFields
+                    }]);
+                } catch (auditErr) {
+                    console.error('Failed to insert audit log:', auditErr);
+                }
+                await logActivity({ module: 'CRM', action: 'UPDATE', customerId: recordId, customerName: row['CLINIC NAME'] || row['ACCOUNT NAME'] || '', field: appliedFields.join(', '), oldValue: JSON.stringify(appliedOld), newValue: JSON.stringify(appliedNew), description: `${currentUser?.username || 'User'} updated ${appliedFields.join(', ')} for ${row['CLINIC NAME'] || row['ACCOUNT NAME'] || 'customer'}` });
+            }
+
             // Save to localStorage and refresh
             saveCRMData();
             renderTable();
-            
+
             // Show success notification and close modal
             showNotification('Info Updated', 'success');
-            
+
             // Close modal
             closeViewDetailsModal();
         }
@@ -10848,73 +11222,88 @@
                 oldDataMap[rowIdx] = { ...crmData[rowIdx] };
             });
 
-            // Apply changes to local data and sync to backend
-            const updatePromises = [];
+            // Apply changes to local data
             Object.keys(pendingChanges).forEach(key => {
                 const [rowIdx, colIdx] = key.split('-').map(Number);
                 crmData[rowIdx][headers[colIdx]] = pendingChanges[key];
             });
 
-            // Sync each changed row to Supabase
+            // Sync each changed row to Supabase. Only the edited columns are sent and
+            // they are merged into the freshest row, so fields another user changed in
+            // the meantime are preserved. A field edited by both users is reported as a
+            // conflict instead of being overwritten.
+            const updateErrors = [];
+            const conflictReports = [];
+            const appliedByRow = {};
+
             for (const rowIdx of Object.keys(rowChanges)) {
                 const { recordId, changes } = rowChanges[rowIdx];
-                if (recordId) {
-                    // Build full data object for the record
-                    const rowData = {...crmData[rowIdx]};
-                    delete rowData.id; // Remove id from data payload
-                    // Remove any _EMPTY_ keys before saving
-                    for (const key of Object.keys(rowData)) {
-                        if (key.includes('_EMPTY_') || key.startsWith('__')) {
-                            delete rowData[key];
-                        }
-                    }
-                    
-                    updatePromises.push(
-                        supabaseClient.from('contacts').update({ data: rowData }).eq('id', recordId)
-                            .then(res => { if (res.error) throw res.error; })
-                            .catch(err => {
-                                console.error(`Failed to update record ${recordId}:`, err);
-                                return { error: err };
-                            })
-                    );
+                if (!recordId) continue;
+
+                const baseline = {};
+                Object.keys(changes).forEach(field => {
+                    baseline[field] = oldDataMap[rowIdx][field];
+                });
+
+                const result = await saveCustomerFields(recordId, changes, baseline, { silent: true });
+                if (result.ok) {
+                    appliedByRow[rowIdx] = result.applied || {};
+                } else if (result.reason === 'conflict') {
+                    conflictReports.push({
+                        recordId: recordId,
+                        label: crmData[rowIdx]['ACCT NO'] || crmData[rowIdx]['CLINIC NAME'] || String(recordId),
+                        fields: describeCustomerConflicts(result.conflicts),
+                        conflicts: result.conflicts
+                    });
+                } else {
+                    updateErrors.push(result);
                 }
             }
 
-            // Wait for all API calls to complete
-            const updateResults = await Promise.all(updatePromises);
-            const updateErrors = updateResults.filter(r => r && r.error);
-
-            // Insert audit logs for each changed row
+            // Insert audit logs for each changed row (only the fields really written)
             for (const rowIdx of Object.keys(rowChanges)) {
-                const { recordId, changes } = rowChanges[rowIdx];
-                if (recordId) {
-                    const oldData = {};
-                    const newData = {};
-                    const changedFieldsList = [];
-                    Object.keys(changes).forEach(field => {
-                        oldData[field] = oldDataMap[rowIdx][field];
-                        newData[field] = changes[field];
-                        changedFieldsList.push(field);
-                    });
-                    try {
-                        await supabaseClient.from('audit_log').insert([{
-                            contacts_id: recordId,
-                            action: 'UPDATE',
-                            changed_by: currentUser ? currentUser.username : 'Unknown',
-                            old_data: oldData,
-                            new_data: newData,
-                            changed_fields: changedFieldsList
-                        }]);
-                    } catch (auditErr) {
-                        console.error('Failed to insert audit log:', auditErr);
-                    }
+                const { recordId } = rowChanges[rowIdx];
+                if (!recordId) continue;
+                const applied = appliedByRow[rowIdx] || {};
+                const changedFieldsList = Object.keys(applied);
+                if (changedFieldsList.length === 0) continue;
+
+                const oldData = {};
+                const newData = {};
+                changedFieldsList.forEach(field => {
+                    oldData[field] = oldDataMap[rowIdx][field];
+                    newData[field] = applied[field];
+                });
+                try {
+                    await supabaseClient.from('audit_log').insert([{
+                        contacts_id: recordId,
+                        action: 'UPDATE',
+                        changed_by: currentUser ? currentUser.username : 'Unknown',
+                        old_data: oldData,
+                        new_data: newData,
+                        changed_fields: changedFieldsList
+                    }]);
+                } catch (auditErr) {
+                    console.error('Failed to insert audit log:', auditErr);
                 }
             }
 
             pendingChanges = {};
             saveCRMData();
+
+            // Conflicting rows were NOT written - pull the saved values back in so the
+            // grid never shows data that does not match the database.
+            if (conflictReports.length > 0) {
+                for (const report of conflictReports) {
+                    await reloadCustomerRowFromDb(report.recordId);
+                }
+            }
+
             renderTable();
-            if (updateErrors.length > 0) {
+
+            if (conflictReports.length > 0) {
+                await notifyBulkConflicts(conflictReports);
+            } else if (updateErrors.length > 0) {
                 showToast('Some customer updates failed', 'error');
             } else {
                 showToast('Customer updated successfully', 'success');
@@ -13199,45 +13588,48 @@
             const lkeyLine3 = document.getElementById('editLkeyLine3').value.trim();
             const lkeyLine4 = document.getElementById('editLkeyLine4').value.trim();
             const lkeyLine5 = document.getElementById('editLkeyLine5').value.trim();
-            
-            // Update in crmData if present
+
             const crmRow = crmData.find(r => r.id === currentEditingLicenseKeyId);
-            if (crmRow) {
-                crmRow['LKEY Line 1'] = lkeyLine1;
-                crmRow['LKEY Line 2'] = lkeyLine2;
-                crmRow['LKEY Line 3'] = lkeyLine3;
-                crmRow['LKEY Line 4'] = lkeyLine4;
-                crmRow['LKEY Line 5'] = lkeyLine5;
-            }
-            
-            // Update in licenseKeyData if present
-            const lkRow = licenseKeyData.find(r => r.id === currentEditingLicenseKeyId);
-            if (lkRow) {
-                lkRow['LKEY Line 1'] = lkeyLine1;
-                lkRow['LKEY Line 2'] = lkeyLine2;
-                lkRow['LKEY Line 3'] = lkeyLine3;
-                lkRow['LKEY Line 4'] = lkeyLine4;
-                lkRow['LKEY Line 5'] = lkeyLine5;
-            }
-            
-            // Persist to Supabase
+            const lkRow = Array.isArray(licenseKeyData) ? licenseKeyData.find(r => r.id === currentEditingLicenseKeyId) : null;
             const baseRow = crmRow || lkRow;
-            if (baseRow) {
-                try {
-                    const rowData = {};
-                    Object.entries(baseRow).forEach(([k, v]) => {
-                        if (k !== 'id' && k !== '_rowIndex' && !k.includes('_EMPTY_') && !k.startsWith('__')) {
-                            rowData[k] = v || '';
-                        }
-                    });
-                    const { error } = await supabaseClient.from('contacts').update({ data: rowData }).eq('id', currentEditingLicenseKeyId);
-                    if (error) { console.error('Failed to update in Supabase:', error); showNotification('Save failed: ' + error.message, 'error'); return; }
-                } catch(err) {
-                    console.error('Error saving to Supabase:', err);
-                    showNotification('Save failed', 'error');
+
+            // Only the licence key columns are sent, merged into the freshest row, so a
+            // concurrent edit of any other customer field is preserved.
+            const entered = {
+                'LKEY Line 1': lkeyLine1,
+                'LKEY Line 2': lkeyLine2,
+                'LKEY Line 3': lkeyLine3,
+                'LKEY Line 4': lkeyLine4,
+                'LKEY Line 5': lkeyLine5
+            };
+            const changes = {};
+            const baseline = {};
+            Object.entries(entered).forEach(([field, value]) => {
+                const previous = baseRow ? baseRow[field] : '';
+                if (!customerValuesEqual(previous, value)) {
+                    changes[field] = value;
+                    baseline[field] = normalizeCustomerValue(previous);
+                }
+            });
+
+            // Persist to Supabase
+            if (Object.keys(changes).length > 0) {
+                const result = await saveCustomerFields(currentEditingLicenseKeyId, changes, baseline, {
+                    syncLists: Array.isArray(licenseKeyData) ? [licenseKeyData] : []
+                });
+                if (!result.ok) {
+                    if (result.reason === 'reloaded') {
+                        showNotification('Latest data loaded. The licence key was changed by another user - please review and save again.', 'error');
+                        renderLicenseKeyTable();
+                        return;
+                    }
+                    if (result.reason === 'conflict' || result.reason === 'cancelled') return;
+                    console.error('Failed to update in Supabase:', result.error);
+                    showNotification('Save failed: ' + ((result.error && result.error.message) || 'unknown error'), 'error');
                     return;
                 }
-                const clinicName = baseRow['CLINIC NAME'] || '';
+                const labelRow = (baseRow || {});
+                const clinicName = labelRow['CLINIC NAME'] || '';
                 await logActivity({ module: 'License Key', action: 'UPDATE', customerName: clinicName, description: `${currentUser?.username || 'User'} updated license key for ${clinicName}` });
             }
             
@@ -16060,7 +16452,9 @@ async function exportActivityLog() {
         }
 
         function setMTNCatFilter(cat) {
-            mtnCatCurrentFilter = cat;
+            // 'X' (Total Customer Base) is the unfiltered aggregate — no row carries _category 'X',
+            // so map it to '' (the module's canonical "all" state) instead of filtering to zero rows.
+            mtnCatCurrentFilter = (cat === 'X') ? '' : cat;
             mtnCatCurrentPage = 1;
             filterMTNCatData();
         }
@@ -17013,47 +17407,47 @@ async function exportActivityLog() {
             if (rowIdx === -1) return;
             const row = crmData[rowIdx];
             const field = fieldType === 'start' ? 'CMS/MHIS MTN START DATE' : 'CMS/MHIS MTN END DATE';
+            const oldStart = row['CMS/MHIS MTN START DATE'] || '';
+            const oldEnd = row['CMS/MHIS MTN END DATE'] || '';
             const oldVal = row[field] || '';
             const newVal = inputEl.value; // yyyy-mm-dd format
             const newDate = new Date(newVal + 'T00:00:00');
             const formattedNew = mtnRenewalFmt(newDate);
+            const now = new Date();
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+
+            // Only the edited date is written (plus the renew date when the end date is
+            // pushed into the future). Everything else comes from the freshest row.
+            const changes = { [field]: formattedNew };
+            const baseline = { [field]: normalizeCustomerValue(oldVal) };
+            if (fieldType === 'end' && newDate > today) {
+                changes['MTN RENEW DATE'] = mtnRenewalFmt(now);
+                baseline['MTN RENEW DATE'] = normalizeCustomerValue(row['MTN RENEW DATE']);
+            }
+
+            const result = await saveCustomerFields(rowId, changes, baseline);
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    showToast('Latest data loaded - this MTN date was changed by another user. Please review and try again.', 'error');
+                    renderMTNRenewalModule();
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    console.error('Failed to update Supabase:', result.error);
+                    showToast('Failed to save changes', 'error');
+                }
+                return;
+            }
 
             // Audit trail
             const auditEntry = {
                 contacts_id: rowId,
-                old_start_date: row['CMS/MHIS MTN START DATE'] || '',
-                old_end_date: row['CMS/MHIS MTN END DATE'] || '',
-                new_start_date: fieldType === 'start' ? formattedNew : (row['CMS/MHIS MTN START DATE'] || ''),
-                new_end_date: fieldType === 'end' ? formattedNew : (row['CMS/MHIS MTN END DATE'] || ''),
+                old_start_date: oldStart,
+                old_end_date: oldEnd,
+                new_start_date: fieldType === 'start' ? formattedNew : oldStart,
+                new_end_date: fieldType === 'end' ? formattedNew : oldEnd,
                 edited_by: currentUser ? currentUser.username : 'Unknown',
                 action: 'INLINE_EDIT',
                 remarks: `${fieldType === 'start' ? 'Start' : 'End'} date changed from ${oldVal || 'empty'} to ${formattedNew}`
             };
-
-            // Update local data
-            row[field] = formattedNew;
-            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
-            const now = new Date();
-            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-            // If end date extended to future, mark as renew
-            if (fieldType === 'end') {
-                const today = new Date(); today.setHours(0,0,0,0);
-                if (newDate > today) {
-                    row['MTN RENEW DATE'] = mtnRenewalFmt(now);
-                }
-            }
-
-            // Push to Supabase
-            try {
-                const { data: rowData } = row;
-                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
-                logActivity({ module: 'MTN Renewal', action: 'UPDATE', description: `Inline edited ${field} for ${row['ACCT NO']}` });
-            } catch (err) {
-                console.error('Failed to update Supabase:', err);
-                showToast('Failed to save changes', 'error');
-                return;
-            }
 
             // Insert audit
             try {
@@ -17062,6 +17456,7 @@ async function exportActivityLog() {
                 console.warn('Audit insert failed (table may not exist):', err.message);
             }
 
+            logActivity({ module: 'MTN Renewal', action: 'UPDATE', description: `Inline edited ${field} for ${row['ACCT NO']}` });
             showToast('Date updated successfully', 'success');
             renderMTNRenewalModule();
         }
@@ -17092,14 +17487,22 @@ async function exportActivityLog() {
             const row = crmData[rowIdx];
             const oldEnd = row['CMS/MHIS MTN END DATE'] || '';
             const now = new Date();
-            row['MTN RENEW DATE'] = mtnRenewalFmt(now);
-            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
-            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            try {
-                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
-                logActivity({ module: 'MTN Renewal', action: 'RENEW', description: `Marked renew: ${row['ACCT NO']}` });
-            } catch (err) { console.error(err); showToast('Failed to update', 'error'); return; }
+            // Only the renew date changes - other fields stay exactly as stored.
+            const result = await saveCustomerFields(rowId,
+                { 'MTN RENEW DATE': mtnRenewalFmt(now) },
+                { 'MTN RENEW DATE': normalizeCustomerValue(row['MTN RENEW DATE']) });
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    showToast('Latest data loaded - this customer was changed by another user. Please review.', 'error');
+                    renderMTNRenewalModule();
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    console.error(result.error);
+                    showToast('Failed to update', 'error');
+                }
+                return;
+            }
+            logActivity({ module: 'MTN Renewal', action: 'RENEW', description: `Marked renew: ${row['ACCT NO']}` });
 
             try {
                 await supabaseClient.from('mtn_renewal_audit').insert([{
@@ -17119,14 +17522,22 @@ async function exportActivityLog() {
             const alreadyPaid = row['MTN PAID DATE'];
             if (alreadyPaid) {
                 if (!confirm(`Undo paid status? Current Paid Date: ${alreadyPaid}`)) return;
-                row['MTN PAID DATE'] = '';
-                const now = new Date();
-                row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
-                row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-                try {
-                    await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
-                    logActivity({ module: 'MTN Renewal', action: 'UNDO PAID', description: `Undo paid: ${row['ACCT NO']}` });
-                } catch (err) { console.error(err); showToast('Failed to update', 'error'); return; }
+
+                // Only the paid date is written to the freshest row
+                const result = await saveCustomerFields(rowId,
+                    { 'MTN PAID DATE': '' },
+                    { 'MTN PAID DATE': normalizeCustomerValue(alreadyPaid) });
+                if (!result.ok) {
+                    if (result.reason === 'reloaded') {
+                        showToast('Latest data loaded - this customer was changed by another user. Please review.', 'error');
+                        renderMTNRenewalModule();
+                    } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                        console.error(result.error);
+                        showToast('Failed to update', 'error');
+                    }
+                    return;
+                }
+                logActivity({ module: 'MTN Renewal', action: 'UNDO PAID', description: `Undo paid: ${row['ACCT NO']}` });
                 try {
                     await supabaseClient.from('mtn_renewal_audit').insert([{
                         contacts_id: rowId,
@@ -17143,13 +17554,22 @@ async function exportActivityLog() {
             }
             const now = new Date();
             const paidFmt = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-            row['MTN PAID DATE'] = paidFmt;
-            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'Unknown';
-            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-            try {
-                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
-                logActivity({ module: 'MTN Renewal', action: 'PAID', description: `Marked paid: ${row['ACCT NO']} on ${paidFmt}` });
-            } catch (err) { console.error(err); showToast('Failed to update', 'error'); return; }
+
+            const result = await saveCustomerFields(rowId,
+                { 'MTN PAID DATE': paidFmt },
+                { 'MTN PAID DATE': normalizeCustomerValue(row['MTN PAID DATE']) });
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    showToast('Latest data loaded - this customer was changed by another user. Please review.', 'error');
+                    renderMTNRenewalModule();
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    console.error(result.error);
+                    showToast('Failed to update', 'error');
+                }
+                return;
+            }
+            logActivity({ module: 'MTN Renewal', action: 'PAID', description: `Marked paid: ${row['ACCT NO']} on ${paidFmt}` });
+
             try {
                 await supabaseClient.from('mtn_renewal_audit').insert([{
                     contacts_id: rowId,
@@ -17194,18 +17614,29 @@ async function exportActivityLog() {
             const oldEnd = row['CMS/MHIS MTN END DATE'] || '';
             const newStart = mtnRenewalFmt(new Date(startVal + 'T00:00:00'));
             const newEnd = mtnRenewalFmt(new Date(endVal + 'T00:00:00'));
-
-            row['CMS/MHIS MTN START DATE'] = newStart;
-            row['CMS/MHIS MTN END DATE'] = newEnd;
             const now = new Date();
-            row['MTN RENEW DATE'] = mtnRenewalFmt(now);
-            row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
-            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            try {
-                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
-                logActivity({ module: 'MTN Renewal', action: 'RENEW', description: `Renewed MTN for ${row['ACCT NO']}: ${newStart} to ${newEnd}` });
-            } catch (err) { console.error(err); showToast('Failed to save', 'error'); return; }
+            // Field-level update: dates + renew date only, merged into the freshest row
+            const result = await saveCustomerFields(rowId, {
+                'CMS/MHIS MTN START DATE': newStart,
+                'CMS/MHIS MTN END DATE': newEnd,
+                'MTN RENEW DATE': mtnRenewalFmt(now)
+            }, {
+                'CMS/MHIS MTN START DATE': normalizeCustomerValue(oldStart),
+                'CMS/MHIS MTN END DATE': normalizeCustomerValue(oldEnd),
+                'MTN RENEW DATE': normalizeCustomerValue(row['MTN RENEW DATE'])
+            });
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    showToast('Latest data loaded - this customer was changed by another user. Please review and renew again.', 'error');
+                    renderMTNRenewalModule();
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    console.error(result.error);
+                    showToast('Failed to save', 'error');
+                }
+                return;
+            }
+            logActivity({ module: 'MTN Renewal', action: 'RENEW', description: `Renewed MTN for ${row['ACCT NO']}: ${newStart} to ${newEnd}` });
 
             try {
                 await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: rowId, old_start_date: oldStart, old_end_date: oldEnd, new_start_date: newStart, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'RENEW', remarks: 'MTN Renewed' }]);
@@ -17250,17 +17681,27 @@ async function exportActivityLog() {
             const newEndDate = new Date(currentEnd);
             newEndDate.setMonth(newEndDate.getMonth() + months);
             const newEnd = mtnRenewalFmt(newEndDate);
-
-            row['CMS/MHIS MTN END DATE'] = newEnd;
             const now = new Date();
-            row['MTN RENEW DATE'] = mtnRenewalFmt(now);
-            row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
-            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            try {
-                await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
-                logActivity({ module: 'MTN Renewal', action: 'EXTEND', description: `Extended MTN for ${row['ACCT NO']} by ${months} months` });
-            } catch (err) { console.error(err); showToast('Failed to save', 'error'); return; }
+            // Field-level update: end date + renew date only
+            const result = await saveCustomerFields(rowId, {
+                'CMS/MHIS MTN END DATE': newEnd,
+                'MTN RENEW DATE': mtnRenewalFmt(now)
+            }, {
+                'CMS/MHIS MTN END DATE': normalizeCustomerValue(oldEnd),
+                'MTN RENEW DATE': normalizeCustomerValue(row['MTN RENEW DATE'])
+            });
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    showToast('Latest data loaded - this customer was changed by another user. Please review and extend again.', 'error');
+                    renderMTNRenewalModule();
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    console.error(result.error);
+                    showToast('Failed to save', 'error');
+                }
+                return;
+            }
+            logActivity({ module: 'MTN Renewal', action: 'EXTEND', description: `Extended MTN for ${row['ACCT NO']} by ${months} months` });
 
             try {
                 await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: rowId, old_end_date: oldEnd, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'EXTEND', remarks: `Extended by ${months} months` }]);
@@ -17329,20 +17770,31 @@ async function exportActivityLog() {
             const currentStart = row['CMS/MHIS MTN START DATE'] || '';
             const currentEnd = row['CMS/MHIS MTN END DATE'] || '';
 
-            // Restore old dates back into the contact row
-            if (oldStart) row['CMS/MHIS MTN START DATE'] = oldStart;
-            if (oldEnd) row['CMS/MHIS MTN END DATE'] = oldEnd;
-            // Clear MTN RENEW DATE since we are reverting
-            row['MTN RENEW DATE'] = '';
-            const now = new Date();
-            row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
-            row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            // Restore the previous dates (field-level) and clear the renew date
+            const changes = { 'MTN RENEW DATE': '' };
+            const baseline = { 'MTN RENEW DATE': normalizeCustomerValue(row['MTN RENEW DATE']) };
+            if (oldStart) {
+                changes['CMS/MHIS MTN START DATE'] = oldStart;
+                baseline['CMS/MHIS MTN START DATE'] = normalizeCustomerValue(currentStart);
+            }
+            if (oldEnd) {
+                changes['CMS/MHIS MTN END DATE'] = oldEnd;
+                baseline['CMS/MHIS MTN END DATE'] = normalizeCustomerValue(currentEnd);
+            }
+
+            // 1. Save the reverted dates to contacts
+            const undoResult = await saveCustomerFields(rowId, changes, baseline);
+            if (!undoResult.ok) {
+                if (undoResult.reason === 'reloaded') {
+                    showToast('Latest data loaded - these dates were changed by another user. Please review before undoing.', 'error');
+                    renderMTNRenewalModule();
+                } else if (undoResult.reason !== 'conflict' && undoResult.reason !== 'cancelled') {
+                    showToast('Failed to undo: ' + ((undoResult.error && undoResult.error.message) || 'unknown error'), 'error');
+                }
+                return;
+            }
 
             try {
-                // 1. Save reverted dates to contacts
-                const { error: contactErr } = await supabaseClient.from('contacts').update({ data: row }).eq('id', rowId);
-                if (contactErr) throw contactErr;
-
                 // 2. Log the undo action in audit
                 const { error: auditErr } = await supabaseClient.from('mtn_renewal_audit').insert([{
                     contacts_id: rowId,
@@ -17378,6 +17830,7 @@ async function exportActivityLog() {
             const m = parseInt(months);
             if (isNaN(m) || m < 1) { alert('Invalid number'); return; }
             let count = 0;
+            const bulkConflicts = [];
             for (const id of mtnRenewalSelectedIds) {
                 const rowIdx = crmData.findIndex(r => r.id === id);
                 if (rowIdx === -1) continue;
@@ -17386,46 +17839,73 @@ async function exportActivityLog() {
                 const currentEnd = parseDateToJs(row['CMS/MHIS MTN END DATE']) || new Date();
                 const newEndDate = new Date(currentEnd); newEndDate.setMonth(newEndDate.getMonth() + m);
                 const newEnd = mtnRenewalFmt(newEndDate);
-                row['CMS/MHIS MTN END DATE'] = newEnd;
                 const now = new Date();
-                row['COMPLETED DATE'] = mtnRenewalFmt(now);
-                row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
-                row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+                // Field-level: only the end date and completed date are written
+                const result = await saveCustomerFields(id, {
+                    'CMS/MHIS MTN END DATE': newEnd,
+                    'COMPLETED DATE': mtnRenewalFmt(now)
+                }, {
+                    'CMS/MHIS MTN END DATE': normalizeCustomerValue(oldEnd),
+                    'COMPLETED DATE': normalizeCustomerValue(row['COMPLETED DATE'])
+                }, { silent: true });
+
+                if (!result.ok) {
+                    if (result.reason === 'conflict') {
+                        bulkConflicts.push({ label: row['ACCT NO'] || String(id), fields: describeCustomerConflicts(result.conflicts) });
+                    } else {
+                        console.error('Bulk extend error:', result.error);
+                    }
+                    continue;
+                }
                 try {
-                    await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
                     const { error: bulkExtendAuditErr } = await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, old_end_date: oldEnd, new_end_date: newEnd, edited_by: currentUser?.username || 'Unknown', action: 'BULK_EXTEND', remarks: `Bulk extended by ${m} months` }]);
                     if (bulkExtendAuditErr) console.warn('Bulk extend audit failed:', bulkExtendAuditErr.message);
                     count++;
-                } catch (err) { console.error('Bulk extend error:', err); }
+                } catch (err) { console.error('Bulk extend audit error:', err); count++; }
             }
             mtnRenewalSelectedIds.clear();
             logActivity({ module: 'MTN Renewal', action: 'BULK_EXTEND', description: `Bulk extended ${count} customers by ${m} months` });
             showToast(`${count} customers extended by ${m} months`, 'success');
             renderMTNRenewalModule();
+            if (bulkConflicts.length > 0) await notifyBulkConflicts(bulkConflicts);
         }
 
         async function bulkCompleteMTN() {
             if (!confirm('Mark all selected as renew?')) return;
             let count = 0;
+            const bulkConflicts = [];
             for (const id of mtnRenewalSelectedIds) {
                 const rowIdx = crmData.findIndex(r => r.id === id);
                 if (rowIdx === -1) continue;
                 const row = crmData[rowIdx];
                 const now = new Date();
-                row['MTN RENEW DATE'] = mtnRenewalFmt(now);
-                row['LAST UPDATED BY'] = currentUser?.username || 'Unknown';
-                row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+                // Field-level: only the renew date is written
+                const result = await saveCustomerFields(id,
+                    { 'MTN RENEW DATE': mtnRenewalFmt(now) },
+                    { 'MTN RENEW DATE': normalizeCustomerValue(row['MTN RENEW DATE']) },
+                    { silent: true });
+
+                if (!result.ok) {
+                    if (result.reason === 'conflict') {
+                        bulkConflicts.push({ label: row['ACCT NO'] || String(id), fields: describeCustomerConflicts(result.conflicts) });
+                    } else {
+                        console.error('Bulk renew error:', result.error);
+                    }
+                    continue;
+                }
                 try {
-                    await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
                     const { error: bulkCompleteAuditErr } = await supabaseClient.from('mtn_renewal_audit').insert([{ contacts_id: id, edited_by: currentUser?.username || 'Unknown', action: 'BULK_RENEW', remarks: 'Bulk marked as renew' }]);
                     if (bulkCompleteAuditErr) console.warn('Bulk renew audit failed:', bulkCompleteAuditErr.message);
                     count++;
-                } catch (err) { console.error('Bulk renew error:', err); }
+                } catch (err) { console.error('Bulk renew audit error:', err); count++; }
             }
             mtnRenewalSelectedIds.clear();
             logActivity({ module: 'MTN Renewal', action: 'BULK_RENEW', description: `Bulk renew ${count} customers` });
             showToast(`${count} customers marked as renew`, 'success');
             renderMTNRenewalModule();
+            if (bulkConflicts.length > 0) await notifyBulkConflicts(bulkConflicts);
         }
 
         async function bulkAssignStaff() {
@@ -17436,13 +17916,14 @@ async function exportActivityLog() {
                 const rowIdx = crmData.findIndex(r => r.id === id);
                 if (rowIdx === -1) continue;
                 const row = crmData[rowIdx];
-                const now = new Date();
-                row['LAST UPDATED BY'] = staffName;
-                row['LAST UPDATED AT'] = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-                try {
-                    await supabaseClient.from('contacts').update({ data: row }).eq('id', id);
-                    count++;
-                } catch (err) { console.error('Bulk assign error:', err); }
+
+                // Field-level: only the staff name (LAST UPDATED BY) is written
+                const result = await saveCustomerFields(id,
+                    { 'LAST UPDATED BY': staffName },
+                    null,
+                    { silent: true, stamp: { 'LAST UPDATED BY': staffName } });
+                if (result.ok) count++;
+                else console.error('Bulk assign error:', result.error || result.reason);
             }
             mtnRenewalSelectedIds.clear();
             logActivity({ module: 'MTN Renewal', action: 'BULK_ASSIGN', description: `Bulk assigned ${staffName} to ${count} customers` });
@@ -17868,11 +18349,23 @@ async function exportActivityLog() {
                     const startY = parseInt(sy, 10);
                     const endDate = new Date(startY + 1, startM - 1, startD - 1); // -1 day
                     const endDateStr = `${String(endDate.getDate()).padStart(2,'0')}/${String(endDate.getMonth()+1).padStart(2,'0')}/${endDate.getFullYear()}`;
-                    contact['CMS/MHIS MTN START DATE'] = scheduleDate;
-                    contact['CMS/MHIS MTN END DATE'] = endDateStr;
-                    contact['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-                    contact['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-                    await supabaseClient.from('contacts').update({ data: contact }).eq('id', contact.id);
+
+                    // Field-level: only the two MTN dates are written
+                    const contactResult = await saveCustomerFields(contact.id, {
+                        'CMS/MHIS MTN START DATE': scheduleDate,
+                        'CMS/MHIS MTN END DATE': endDateStr
+                    }, {
+                        'CMS/MHIS MTN START DATE': normalizeCustomerValue(mtnStart),
+                        'CMS/MHIS MTN END DATE': normalizeCustomerValue(contact['CMS/MHIS MTN END DATE'])
+                    });
+                    if (!contactResult.ok) {
+                        if (contactResult.reason === 'reloaded') {
+                            alert('The MTN dates were changed by another user and have been refreshed. Please review and schedule again.');
+                        } else if (contactResult.reason !== 'conflict' && contactResult.reason !== 'cancelled') {
+                            throw new Error((contactResult.error && contactResult.error.message) || 'Customer update failed');
+                        }
+                        return;
+                    }
                 }
 
                 // Update local state
@@ -18618,9 +19111,115 @@ async function exportActivityLog() {
         let waExcludedKeys = new Set();
         let waSending = false;
         let waHistoryExpanded = {};
+        let waAutoTunnelUrl = null;  // fresh tunnel URL from tunnel-url.json
+        let waTunnelTimer = null;    // pending retry / periodic re-check
+        let waTunnelBusy = false;    // single-flight guard
+        let waTunnelBackoff = 5000;  // retry delay while the URL is not known yet
+        let waLastTunnelRefresh = 0; // throttle for error-triggered refreshes
+
+        function waIsTunnelUrl(u) {
+            return /^https:\/\/[a-z0-9-]+\.trycloudflare\.com\/?$/i.test(String(u || '').trim());
+        }
+
+        function waIsLocalOrigin() {
+            return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.origin);
+        }
+
+        function waScheduleTunnelFetch(delay) {
+            clearTimeout(waTunnelTimer);
+            waTunnelTimer = setTimeout(() => {
+                waTunnelTimer = null;
+                waFetchTunnelUrl();
+            }, delay);
+        }
+
+        // Apply a freshly discovered tunnel URL: make it the single source of
+        // truth and drop any stale saved value (a quick-tunnel URL can never
+        // become valid again — they rotate on every restart).
+        function waApplyTunnelUrl(url) {
+            url = String(url || '').replace(/\/+$/, '');
+            if (!url || url === waAutoTunnelUrl) return;
+            waAutoTunnelUrl = url;
+            const saved = (localStorage.getItem('wa_api_base') || '').replace(/\/+$/, '');
+            if (waIsTunnelUrl(saved) && saved !== url) localStorage.removeItem('wa_api_base');
+            waSyncConfigInputs();
+        }
+
+        // Public Supabase Storage mirror of tunnel-url.json, kept fresh by
+        // tunnel-sync.js on the PC backend. Reachable from ANY origin — this is
+        // how the deployed CRM (e.g. Vercel), which has no local backend to ask,
+        // discovers the current tunnel URL.
+        function waTunnelMirrorUrl() {
+            try {
+                if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL) {
+                    return SUPABASE_URL + '/storage/v1/object/public/app-config/tunnel-url.json';
+                }
+            } catch (_) { /* SUPABASE_URL not available */ }
+            return '';
+        }
+
+        // Fetch the current tunnel URL. Source 1: the backend on this origin
+        // (localhost / current tunnel URL). Source 2: the public Supabase
+        // mirror (works on the deployed CRM and any other origin). Retries
+        // with backoff while neither has the URL yet (boot window after
+        // Windows start), then re-checks every 60s so a tunnel restart is
+        // picked up without reloading the page.
+        async function waFetchTunnelUrl() {
+            if (waTunnelBusy) { waScheduleTunnelFetch(1000); return; }
+            waTunnelBusy = true;
+            let delay;
+            try {
+                let url = null;
+                try {
+                    const resp = await fetch('/api/whatsapp/tunnel-url', { cache: 'no-store' });
+                    const data = resp.ok ? await resp.json().catch(() => ({})) : {};
+                    if (data.url) url = data.url;
+                } catch (_) { /* backend not on this origin — fall through to the mirror */ }
+                if (!url) {
+                    const mirror = waTunnelMirrorUrl();
+                    if (mirror) {
+                        try {
+                            const resp = await fetch(`${mirror}?t=${Date.now()}`, { cache: 'no-store' });
+                            const data = resp.ok ? await resp.json().catch(() => ({})) : {};
+                            if (data.url) url = data.url;
+                        } catch (_) { /* mirror unreachable — retry later */ }
+                    }
+                }
+                if (url) {
+                    waApplyTunnelUrl(url);
+                    // Also purge a stale saved tunnel URL even when the auto URL
+                    // didn't change this cycle (e.g. one saved after page load).
+                    const saved = (localStorage.getItem('wa_api_base') || '').replace(/\/+$/, '');
+                    if (waIsTunnelUrl(saved) && saved !== waAutoTunnelUrl) {
+                        localStorage.removeItem('wa_api_base');
+                        waSyncConfigInputs();
+                    }
+                    waTunnelBackoff = 5000;
+                    delay = 60000; // periodic re-check: catches tunnel restarts while the page stays open
+                } else {
+                    // Neither source has the URL yet (backend still booting) — retry soon.
+                    delay = waTunnelBackoff;
+                    waTunnelBackoff = Math.min(waTunnelBackoff * 2, 60000);
+                }
+            } catch (_) {
+                delay = waTunnelBackoff;
+                waTunnelBackoff = Math.min(waTunnelBackoff * 2, 60000);
+            }
+            waTunnelBusy = false;
+            waScheduleTunnelFetch(delay);
+        }
 
         function getWhatsAppApiBase() {
-            return (localStorage.getItem('wa_api_base') || WHATSAPP_API_BASE || '').replace(/\/+$/, '');
+            // Priority: 1) manual override for a non-tunnel backend (e.g. Render),
+            // 2) fresh auto-detected tunnel URL, 3) previously saved tunnel URL
+            // (last resort when auto-detection is unavailable, e.g. static hosting),
+            // 4) hardcoded default. Saved trycloudflare URLs never win over the
+            // fresh auto-detected one — they are stale after every restart.
+            const manual = (localStorage.getItem('wa_api_base') || '').replace(/\/+$/, '');
+            if (manual && !waIsTunnelUrl(manual)) return manual;
+            if (waAutoTunnelUrl) return waAutoTunnelUrl;
+            if (manual) return manual;
+            return (WHATSAPP_API_BASE || '').replace(/\/+$/, '');
         }
         function getWhatsAppSecret() {
             return localStorage.getItem('wa_api_secret') || WHATSAPP_API_SECRET || '';
@@ -18642,16 +19241,27 @@ async function exportActivityLog() {
 
         async function waApiFetch(path, method = 'GET', body) {
             const base = getWhatsAppApiBase();
-            if (!base) throw new Error('WhatsApp backend URL is not configured.');
+            // Relative requests are used whenever this page is served by the
+            // WhatsApp backend itself (localhost, or through the current tunnel
+            // URL) — they keep working no matter how often the tunnel URL
+            // rotates. The absolute base is only needed when a non-tunnel
+            // backend override is set or the page is hosted elsewhere.
+            const manualOverride = base && !waIsTunnelUrl(base);
+            const useRelative = !manualOverride && (!base || window.location.origin === base || waIsLocalOrigin());
+            const url = useRelative ? `/api/whatsapp${path}` : `${base}/api/whatsapp${path}`;
             const opts = { method, headers: { 'Content-Type': 'application/json' } };
             const secret = getWhatsAppSecret();
             if (secret) opts.headers['x-wa-secret'] = secret;
             if (body) opts.body = JSON.stringify(body);
-            const resp = await fetch(`${base}/api/whatsapp${path}`, opts);
+            const resp = await fetch(url, opts);
             const data = await resp.json().catch(() => ({}));
             if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
             return data;
         }
+
+        // Auto-detect tunnel URL on module load — the fetch chain retries while
+        // the backend is booting, then re-checks every 60s (see waFetchTunnelUrl).
+        waFetchTunnelUrl();
 
         function waSectionActive() {
             return document.getElementById('whatsapp')?.classList.contains('active');
@@ -18670,17 +19280,19 @@ async function exportActivityLog() {
         }
 
         async function waPollStatus() {
-            const base = getWhatsAppApiBase();
-            if (!base) {
-                waRenderConnection({ state: 'disconnected' }, 'Backend URL not configured — enter it below and click Save.');
-                return;
-            }
             try {
                 const data = await waApiFetch('/status');
                 waRenderConnection(data);
                 waUpdateQrModal(data);
             } catch (e) {
-                waRenderConnection({ state: 'disconnected', lastError: e.message }, `Cannot reach WhatsApp backend (${e.message}). Check the URL and that the backend is running.`);
+                waRenderConnection({ state: 'disconnected', lastError: e.message }, `Cannot reach WhatsApp backend (${e.message}). Check that the backend is running.`);
+                // The tunnel URL may have rotated (PC/tunnel restart) — re-check it
+                // now so the next poll uses the fresh URL. Throttled to 10s.
+                const now = Date.now();
+                if (now - waLastTunnelRefresh > 10000) {
+                    waLastTunnelRefresh = now;
+                    waScheduleTunnelFetch(250);
+                }
             }
         }
 
@@ -18717,17 +19329,25 @@ async function exportActivityLog() {
                     if (s === 'qr') text = 'Scan the QR code shown in the popup with WhatsApp > Linked devices.';
                     else if (s === 'authenticated') text = 'Authenticated — finalizing connection...';
                     else if (s === 'ready') text = 'WhatsApp is connected. You can send messages and blasts.';
-                    else if (!getWhatsAppApiBase()) text = 'Backend URL not configured.';
                 }
                 note.textContent = text;
                 note.className = `wa-note${waConnection.lastError && !noteOverride ? ' error' : ''}`;
             }
         }
 
-        function waPrefillConfig() {
+        // Keep the URL field showing the live base. A deliberate non-tunnel
+        // override typed by the user is never clobbered; empty or stale tunnel
+        // URLs are refreshed in place.
+        function waSyncConfigInputs() {
             const baseInput = document.getElementById('waApiBaseInput');
+            if (!baseInput) return;
+            const cur = (baseInput.value || '').trim().replace(/\/+$/, '');
+            if (!cur || waIsTunnelUrl(cur)) baseInput.value = getWhatsAppApiBase();
+        }
+
+        function waPrefillConfig() {
             const secretInput = document.getElementById('waApiSecretInput');
-            if (baseInput && !baseInput.value) baseInput.value = getWhatsAppApiBase();
+            waSyncConfigInputs();
             if (secretInput && !secretInput.value) secretInput.value = getWhatsAppSecret();
         }
 
@@ -18741,7 +19361,6 @@ async function exportActivityLog() {
         }
 
         async function waConnect() {
-            if (!getWhatsAppApiBase()) { showToast('Set the WhatsApp backend URL below and click Save first.', 'error'); return; }
             openWaQrModal();
             try {
                 await waApiFetch('/connect', 'POST');
@@ -19444,23 +20063,28 @@ async function exportActivityLog() {
             if (!row) return;
             const current = String(row['CHECKED'] || '').trim().toLowerCase();
             const newVal = (current === 'yes' || current === 'true' || current === '1') ? 'NO' : 'YES';
-            row['CHECKED'] = newVal;
-            row['DATE CHECKED'] = new Date().toLocaleDateString('en-GB');
-            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-            row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-            try {
-                const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
-                if (error) {
-                    console.error('Check update failed:', error);
-                    alert('Update failed: ' + error.message);
-                    return;
+            const today = new Date().toLocaleDateString('en-GB');
+
+            // Field-level: only the check flag and check date are written
+            const result = await saveCustomerFields(row.id, {
+                'CHECKED': newVal,
+                'DATE CHECKED': today
+            }, {
+                'CHECKED': normalizeCustomerValue(row['CHECKED']),
+                'DATE CHECKED': normalizeCustomerValue(row['DATE CHECKED'])
+            });
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    alert('Latest data loaded - this record was changed by another user. Please review.');
+                    renderCloudBackupModule();
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    console.error('Check update failed:', result.error);
+                    alert('Update failed: ' + ((result.error && result.error.message) || 'unknown error'));
                 }
-                logActivity({ module: 'Cloud Backup', action: 'CHECK', description: `${id} marked as ${newVal}` });
-                renderCloudBackupModule();
-            } catch (e) {
-                console.error('Check update exception', e);
-                alert('Update failed: ' + e.message);
+                return;
             }
+            logActivity({ module: 'Cloud Backup', action: 'CHECK', description: `${id} marked as ${newVal}` });
+            renderCloudBackupModule();
         }
 
         async function resetCloudBackupDailyCheck() {
@@ -19477,15 +20101,13 @@ async function exportActivityLog() {
                 if (status === 'active') {
                     const current = String(row['CHECKED'] || '').trim().toLowerCase();
                     if (current === 'yes' || current === 'true' || current === '1') {
-                        row['CHECKED'] = 'NO';
-                        row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-                        row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-                        try {
-                            await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
-                            resetCount++;
-                        } catch (e) {
-                            console.error('Reset failed for', row['ACCT NO'], e);
-                        }
+                        // Field-level reset of the daily check flag
+                        const result = await saveCustomerFields(row.id,
+                            { 'CHECKED': 'NO' },
+                            { 'CHECKED': normalizeCustomerValue(row['CHECKED']) },
+                            { silent: true });
+                        if (result.ok) resetCount++;
+                        else console.error('Reset failed for', row['ACCT NO'], result.error || result.reason);
                     }
                 }
             }
@@ -20640,23 +21262,24 @@ async function exportActivityLog() {
             }
             const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
             if (!row) return;
-            row[field] = value;
-            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-            row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-            try {
-                const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
-                if (error) {
-                    console.error('Update error:', error);
-                    showToast('Update failed: ' + error.message, 'error');
-                    return;
+
+            // Field-level: only the edited column is written
+            const result = await saveCustomerFields(row.id,
+                { [field]: value },
+                { [field]: normalizeCustomerValue(row[field]) });
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    showToast('Latest data loaded - this value was changed by another user. Please review.', 'error');
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    console.error('Update error:', result.error);
+                    showToast('Update failed: ' + ((result.error && result.error.message) || 'unknown error'), 'error');
                 }
-                logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Updated ${field} for ${row['CLINIC NAME'] || id}` });
-                showToast('Updated successfully', 'success');
-            } catch (e) {
-                console.error('Update exception:', e);
-                showToast('Update failed: ' + e.message, 'error');
+                cloudBackupEditingCell = '';
+                renderCloudBackupModule();
                 return;
             }
+            logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Updated ${field} for ${row['CLINIC NAME'] || id}` });
+            showToast('Updated successfully', 'success');
             cloudBackupEditingCell = '';
             renderCloudBackupModule();
         }
@@ -20672,19 +21295,27 @@ async function exportActivityLog() {
             const name = row['CLINIC NAME'] || id;
             if (!confirm(`Terminate cloud backup for "${name}"? This will also update the customer STATUS to TERMINATED.`)) return;
             const today = new Date().toLocaleDateString('en-GB');
-            row['STATUS'] = 'TERMINATED';
-            row['CLOUD TERMINATION DATE'] = today;
-            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-            row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-            try {
-                const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
-                if (error) { showToast('Terminate failed: ' + error.message, 'error'); return; }
-                logActivity({ module: 'Cloud Backup', action: 'TERMINATE', description: `Terminated cloud backup for ${name} on ${today}` });
-                showToast(`${name} terminated successfully`, 'success');
-                renderCloudBackupModule();
-            } catch (e) {
-                showToast('Terminate failed: ' + e.message, 'error');
+
+            // Field-level: only the status and termination date are written
+            const result = await saveCustomerFields(row.id, {
+                'STATUS': 'TERMINATED',
+                'CLOUD TERMINATION DATE': today
+            }, {
+                'STATUS': normalizeCustomerValue(row['STATUS']),
+                'CLOUD TERMINATION DATE': normalizeCustomerValue(row['CLOUD TERMINATION DATE'])
+            });
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    showToast('Latest data loaded - this record was changed by another user. Please review.', 'error');
+                    renderCloudBackupModule();
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    showToast('Terminate failed: ' + ((result.error && result.error.message) || 'unknown error'), 'error');
+                }
+                return;
             }
+            logActivity({ module: 'Cloud Backup', action: 'TERMINATE', description: `Terminated cloud backup for ${name} on ${today}` });
+            showToast(`${name} terminated successfully`, 'success');
+            renderCloudBackupModule();
         }
 
         async function reactivateCloudBackup(id) {
@@ -20692,19 +21323,27 @@ async function exportActivityLog() {
             if (!row) return;
             const name = row['CLINIC NAME'] || id;
             if (!confirm(`Re-activate cloud backup for "${name}"? This will also update the customer STATUS to ACTIVE.`)) return;
-            row['STATUS'] = 'ACTIVE';
-            row['CLOUD TERMINATION DATE'] = '';
-            row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-            row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-            try {
-                const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
-                if (error) { showToast('Re-activate failed: ' + error.message, 'error'); return; }
-                logActivity({ module: 'Cloud Backup', action: 'REACTIVATE', description: `Re-activated cloud backup for ${name}` });
-                showToast(`${name} re-activated successfully`, 'success');
-                renderCloudBackupModule();
-            } catch (e) {
-                showToast('Re-activate failed: ' + e.message, 'error');
+
+            // Field-level: only the status and termination date are written
+            const result = await saveCustomerFields(row.id, {
+                'STATUS': 'ACTIVE',
+                'CLOUD TERMINATION DATE': ''
+            }, {
+                'STATUS': normalizeCustomerValue(row['STATUS']),
+                'CLOUD TERMINATION DATE': normalizeCustomerValue(row['CLOUD TERMINATION DATE'])
+            });
+            if (!result.ok) {
+                if (result.reason === 'reloaded') {
+                    showToast('Latest data loaded - this record was changed by another user. Please review.', 'error');
+                    renderCloudBackupModule();
+                } else if (result.reason !== 'conflict' && result.reason !== 'cancelled') {
+                    showToast('Re-activate failed: ' + ((result.error && result.error.message) || 'unknown error'), 'error');
+                }
+                return;
             }
+            logActivity({ module: 'Cloud Backup', action: 'REACTIVATE', description: `Re-activated cloud backup for ${name}` });
+            showToast(`${name} re-activated successfully`, 'success');
+            renderCloudBackupModule();
         }
 
         async function bulkCloudBackupUpdateStatus() {
@@ -20712,45 +21351,59 @@ async function exportActivityLog() {
             if (!newStatus) return;
             const ids = Array.from(cloudBackupSelectedIds);
             let updated = 0;
+            const bulkConflicts = [];
             for (const id of ids) {
                 const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
                 if (!row) continue;
-                row['STATUS'] = newStatus;
-                row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-                row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-                try {
-                    const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
-                    if (error) { console.error('Bulk update error:', error); continue; }
+                // Field-level status update
+                const result = await saveCustomerFields(row.id,
+                    { 'STATUS': newStatus },
+                    { 'STATUS': normalizeCustomerValue(row['STATUS']) },
+                    { silent: true });
+                if (result.ok) {
                     updated++;
-                } catch (e) { console.error('Bulk update exception:', e); }
+                } else if (result.reason === 'conflict') {
+                    bulkConflicts.push({ label: row['ACCT NO'] || String(row.id), fields: describeCustomerConflicts(result.conflicts) });
+                } else {
+                    console.error('Bulk update error:', result.error || result.reason);
+                }
             }
             logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Bulk updated status to ${newStatus} for ${updated} records` });
             cloudBackupSelectedIds.clear();
             showToast(`Updated ${updated} records`, 'success');
             renderCloudBackupModule();
+            if (bulkConflicts.length > 0) await notifyBulkConflicts(bulkConflicts);
         }
 
         async function bulkCloudBackupMarkChecked() {
             const ids = Array.from(cloudBackupSelectedIds);
             let updated = 0;
             const today = new Date().toLocaleDateString('en-GB');
+            const bulkConflicts = [];
             for (const id of ids) {
                 const row = crmData.find(r => String(r['ACCT NO'] || r.id || '') === id);
                 if (!row) continue;
-                row['CHECKED'] = 'Yes';
-                row['DATE CHECKED'] = today;
-                row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-                row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-                try {
-                    const { error } = await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
-                    if (error) { console.error('Bulk check error:', error); continue; }
+                // Field-level: check flag + date checked
+                const result = await saveCustomerFields(row.id, {
+                    'CHECKED': 'Yes',
+                    'DATE CHECKED': today
+                }, {
+                    'CHECKED': normalizeCustomerValue(row['CHECKED']),
+                    'DATE CHECKED': normalizeCustomerValue(row['DATE CHECKED'])
+                }, { silent: true });
+                if (result.ok) {
                     updated++;
-                } catch (e) { console.error('Bulk check exception:', e); }
+                } else if (result.reason === 'conflict') {
+                    bulkConflicts.push({ label: row['ACCT NO'] || String(row.id), fields: describeCustomerConflicts(result.conflicts) });
+                } else {
+                    console.error('Bulk check error:', result.error || result.reason);
+                }
             }
             logActivity({ module: 'Cloud Backup', action: 'UPDATE', description: `Bulk marked ${updated} records as checked` });
             cloudBackupSelectedIds.clear();
             showToast(`Marked ${updated} records as checked`, 'success');
             renderCloudBackupModule();
+            if (bulkConflicts.length > 0) await notifyBulkConflicts(bulkConflicts);
         }
 
         function openCloudBackupSendReminder() {
@@ -20933,7 +21586,7 @@ async function exportActivityLog() {
                     }
                     matched++;
         
-                    let changed = false;
+                    const pendingFields = {};
                     const setField = (field, colIdx) => {
                         if (colIdx === -1) return;
                         let val = row[colIdx];
@@ -20946,8 +21599,7 @@ async function exportActivityLog() {
                         }
                         const current = String(crmRow[field] || '').trim();
                         if (!val || val === current) return;
-                        crmRow[field] = val;
-                        changed = true;
+                        pendingFields[field] = val;
                     };
         
                     setField('CLINIC NAME', colMap.clinic);
@@ -20962,14 +21614,18 @@ async function exportActivityLog() {
                     setField('SUPPORT NAME', colMap.supportName);
                     setField('REMARK', colMap.remark);
         
-                    if (changed) {
-                        crmRow['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-                        crmRow['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-                        try {
-                            await supabaseClient.from('contacts').update({ data: crmRow }).eq('id', crmRow.id);
+                    // Field-level import: only the columns present in the Excel file are written
+                    const pendingList = Object.keys(pendingFields);
+                    if (pendingList.length > 0) {
+                        const baseline = {};
+                        pendingList.forEach(field => {
+                            baseline[field] = normalizeCustomerValue(crmRow[field]);
+                        });
+                        const result = await saveCustomerFields(crmRow.id, pendingFields, baseline, { silent: true });
+                        if (result.ok) {
                             updated++;
-                        } catch (e) {
-                            console.error('Update failed for', excelAcct, e);
+                        } else {
+                            console.error('Update failed for', excelAcct, result.error || result.reason);
                         }
                     }
                 }
@@ -20990,7 +21646,7 @@ async function exportActivityLog() {
             let fixed = 0;
             for (const row of crmData) {
                 if (!hasCloudBackupData(row)) continue;
-                let changed = false;
+                const fixes = {};
                 for (const field of dateFields) {
                     const val = String(row[field] || '').trim();
                     if (!val) continue;
@@ -21004,19 +21660,14 @@ async function exportActivityLog() {
                         const d = date.getUTCDate().toString().padStart(2, '0');
                         const m = (date.getUTCMonth() + 1).toString().padStart(2, '0');
                         const y = date.getUTCFullYear();
-                        row[field] = `${d}/${m}/${y}`;
-                        changed = true;
+                        fixes[field] = `${d}/${m}/${y}`;
                     }
                 }
-                if (changed) {
-                    row['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-                    row['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-                    try {
-                        await supabaseClient.from('contacts').update({ data: row }).eq('id', row.id);
-                        fixed++;
-                    } catch (e) {
-                        console.error('Fix failed for', row['ACCT NO'], e);
-                    }
+                if (Object.keys(fixes).length > 0) {
+                    // Field-level fix: only the converted date columns are written
+                    const result = await saveCustomerFields(row.id, fixes, null, { silent: true });
+                    if (result.ok) fixed++;
+                    else console.error('Fix failed for', row['ACCT NO'], result.error || result.reason);
                 }
             }
             logActivity({ module: 'Cloud Backup', action: 'FIX', description: `Fixed ${fixed} records with serial date values` });
@@ -21101,35 +21752,30 @@ async function exportActivityLog() {
                     matched++;
 
                     // Determine new status values — only set Active if cell has a value
-                    let changed = false;
+                    const statusChanges = {};
                     const applyStatus = (colIdx, fieldName) => {
                         if (colIdx === -1) return;
                         const cellVal = String(row[colIdx] || '').trim();
                         if (!cellVal) return;           // blank → leave unchanged
                         if (crmRow[fieldName] === 'Active') return; // already Active → no change needed
-                        crmRow[fieldName] = 'Active';
-                        changed = true;
+                        statusChanges[fieldName] = 'Active';
                     };
 
                     applyStatus(colEInv, 'E-INVOICE STATUS');
                     applyStatus(colWsp,  'WHATSAPP STATUS');
                     applyStatus(colSst,  'SST STATUS');
 
-                    if (changed) {
-                        crmRow['LAST UPDATED BY'] = currentUser ? currentUser.username : 'system';
-                        crmRow['LAST UPDATED AT'] = new Date().toLocaleString('en-GB');
-                        try {
-                            const rowData = { ...crmRow };
-                            delete rowData.id;
-                            delete rowData._rowIndex;
-                            for (const k of Object.keys(rowData)) {
-                                if (k.includes('_EMPTY_') || k.startsWith('__')) delete rowData[k];
-                            }
-                            const { error } = await supabaseClient.from('contacts').update({ data: rowData }).eq('id', crmRow.id);
-                            if (error) throw error;
+                    // Field-level import: only the status columns present in the file are written
+                    if (Object.keys(statusChanges).length > 0) {
+                        const baseline = {};
+                        Object.keys(statusChanges).forEach(field => {
+                            baseline[field] = normalizeCustomerValue(crmRow[field]);
+                        });
+                        const result = await saveCustomerFields(crmRow.id, statusChanges, baseline, { silent: true });
+                        if (result.ok) {
                             updated++;
-                        } catch (e) {
-                            console.error('[E-INV/WSP/SST Import] Update failed for', acct, e);
+                        } else {
+                            console.error('[E-INV/WSP/SST Import] Update failed for', acct, result.error || result.reason);
                         }
                     }
                 }
