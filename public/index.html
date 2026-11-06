@@ -8311,14 +8311,21 @@
             const container = document.getElementById('productReportFilterBar');
             if (!container) return;
 
-            const statusOpts = ['All (Active / Expired / Loss / No Date)', 'Active', 'Expired', 'Loss', 'No Date'];
+            // Values must match the strings returned by getCustomerStatus()
+            const statusOpts = [
+                { label: 'All (Active / Expired / Loss / No Date)', value: '' },
+                { label: 'Active', value: 'active' },
+                { label: 'Expired', value: 'expired' },
+                { label: 'Loss', value: 'loss' },
+                { label: 'No Date', value: 'nodate' }
+            ];
             const customerTypes = [...new Set(crmData.map(r => r['CUSTOMER TYPE']).filter(Boolean))].sort();
 
             container.innerHTML = `
                 <div class="filter-group">
                     <label>Status:</label>
                     <select id="productReportFilterStatus" onchange="filterProductReportDetail()">
-                        ${statusOpts.map(o => `<option value="${o === 'All (Active / Expired / Loss / No Date)' ? '' : o.toLowerCase()}">${o}</option>`).join('')}
+                        ${statusOpts.map(o => `<option value="${o.value}">${o.label}</option>`).join('')}
                     </select>
                 </div>
                 <div class="filter-group">
